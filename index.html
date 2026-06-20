@@ -121,6 +121,25 @@ button{font-family:inherit; cursor:pointer; border:none; color:inherit;}
 .stickfin{position:fixed; left:0; right:0; bottom:86px; z-index:45; display:flex; justify-content:center; pointer-events:none; padding:0 16px;}
 .stickfin .b{pointer-events:auto; width:100%; max-width:488px; padding:15px; border-radius:14px; font-weight:800; font-size:16px; color:var(--accent-ink); background:linear-gradient(135deg,#48ECEF,#2DE2E6 55%,#16B8BC); box-shadow:0 10px 34px rgba(45,226,230,.32);}
 .stickfin .b:active{transform:translateY(1px);}
+/* --- Insights v5 --- */
+.icard{background:var(--panel); border:1px solid var(--line); border-left:3px solid var(--accent); border-radius:12px; padding:12px 14px; margin:10px 0;}
+.icard.tap{cursor:pointer;}
+.icard .ihd{display:flex; justify-content:space-between; align-items:center; gap:8px;}
+.ibadge{font-size:9px; letter-spacing:.09em; text-transform:uppercase; font-weight:700; padding:3px 8px; border-radius:999px; white-space:nowrap;}
+.imetric{font-family:'JetBrains Mono',monospace; font-weight:700; font-size:15px; white-space:nowrap;}
+.ititle{font-weight:700; font-size:14px; margin-top:7px; letter-spacing:-.01em;}
+.ibody{font-size:12.5px; color:var(--muted); margin-top:4px; line-height:1.5;}
+.ibody b{color:#AEB9C7;}
+.momwrap{display:flex; align-items:center; gap:15px;}
+.momring{width:76px; height:76px; border-radius:50%; flex:0 0 auto; display:flex; align-items:center; justify-content:center;}
+.momring .inner{width:62px; height:62px; border-radius:50%; background:var(--panel); display:flex; flex-direction:column; align-items:center; justify-content:center; line-height:1;}
+.spark{display:flex; align-items:flex-end; gap:3px; height:30px; margin-top:8px;}
+.spark i{flex:1; min-height:2px; background:var(--grey); border-radius:2px 2px 0 0; display:block;}
+.spark i.cur{background:var(--accent);}
+.scorechips{display:flex; gap:8px; margin-top:10px;}
+.scorechips .sc{flex:1; background:var(--panel2); border:1px solid var(--line); border-radius:10px; padding:9px 6px; text-align:center;}
+.scorechips .sc b{display:block; font-family:'JetBrains Mono',monospace; font-size:18px;}
+.scorechips .sc span{font-size:9px; text-transform:uppercase; letter-spacing:.05em; color:var(--muted);}
 </style>
 </head>
 <body>
@@ -617,7 +636,7 @@ function weekCard(){ const w=weekStatus();
   const need=w.needsAttention.slice(0,5).map(m=>S.muscles[m].label.toLowerCase());
   const recov=Object.keys(S.muscles).filter(m=>{const st=recoveryStatus(m); return st==="recovering"||st==="overloaded";}).slice(0,2).map(m=>S.muscles[m].label.toLowerCase());
   const al=activeLimitation(); const avoid=[]; if(recov.length) avoid.push(recov.join(", ")+" recovering"); if(al) avoid.push(al.name.toLowerCase()+" — exercises excluded");
-  return '<div class="card"><div style="display:flex;justify-content:space-between;align-items:center"><div class="tiny">This week · Mon–Sun</div><div class="mono" style="font-weight:700;color:'+(w.sess>=w.target?'var(--green)':'var(--accent)')+'">'+w.sess+' / '+w.target+' sessions</div></div><div style="margin-top:9px">'+dots+'</div>'
+  const mom=momentumScore(); return '<div class="card"><div style="display:flex;justify-content:space-between;align-items:center"><div class="tiny">This week · Mon–Sun</div><div class="mono" style="font-weight:700;color:'+(w.sess>=w.target?'var(--green)':'var(--accent)')+'">'+w.sess+' / '+w.target+' sessions</div></div><div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px"><span class="histline">Momentum</span><span class="statuspill" style="background:'+momColor(mom.score)+'22;color:'+momColor(mom.score)+'">'+mom.score+'/100 · '+mom.label+'</span></div><div style="margin-top:9px">'+dots+'</div>'
     +(need.length?'<div class="histline" style="margin-top:11px"><b>Still needs:</b> '+need.join(", ")+'</div>':'<div class="histline" style="margin-top:11px;color:var(--green)">All priority muscles met this week ✓</div>')
     +(avoid.length?'<div class="histline" style="margin-top:3px"><b>Avoid today:</b> '+avoid.join("; ")+'</div>':'')
     +'<button class="btn ghost sm full" data-act="goto-stats-week" style="margin-top:10px">Open full week view →</button></div>'; }
@@ -728,6 +747,7 @@ function renderSheet(){ const m=document.getElementById("sheetmount"); if(!sheet
   else if(sheet.type==="recap"){ const r=sheet.data;
     inner='<div style="text-align:center;padding:2px 0 4px"><div class="tiny" style="color:var(--accent)">Session complete</div><h2 style="font-size:20px;margin:4px 0">'+r.title+'</h2></div>'
       +'<div class="kpi" style="margin-top:6px"><div class="k"><b>'+(r.dur||"—")+'</b><span>minutes</span></div><div class="k"><b>'+r.setsN+'</b><span>working sets</span></div><div class="k"><b>'+r.exN+'</b><span>exercises</span></div></div>'
+      +(r.coach?'<div class="card" style="margin:12px 0 0;border-color:rgba(45,226,230,.3);background:rgba(45,226,230,.05)"><div class="tiny" style="color:var(--accent)">Coach says</div><div class="ibody" style="margin-top:4px;color:#C6D0DC">'+r.coach+'</div></div>':"")
       +(r.muscles.length?'<div class="histline" style="margin-top:10px;text-align:center">Trained: '+r.muscles.join(" · ")+'</div>':"")
       +(r.prs.length?'<div class="tiny" style="margin-top:14px">Personal records 🏆</div><div style="margin-top:4px">'+r.prs.map(p=>'<div class="contrib"><div><b>'+p+'</b></div><span class="badge pr">PR</span></div>').join("")+'</div>':"")
       +'<div class="tiny" style="margin-top:14px">Volume added by muscle</div><div style="margin-top:6px">'+(r.parts.length?r.parts.map(p=>'<div class="exline" style="padding:6px 0"><div class="nm" style="font-size:13px">'+p.label+'</div><span class="sets">'+p.v.toFixed(1)+' sets</span></div>').join(""):'<div class="empty" style="padding:10px">No working sets logged.</div>')+'</div>'
@@ -777,6 +797,92 @@ function calcStreak(){ let streak=0,cursor=startOfWeek(); for(let i=0;i<26;i++){
   const n=S.sessions.filter(x=>x.completedAt&&new Date(x.completedAt)>=s&&new Date(x.completedAt)<e).length;
   if(i===0&&n<S.settings.sessionsPerWeek){ cursor.setDate(cursor.getDate()-7); continue; } if(n>=S.settings.sessionsPerWeek) streak++; else break; cursor.setDate(cursor.getDate()-7); } return streak; }
 
+/* ============================================================================ INSIGHTS ENGINE (v5)
+   All derived client-side from completedAt (canonical workout time), set data and mode.
+   Threshold-guarded — no fake precision on small data. ============================================================================ */
+function weekKeyOf(d){ const x=new Date(d); x.setHours(0,0,0,0); const day=(x.getDay()+6)%7; x.setDate(x.getDate()-day); return x.getFullYear()+"-"+(x.getMonth()+1)+"-"+x.getDate(); }
+function sessionSets(s){ return (s.entries||[]).reduce((a,en)=>a+workingSets(en).length,0); }
+function sessionVol(s){ return (s.entries||[]).reduce((a,en)=>a+workingSets(en).reduce((x,st)=>x+(+st.weight||0)*(+st.reps||0),0),0); }
+function needsAttentionPrimary(){ const vol=weeklyVolume(); return Object.entries(S.muscles).filter(([m,c])=>c.tier==="primary"&&vol[m]<c.min&&(function(){const st=recoveryStatus(m);return st!=="recovering"&&st!=="overloaded";})()).map(([m])=>m); }
+function secondaryDominant(){ const wk=weekSessions(); const vol=weeklyVolume(wk); const out=[];
+  Object.entries(S.muscles).forEach(([m,cfg])=>{ const v=vol[m]; if(v<=0||v>=cfg.min) return; const con=muscleContrib(m,wk); if(con.total<=0) return;
+    if(con.secondary>con.direct && con.direct<cfg.min*0.6) out.push({m,cfg,con,v}); });
+  return out.sort((a,b)=>b.con.secondary-a.con.secondary); }
+function dayOfWeekCounts(){ const c=[0,0,0,0,0,0,0]; completedSessions().forEach(s=>{ c[(new Date(s.completedAt).getDay()+6)%7]++; }); return c; }
+function bestTrainingDay(){ const c=dayOfWeekCounts(); const total=c.reduce((a,b)=>a+b,0); if(total<6) return null;
+  const names=["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"]; let bi=0; c.forEach((n,i)=>{ if(n>c[bi]) bi=i; });
+  if(c[bi]<2) return null; return {day:names[bi], n:c[bi], total, share:c[bi]/total, counts:c}; }
+const TOD_BUCKETS=[["Early (before 9am)",0,9],["Morning (9am–12pm)",9,12],["Afternoon (12–5pm)",12,17],["Evening (5pm+)",17,24]];
+function timeOfDayCounts(){ return TOD_BUCKETS.map(([label,lo,hi])=>{ let n=0; completedSessions().forEach(s=>{ const h=new Date(s.startedAt||s.completedAt).getHours(); if(h>=lo&&h<hi) n++; }); return {label,n}; }); }
+function bestTimeWindow(){ const total=completedSessions().length; const buckets=timeOfDayCounts(); const best=buckets.slice().sort((a,b)=>b.n-a.n)[0];
+  if(!best||best.n===0) return null; return {window:best.label, n:best.n, total, early:total<8}; }
+function progressionInsights(){ return exerciseProgression().filter(p=>p.n>=3); }
+function bestWeekSoFar(){ const wk={}; completedSessions().forEach(s=>{ const k=weekKeyOf(s.completedAt); const o=wk[k]||(wk[k]={sessions:0,sets:0,muscles:new Set()}); o.sessions++; o.sets+=sessionSets(s);
+    (s.entries||[]).forEach(en=>{ if(workingSets(en).length){ const ex=exById(en.exId); const pm=ex&&primaryMuscle(ex); if(pm) o.muscles.add(pm); } }); });
+  const weeks=Object.values(wk); if(!weeks.length) return null; weeks.sort((a,b)=>b.sets-a.sets); const b=weeks[0]; if(b.sets<10) return null;
+  return {sessions:b.sessions, sets:b.sets, muscles:b.muscles.size, isThis:weekKeyOf(new Date())===Object.keys(wk).find(k=>wk[k]===b)}; }
+function recentSets(n){ const out=[]; const base=startOfWeek(); for(let i=n-1;i>=0;i--){ const a=new Date(base); a.setDate(a.getDate()-i*7); const b=new Date(a); b.setDate(b.getDate()+7);
+  out.push(completedSessions().filter(x=>new Date(x.completedAt)>=a&&new Date(x.completedAt)<b).reduce((s,x)=>s+sessionSets(x),0)); } return out; }
+function momColor(sc){ return sc>=85?"var(--green)":sc>=70?"var(--accent)":sc>=50?"var(--gold)":sc>=30?"var(--amber)":"var(--red)"; }
+function momentumScore(){ const w=weekStatus(); const target=w.target||4; const vol=weeklyVolume();
+  const consist=Math.min(1,w.sess/target); const streak=calcStreak();
+  const primaryAll=Object.values(S.muscles).filter(c=>c.tier==="primary").length;
+  const primaryMet=Object.entries(S.muscles).filter(([m,c])=>c.tier==="primary"&&vol[m]>=c.min).length;
+  const coverage=primaryAll?primaryMet/primaryAll:1;
+  const last=completedSessions().slice().sort((a,b)=>new Date(b.completedAt)-new Date(a.completedAt))[0];
+  const recH=last?hoursBetween(last.completedAt,new Date()):999; const recency=recH<72?1:recH<120?0.6:0.2;
+  let score=Math.round(consist*42 + Math.min(streak,3)/3*16 + coverage*30 + recency*12); score=Math.max(0,Math.min(100,score));
+  const label=score>=85?"On fire":score>=70?"Strong":score>=50?"Building":score>=30?"Warming up":"Time to restart";
+  return {score,label,consist,streak,coverage,primaryMet,primaryAll}; }
+function coachSummary(){ const m=momentumScore(); const w=weekStatus(); const parts=[];
+  parts.push(w.sess>=w.target?("You’ve hit "+w.sess+"/"+w.target+" sessions this week — target met."):(w.sess+"/"+w.target+" sessions logged this week, "+(w.target-w.sess)+" to go."));
+  const na=needsAttentionPrimary(); if(na.length) parts.push("Still needs direct work: "+na.slice(0,3).map(x=>S.muscles[x].label.toLowerCase()).join(", ")+".");
+  else parts.push("Every primary muscle has met its weekly minimum.");
+  const sd=secondaryDominant()[0]; if(sd) parts.push(S.muscles[sd.m].label+" volume is mostly secondary — add one direct exercise.");
+  return parts.join(" "); }
+/* ---- card renderer ---- */
+function insightCard(o){ const c=o.tier==="good"?"var(--green)":o.tier==="warn"?"var(--amber)":o.tier==="bad"?"var(--red)":"var(--accent)";
+  return '<div class="icard'+(o.muscle?' tap':'')+'" style="border-left-color:'+c+'"'+(o.muscle?' data-insight-muscle="'+o.muscle+'"':'')+'>'
+    +'<div class="ihd"><span class="ibadge" style="background:'+c+'22;color:'+c+'">'+(o.badge||"Insight")+'</span>'+(o.metric?'<span class="imetric" style="color:'+c+'">'+o.metric+'</span>':'')+'</div>'
+    +'<div class="ititle">'+o.title+'</div>'+(o.body?'<div class="ibody">'+o.body+'</div>':'')+(o.muscle?'<div class="ibody" style="color:var(--accent);margin-top:6px">Tap to see what made this number →</div>':'')+'</div>'; }
+function coachCard(){ const m=momentumScore(); const col=momColor(m.score);
+  const ring='<div class="momring" style="background:conic-gradient('+col+' '+m.score+'%, var(--panel2) 0)"><div class="inner"><b style="font-family:\'JetBrains Mono\',monospace;font-size:21px;color:'+col+'">'+m.score+'</b><span style="font-size:8px;letter-spacing:.12em;color:var(--muted)">/ 100</span></div></div>';
+  return '<div class="card glow"><div class="tiny" style="color:var(--accent)">🏋 Coach says</div><div class="momwrap" style="margin-top:10px">'+ring+'<div><div style="font-weight:800;font-size:15px">Momentum: '+m.label+'</div><div class="ibody" style="margin-top:4px">'+coachSummary()+'</div></div></div></div>'; }
+function weeklyScorecard(){ const w=weekStatus(); const vol=weeklyVolume();
+  const sets=weekSessions().reduce((a,s)=>a+sessionSets(s),0); const trained=w.trained.length;
+  const primaryAll=Object.values(S.muscles).filter(c=>c.tier==="primary").length; const primaryMet=primaryAll-w.primaryBelow.length;
+  const spark=recentSets(8); const mx=Math.max(1,...spark);
+  const bars=spark.map((v,i)=>'<i class="'+(i===spark.length-1?'cur':'')+'" style="height:'+Math.round(v/mx*100)+'%"></i>').join("");
+  const tl=w.sess>=w.target?"var(--green)":w.sess>=w.target-1?"var(--amber)":"var(--red)";
+  return '<div class="card"><div style="display:flex;justify-content:space-between;align-items:center"><div class="tiny">Weekly scorecard · Mon–Sun</div><span class="statuspill" style="background:'+tl+'22;color:'+tl+'">'+(w.sess>=w.target?"On track":w.sess>=w.target-1?"Almost there":"Behind")+'</span></div>'
+    +'<div class="scorechips"><div class="sc"><b style="color:'+tl+'">'+w.sess+'/'+w.target+'</b><span>sessions</span></div><div class="sc"><b>'+sets+'</b><span>sets</span></div><div class="sc"><b>'+trained+'</b><span>muscles</span></div><div class="sc"><b style="color:'+(primaryMet===primaryAll?"var(--green)":"var(--amber)")+'">'+primaryMet+'/'+primaryAll+'</b><span>primary</span></div></div>'
+    +'<div class="tiny" style="margin-top:12px">Weekly sets · last 8 weeks</div><div class="spark">'+bars+'</div></div>'; }
+function insightsBlock(){ let h=coachCard()+weeklyScorecard(); const cards=[]; const unlock=[];
+  // needs attention (primary direct gaps)
+  const na=needsAttentionPrimary(); if(na.length) cards.push(insightCard({tier:"warn",badge:"Needs attention",title:na.slice(0,3).map(m=>S.muscles[m].label).join(", ")+(na.length>1?" need direct work":" needs direct work"),body:"Primary focus "+(na.length>1?"muscles are":"muscle is")+" below the weekly minimum and recovered enough to train.",muscle:na[0]}));
+  // best next move
+  const nxt=muscleScores({}).filter(s=>s.trainable&&s.v<s.cfg.gl); const al=activeLimitation();
+  if(nxt.length) cards.push(insightCard({tier:"info",badge:"Best next move",title:"Train "+nxt.slice(0,2).map(s=>S.muscles[s.m].label.toLowerCase()).join(" + "),body:"Highest-value focus right now from recovery, weekly gaps and priority"+(al?" (avoiding "+al.name.toLowerCase()+")":"")+"."}));
+  // direct vs secondary
+  const sd=secondaryDominant()[0]; if(sd) cards.push(insightCard({tier:"warn",badge:"Direct vs secondary",title:S.muscles[sd.m].label+" is mostly secondary volume",body:sd.con.direct.toFixed(1)+" direct vs <b>"+sd.con.secondary.toFixed(1)+" secondary</b> sets this week. Add one direct "+S.muscles[sd.m].label.toLowerCase()+" exercise to train it intentionally.",muscle:sd.m}));
+  // best training day
+  const bd=bestTrainingDay(); if(bd) cards.push(insightCard({tier:"info",badge:"Pattern",metric:Math.round(bd.share*100)+"%",title:bd.day+" is your most consistent training day",body:bd.n+" of your "+bd.total+" logged sessions land on "+bd.day+"."}));
+  // best time window
+  const tw=bestTimeWindow(); if(tw) cards.push(insightCard({tier:"info",badge:tw.early?"Early signal":"Pattern",title:(tw.early?"Early signal: you ":"You ")+"train most in the "+tw.window.toLowerCase(),body:tw.n+" of "+tw.total+" sessions"+(tw.early?" — based on limited data so far, keep logging to confirm.":".")}));
+  // progression
+  const prog=progressionInsights(); const up=prog.filter(p=>p.pct>=5)[0]; const flat=prog.filter(p=>p.pct<=0.5)[0];
+  if(up) cards.push(insightCard({tier:"good",badge:"Trending up",metric:"▲ "+Math.round(up.pct)+"%",title:up.ex.name+" is climbing",body:up.first.toFixed(0)+" → "+up.latest.toFixed(0)+" "+up.metric+" across "+up.n+" sessions. Keep pushing."}));
+  if(flat) cards.push(insightCard({tier:"warn",badge:"Stalled",title:flat.ex.name+" has plateaued",body:"No "+flat.metric+" progress over "+flat.n+" sessions. Try a small load bump, an extra rep, or a fresh variation."}));
+  // best week
+  const bw=bestWeekSoFar(); if(bw) cards.push(insightCard({tier:"good",badge:"Milestone",title:"Best week so far: "+bw.sessions+" sessions, "+bw.sets+" sets",body:bw.muscles+" muscle groups trained"+(bw.isThis?" — and it’s this week. 🔥":".")}));
+  h+=cards.join("");
+  // unlock hints for thresholded insights not yet available
+  if(!bd) unlock.push("most consistent day (log ~6 sessions)");
+  if(completedSessions().length<8) unlock.push("time-of-day patterns (8+ sessions)");
+  if(!prog.length) unlock.push("exercise progression (3+ logs of an exercise)");
+  if(unlock.length) h+='<div class="card" style="background:var(--panel2)"><div class="ibody">🔒 Keep logging to unlock: '+unlock.join("; ")+'.</div></div>';
+  return h; }
+
 function viewStats(){ const total=completedSessions().length; const streak=calcStreak(); const bm=bestMonth();
   const pBtns=[["week","Week"],["30","30d"],["90","90d"],["all","All"]].map(([v,l])=>'<button data-statsperiod="'+v+'" class="'+(statsPeriod===v?'on':'')+'">'+l+'</button>').join("");
   const weeks=weeklyCounts(10); const wmax=Math.max(1,...weeks.map(w=>w.count));
@@ -788,7 +894,10 @@ function viewStats(){ const total=completedSessions().length; const streak=calcS
   const prog=exerciseProgression().slice(0,6); const progRows=prog.length?prog.map(p=>{ const up=p.pct>=0,c=up?'var(--green)':'var(--red)';
     return '<div class="exline" data-exhist="'+p.ex.id+'" style="padding:7px 0;cursor:pointer"><div><div class="nm" style="font-size:13px">'+p.ex.name+'</div><div class="histline">'+p.first.toFixed(0)+' → '+p.latest.toFixed(0)+'kg '+p.metric+' · '+p.n+' sessions</div></div><span class="statuspill" style="background:'+c+'22;color:'+c+'">'+(up?'▲':'▼')+' '+Math.abs(p.pct).toFixed(0)+'%</span></div>'; }).join(""):'<div class="empty" style="padding:16px">Log an exercise twice to see progression.</div>';
   const weekTop=statsPeriod==="week"?weekSummaryCard():"";
-  return weekTop+'<div class="card"><div class="kpi"><div class="k" data-act="goto-history"><b>'+total+'</b><span>workouts</span></div><div class="k" data-act="goto-history"><b>'+streak+'</b><span>week streak</span></div><div class="k" data-act="goto-history"><b style="font-size:15px;line-height:2">'+(bm?monthLabel(bm.k):'\u2014')+'</b><span>best month'+(bm?' · '+bm.v:'')+'</span></div></div></div>'
+  return '<div style="display:flex;align-items:center;gap:8px;margin:14px 2px 2px"><span style="font-size:18px">✨</span><div class="tiny" style="font-size:13px;letter-spacing:.02em;text-transform:none;color:var(--text);font-weight:700">Insights</div></div>'
+    +insightsBlock()
+    +'<div style="display:flex;align-items:center;gap:8px;margin:18px 2px 2px"><div class="tiny" style="font-size:13px;letter-spacing:.02em;text-transform:none;color:var(--text);font-weight:700">Charts & history</div></div>'
+    +weekTop+'<div class="card"><div class="kpi"><div class="k" data-act="goto-history"><b>'+total+'</b><span>workouts</span></div><div class="k" data-act="goto-history"><b>'+streak+'</b><span>week streak</span></div><div class="k" data-act="goto-history"><b style="font-size:15px;line-height:2">'+(bm?monthLabel(bm.k):'\u2014')+'</b><span>best month'+(bm?' · '+bm.v:'')+'</span></div></div></div>'
     +'<div class="card"><div class="tiny">Workouts · last 10 weeks</div><div style="display:flex;gap:4px;margin-top:10px;align-items:flex-end">'+wbars+'</div></div>'
     +'<div class="card" style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px"><span class="tiny">Window</span><div class="seg" style="width:60%">'+pBtns+'</div></div>'
     +'<div class="card"><div class="tiny">Sets by body part · tap any row to explain this '+(statsPeriod==="week"?"week (Mon–Sun)":statsPeriod==="all"?"period":statsPeriod+"-day window")+'</div><div style="margin-top:8px">'+sbpRows+'</div></div>'
@@ -914,7 +1023,11 @@ function buildRecap(sess){ const setsN=sess.entries.reduce((a,en)=>a+workingSets
     let mw=0,m1=0,vol=0; ws.forEach(s=>{const w=+s.weight||0,r=+s.reps||0; vol+=w*r; if(w>mw)mw=w; const e=est1RM(w,r); if(e>m1)m1=e;});
     if(bw>0&&mw>bw) prs.push(ex.name+" — "+mw+"kg top set"); else if(b1>0&&m1>b1) prs.push(ex.name+" — e1RM "+m1.toFixed(0)+"kg"); else if(bv>0&&vol>bv) prs.push(ex.name+" — "+vol+"kg volume"); });
   const vbp=weeklyVolume([sess]); const parts=Object.entries(vbp).filter(([m,v])=>v>0).sort((a,b)=>b[1]-a[1]).slice(0,6).map(([m,v])=>({label:S.muscles[m].label,v}));
-  return {id:sess.id, setsN, exN:sess.entries.filter(en=>workingSets(en).length).length, dur, muscles, prs, parts, title:sess.title}; }
+  let coach=""; const mom=momentumScore(); const na=needsAttentionPrimary();
+  if(prs.length) coach="🏆 "+prs.length+" personal record"+(prs.length>1?"s":"")+" this session — momentum "+mom.score+"/100.";
+  else if(na.length) coach="Momentum "+mom.score+"/100. Still needs direct work this week: "+na.slice(0,2).map(m=>S.muscles[m].label.toLowerCase()).join(", ")+".";
+  else coach="Momentum "+mom.score+"/100 — every primary muscle is on track this week. 🔥";
+  return {id:sess.id, setsN, exN:sess.entries.filter(en=>workingSets(en).length).length, dur, muscles, prs, parts, title:sess.title, coach}; }
 function editWorkout(id){ const s=S.sessions.find(x=>x.id===id); if(!s) return; loggerOpen={}; activeSession={ id:uid(), editingId:id, startedAt:s.startedAt||s.completedAt, dateISO:new Date(s.completedAt).toISOString().slice(0,10), title:s.title, mode:"edit", entries:JSON.parse(JSON.stringify(s.entries)) }; viewingLogger=true; saveActive(); go("today"); }
 function duplicateWorkout(id){ const s=S.sessions.find(x=>x.id===id); if(!s) return; loggerOpen={}; activeSession={ id:uid(), startedAt:iso(new Date()), dateISO:new Date().toISOString().slice(0,10), title:s.title, mode:"manual", entries:s.entries.map(en=>({exId:en.exId, sets:en.sets.map(()=>({weight:"",reps:"",type:"work",done:false}))})) }; viewingLogger=true; saveActive(); try{ history.pushState({iron:"workout"},""); }catch(e){} go("today"); }
 function deleteWorkout(id){ confirmSheet("Delete this workout permanently? Stats, volume and muscle status will update.","Delete",()=>{ S.sessions=S.sessions.filter(x=>x.id!==id); persistLocal(); deleteWorkoutCloud(id); render(); },{danger:true,title:"Delete workout?"}); }
@@ -974,6 +1087,7 @@ function wireScreen(){
   document.querySelectorAll("[data-statsperiod]").forEach(b=>b.onclick=()=>{ statsPeriod=b.dataset.statsperiod; render(); });
   document.querySelectorAll("[data-muscle]").forEach(b=>b.onclick=()=>{ bodyDetail=b.dataset.muscle; route="body"; render(); setTimeout(()=>{ const d=document.getElementById("bodydetail"); if(d) d.scrollIntoView({behavior:"smooth",block:"center"}); },60); });
   document.querySelectorAll("[data-muscle-stat]").forEach(b=>b.onclick=()=>openSheet("mperiod",b.dataset.muscleStat));
+  document.querySelectorAll("[data-insight-muscle]").forEach(b=>b.onclick=()=>{ const cur=statsPeriod; statsPeriod="week"; openSheet("mperiod",b.dataset.insightMuscle); statsPeriod=cur; });
   document.querySelectorAll("[data-exhist]").forEach(b=>b.onclick=()=>openSheet("exhist",b.dataset.exhist));
   document.querySelectorAll("[data-closedetail]").forEach(b=>b.onclick=()=>{ bodyDetail=null; render(); });
   // settings
