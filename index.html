@@ -202,6 +202,35 @@ const EXERCISES = [
  {id:"calf_raise", name:"Calf Raise", type:"isolation", equip:"machine", pattern:"calf", pref:"like", avail:"always", rest:75, rl:8, rh:15, sl:2, sh:3, fatigue:1, m:{calves:1}},
  {id:"ab_movement", name:"Ab Movement", type:"isolation", equip:"cable", pattern:"ab", pref:"neutral", avail:"always", rest:60, rl:10, rh:20, sl:2, sh:3, fatigue:1, m:{abs:1}},
 ];
+/* ===== Exercise metadata for temporary limitations (toe/foot, legs, standing) =====
+   foot_pressure: 0 none · 1 light · 2 heavy (drives through forefoot/toe).
+   standing_loaded: bears load while standing. lower_body: primary leg movement. */
+const FOOT_PRESSURE={ hack_squat:2, leg_press:2, rdl:2, calf_raise:2, leg_ext:0, leg_curl:0 };
+const STANDING_LOADED={ hack_squat:true, rdl:true, calf_raise:true };
+const LEG_MUSCLES=new Set(["quads","hamstrings","glutes","calves"]);
+function footPressure(ex){ return FOOT_PRESSURE[ex.id]||0; }
+function isStanding(ex){ return !!STANDING_LOADED[ex.id]; }
+function isLowerBody(ex){ const pm=primaryMuscle(ex); return LEG_MUSCLES.has(pm); }
+/* Limitation presets — each maps to an exclusion predicate. */
+const LIMIT_PRESETS={
+  foot_pressure:{ name:"Avoid foot pressure", area:"toe / foot", test:(ex)=>footPressure(ex)>=2 },
+  no_legs:{ name:"No legs today", area:"lower body", test:(ex)=>isLowerBody(ex) },
+  no_standing:{ name:"Avoid standing exercises", area:"standing loaded", test:(ex)=>isStanding(ex) },
+};
+const LIMIT_DURATIONS=[["today","Today"],["1week","1 week"],["2weeks","2 weeks"],["forever","Until removed"]];
+function durationMs(d){ return d==="today"?864e5:d==="1week"?6048e5:d==="2weeks"?12096e5:null; }
+function activeLimitation(){ const l=S.settings&&S.settings.limitation; if(!l) return null;
+  if(l.until&&new Date(l.until)<new Date()){ delete S.settings.limitation; persistLocal(); scheduleCloudPush(); return null; } return l; }
+/* returns the limitation name if this exercise is blocked, else null */
+function limBlock(ex){ const l=activeLimitation(); if(!l) return null;
+  const rules=l.rules||[]; for(const r of rules){ const p=LIMIT_PRESETS[r]; if(p&&p.test(ex)) return l.name; }
+  if(l.exIds&&l.exIds.indexOf(ex.id)>=0) return l.name; return null; }
+function setLimitation(rules,name,note,dur){ const ms=durationMs(dur);
+  S.settings.limitation={ rules, name:name||rules.map(r=>LIMIT_PRESETS[r]?LIMIT_PRESETS[r].name:r).join(" · "), note:note||"", dur, until:ms?iso(new Date(Date.now()+ms)):null, createdAt:iso(new Date()) };
+  persistLocal(); pushSettings(); }
+function clearLimitation(){ if(S.settings) delete S.settings.limitation; persistLocal(); pushSettings(); }
+function limitationBlockedNames(){ const l=activeLimitation(); if(!l) return []; return S.exercises.filter(e=>AVAIL_OK[e.avail]&&limBlock(e)).map(e=>e.name); }
+
 const MEASURE_FIELDS = ["Waist","Chest","Arms","Thigh","Hips","Shoulders","Neck"];
 const PHOTO_POSES = ["Front relaxed","Front flexed","Side relaxed","Side flexed","Back relaxed","Back flexed"];
 const QUOTES = ["Discipline is choosing what you want most over what you want now.","The work you avoid is the work that grows you.","Win the set in front of you.","Beat last time. That's the whole game.","Hard, brief, frequent, recovered. Repeat.","No zero days.","Consistency beats intensity you can't repeat."];
@@ -332,7 +361,17 @@ function iso(d){ return new Date(d).toISOString(); }
 function dayKey(d){ const x=new Date(d); return x.getFullYear()+"-"+(x.getMonth()+1)+"-"+x.getDate(); }
 function fmtDate(d){ return new Date(d).toLocaleDateString("en-AU",{weekday:"short",day:"numeric",month:"short"}); }
 function hoursBetween(a,b){ return (new Date(b)-new Date(a))/36e5; }
-function fmtAgo(date){ if(!date) return "never"; const h=hoursBetween(date,new Date()); if(h<1) return "just now"; if(h<24) return Math.round(h)+"h ago"; return Math.floor(h/24)+"d ago"; }
+function fmtAgo(date){ if(!date) return "never"; const h=hoursBetween(date,new Date()); if(h<1) return "just now"; if(h<72) return Math.round(h)+"h ago"; const d=Math.floor(h/24); return d>=7?"over a week ago":d+" days ago"; }
+function fmtWhen(date){ const d=new Date(date); const wd=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][d.getDay()]; let h=d.getHours(); const ap=h<12?"am":"pm"; h=h%12; if(h===0) h=12; const mm=d.getMinutes(); return wd+" "+h+(mm?":"+String(mm).padStart(2,"0"):"")+ap; }
+function lastTrainedStr(m){ const lt=lastTrainedMap()[m]; if(!lt) return "Never trained"; const h=hoursBetween(lt.date,new Date()); return (h<24*6?fmtWhen(lt.date)+" · ":"")+fmtAgo(lt.date); }
+/* display-only recovery wording (engine windows unchanged) */
+function recoveryDisplay(m){ const st=recoveryStatus(m); const lt=lastTrainedMap()[m];
+  if(!lt||st==="untrained") return {label:"Fresh · ready", c:REC_META.untrained.c, st};
+  if(st==="overloaded") return {label:"Overloaded", c:REC_META.overloaded.c, st};
+  if(st==="recovering") return {label:"Recovering", c:REC_META.recovering.c, st};
+  if(st==="caution") return {label:"Caution · nearly ready", c:REC_META.caution.c, st};
+  const h=hoursBetween(lt.date,new Date()); if(h<72) return {label:"Ready · recently trained", c:REC_META.ready.c, st};
+  return {label:"Fresh · ready", c:REC_META.ready.c, st}; }
 function weekSessions(){ const s=startOfWeek(); const e=new Date(s); e.setDate(e.getDate()+7); return S.sessions.filter(x=>x.completedAt&&new Date(x.completedAt)>=s&&new Date(x.completedAt)<e); }
 /* ============================================================================ DERIVED ENGINE ============================================================================ */
 /* A set counts when it has weight + reps and isn't a warm-up. No RPE, no separate tick required (P4/P5). */
@@ -439,7 +478,8 @@ function recommend(r){ r=r||{}; const time=r.time||60; const maxEx=time<=30?3:ti
   const lowEnergy=(r.energy&&r.energy<=2)||(r.sleep&&r.sleep<=2); const highSore=(r.soreness&&r.soreness>=4);
   const scored=muscleScores(r); const wk=weekSessions().length; const remaining=S.settings.sessionsPerWeek-wk;
   const belowMin=scored.filter(s=>s.v<s.cfg.min&&s.trainable);
-  const pool=S.exercises.filter(e=>AVAIL_OK[e.avail]); const chosen=[]; const covered={}; const now=new Date();
+  const lim=activeLimitation();
+  const pool=S.exercises.filter(e=>AVAIL_OK[e.avail]&&!limBlock(e)); const chosen=[]; const covered={}; const now=new Date();
   const lastExMap=lastExerciseMap(), lastPatMap=lastPatternMap(), ltMap=lastTrainedMap();
   /* relaxed=true lets the fallback pass program a caution/recovering muscle when nothing fresher exists */
   function exValue(ex,relaxed){ let val=0,bad=false,cautionLead=false;
@@ -460,28 +500,46 @@ function recommend(r){ r=r||{}; const time=r.time||60; const maxEx=time<=30?3:ti
       if(sc&&sc.cfg.tier==="primary"&&sc.v<sc.cfg.gh&&sc.status==="ready") sets=3; if(sc&&sc.v>=sc.cfg.cap*0.85) sets=2; if(lowEnergy||highSore) sets=Math.min(sets,2);
       chosen.push({exId:bestEx.id,sets,caution:bestCaution}); for(const [m,c] of Object.entries(bestEx.m)){ if(c>=0.5) covered[m]=(covered[m]||0)+sets*c; } } }
   fill(false,0);
-  if(belowMin.length){ const need=belowMin[0]; if(!chosen.some(c=>{ const e=exById(c.exId); return e.m[need.m]>=0.5; })){
-    const fix=pool.filter(e=>e.m[need.m]>=0.5&&!chosen.find(c=>c.exId===e.id)&&!exValue(e,false).bad).sort((a,b)=>PREF_SCORE[b.pref]-PREF_SCORE[a.pref])[0];
-    if(fix){ if(chosen.length>=maxEx) chosen.pop(); chosen.push({exId:fix.id,sets:2,caution:false}); } } }
+  /* DIRECT-COVERAGE: a below-min, ready, PRIMARY-focus muscle must get an exercise where it is the primary target (c>=1) */
+  const needDirect=scored.filter(s=>s.v<s.cfg.min&&s.trainable&&(s.status==="ready"||s.status==="untrained")&&s.cfg.tier==="primary");
+  const protectedM=new Set(needDirect.map(x=>x.m));
+  needDirect.forEach(nd=>{ if(chosen.some(c=>exById(c.exId).m[nd.m]>=1)) return;
+    const cand=pool.filter(e=>e.m[nd.m]>=1&&!chosen.find(c=>c.exId===e.id)&&!exValue(e,false).bad).sort((a,b)=>(exValue(b,false).val-exValue(a,false).val)||(PREF_SCORE[b.pref]-PREF_SCORE[a.pref]))[0];
+    if(!cand) return;                                                  // no direct option (limitation / library) — explained below
+    if(chosen.length<maxEx){ chosen.push({exId:cand.id,sets:2,caution:false}); for(const [m,c] of Object.entries(cand.m)){ if(c>=0.5) covered[m]=(covered[m]||0)+2*c; } }
+    else { let worstIdx=-1,worstVal=Infinity;
+      chosen.forEach((c,ci)=>{ const e=exById(c.exId); const guards=[...protectedM].some(pm=>pm!==nd.m&&e.m[pm]>=1); if(guards) return; const v=exValue(e,false).val; if(v<worstVal){ worstVal=v; worstIdx=ci; } });
+      if(worstIdx>=0) chosen.splice(worstIdx,1,{exId:cand.id,sets:2,caution:false}); } });
   if(chosen.length<Math.min(maxEx,3)) fill(true,-150);   // nothing fresh left — program caution work, flagged
   let tot=chosen.reduce((s,c)=>s+c.sets,0); while(tot>15){ const b=chosen.filter(c=>c.sets===3)[0]; if(!b) break; b.sets=2; tot--; }
-  /* ---- explainability ---- */
-  const why=[]; const lead=Object.entries(covered).filter(([m,c])=>c>=1).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([m])=>S.muscles[m].label.toLowerCase());
-  if(lead.length) why.push({t:"go",x:"Today’s focus: "+lead.join(", ")+"."});
-  belowMin.slice(0,2).forEach(b=>{ if(chosen.some(c=>exById(c.exId).m[b.m]>=0.5)) why.push({t:"go",x:b.cfg.label+" was below minimum ("+b.v.toFixed(1)+"/"+b.cfg.min+") and recovered — included."}); });
-  scored.filter(s=>s.status==="recovering"||s.status==="overloaded").sort((a,b)=>(b.cfg.tier==="primary")-(a.cfg.tier==="primary")).slice(0,3).forEach(s=>{ const w=readyInHours(s.m); const lt=ltMap[s.m];
-    why.push({t:"neg",x:s.cfg.label+" trained "+fmtAgo(lt&&lt.date)+" — "+(s.status==="overloaded"?"at weekly cap, still ":"")+"recovering"+(w>0?", wait ~"+w+"h":"")+"."}); });
+  /* ---- explainability (direct vs secondary precision) ---- */
+  const covF={}; chosen.forEach(c=>{ const e=exById(c.exId); for(const [m,k] of Object.entries(e.m)){ if(k>=0.5) covF[m]=(covF[m]||0)+c.sets*k; } });
+  const isDirect=(m)=>chosen.some(c=>exById(c.exId).m[m]>=1);
+  const secVia=(m)=>{ const e=chosen.map(c=>exById(c.exId)).find(e=>e.m[m]>=0.5&&e.m[m]<1); return e?e.name:null; };
+  const why=[]; const lead=Object.keys(covF).filter(isDirect).sort((a,b)=>covF[b]-covF[a]).slice(0,3).map(m=>S.muscles[m].label.toLowerCase());
+  if(lead.length) why.push({t:"go",x:"Today’s focus (trained directly): "+lead.join(", ")+"."});
+  belowMin.filter(b=>isDirect(b.m)).slice(0,3).forEach(b=>why.push({t:"go",x:b.cfg.label+" below minimum ("+b.v.toFixed(1)+"/"+b.cfg.min+") and recovered — included directly."}));
+  belowMin.filter(b=>!isDirect(b.m)&&(b.cfg.tier==="primary"||secVia(b.m))).slice(0,3).forEach(b=>{ const via=secVia(b.m);
+    if(via){ why.push({t:"warn",x:b.cfg.label+" below minimum — partially covered via "+via+" (secondary only), no direct exercise."}); }
+    else { let reason="no direct option available"; const directOpts=S.exercises.filter(e=>e.m[b.m]>=1&&AVAIL_OK[e.avail]);
+      if(lim&&directOpts.length&&directOpts.every(e=>limBlock(e))) reason="active limitation blocks all direct options";
+      else if(chosen.length>=maxEx) reason="session already at its exercise cap";
+      else if(!directOpts.length) reason="no direct exercise available";
+      why.push({t:"warn",x:b.cfg.label+" below minimum but not trained directly — "+reason+"."}); } });
+  scored.filter(s=>s.status==="recovering"||s.status==="overloaded").sort((a,b)=>(b.cfg.tier==="primary")-(a.cfg.tier==="primary")).slice(0,2).forEach(s=>{ const w=readyInHours(s.m); const lt=ltMap[s.m];
+    why.push({t:"neg",x:s.cfg.label+" trained "+fmtAgo(lt&&lt.date)+" — "+(s.status==="overloaded"?"at weekly cap, still ":"")+"recovering"+(w>0?", wait ~"+w+"h":"")+" (not included due to recovery)."}); });
+  if(lim){ const nm=limitationBlockedNames(); const ex2=nm.slice(0,2).join(" and ")||"some exercises"; why.push({t:"neg",x:ex2+(nm.length>2?" + others":"")+" excluded due to active limitation: "+lim.name+(lim.area?" ("+lim.area+")":"")+"."}); }
   chosen.filter(c=>c.caution).slice(0,2).forEach(c=>{ const m=primaryMuscle(exById(c.exId)); why.push({t:"warn",x:S.muscles[m].label+" still in caution window — included only because nothing fresher was available."}); });
   scored.filter(s=>s.v>=s.cfg.cap*0.85&&s.trainable&&s.status!=="caution").slice(0,1).forEach(s=>why.push({t:"warn",x:s.cfg.label+" near cap ("+s.v.toFixed(1)+"/"+s.cfg.cap+") — capped."}));
   if(remaining<=1&&wk<S.settings.sessionsPerWeek) why.push({t:"warn",x:"Only "+Math.max(0,remaining)+" session left this week — high-leverage catch-up."});
   if(highSore) why.push({t:"warn",x:"High soreness — leaning isolation, sets capped at 2."});
   if(lowEnergy) why.push({t:"warn",x:"Low energy/sleep — volume trimmed."});
-  const musclesHit=Object.entries(covered).filter(([m,c])=>c>0).sort((a,b)=>b[1]-a[1]).map(([m])=>S.muscles[m].label);
+  const musclesHit=Object.keys(covF).filter(m=>covF[m]>0).sort((a,b)=>covF[b]-covF[a]).map(m=>S.muscles[m].label);
   return {title:musclesHit.slice(0,3).join(" · ")||"Recovery session", why, exercises:chosen, musclesHit, time}; }
 
 /* SWAP / SUBSTITUTION (P3) */
 function swapSuggestions(exId){ const ex=exById(exId); if(!ex) return []; const pm=primaryMuscle(ex);
-  return S.exercises.filter(e=>e.id!==exId && primaryMuscle(e)===pm && AVAIL_OK[e.avail])
+  return S.exercises.filter(e=>e.id!==exId && primaryMuscle(e)===pm && AVAIL_OK[e.avail] && !limBlock(e))
     .map(e=>({e, samePattern:e.pattern===ex.pattern}))
     .sort((a,b)=>(b.samePattern-a.samePattern)||(PREF_SCORE[b.e.pref]-PREF_SCORE[a.e.pref]))
     .slice(0,6).map(x=>x.e); }
@@ -489,6 +547,7 @@ function libraryByMuscle(){ const groups={}; S.exercises.forEach(e=>{ const pm=p
 /* ============================================================================ UI STATE + ROUTER ============================================================================ */
 let route="today", activeSession=null, viewingLogger=false, pendingRec=null, restTimer=null, sheet=null, statsPeriod="all", bodyDetail=null;
 let loggerOpen={}, loggerClock=null;
+let limDraft={rules:["foot_pressure"],dur:"1week",note:""};
 let readinessDraft={sleep:3,energy:3,soreness:2,motivation:3,time:60,avoid:[]};
 const ICONS={
  today:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3v4M18 3v4M4 9h16M5 21h14a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1z"/></svg>',
@@ -528,13 +587,17 @@ function viewToday(){
     resume='<div class="card resume"><div class="tiny" style="color:var(--hot)">Unfinished workout</div><h2 style="font-size:17px;margin:6px 0">'+(activeSession.title||"Workout")+'</h2><div class="histline">'+activeSession.entries.length+' exercises · '+n+' sets logged · started '+fmtAgo(activeSession.startedAt)+'</div><div class="row" style="margin-top:12px"><button class="btn accent full" data-act="resume">Resume workout</button><button class="btn danger" data-act="discard">Discard</button></div></div>'; }
   let banner="";
   if(cloudReady()&&unsyncedCount()>0) banner='<div class="card" style="border-color:rgba(255,194,61,.4);background:rgba(255,194,61,.06)"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><div class="histline" style="color:var(--amber)">'+unsyncedCount()+' workout'+(unsyncedCount()===1?"":"s")+' not yet synced to the cloud.</div><button class="btn sm" data-act="resync">Retry</button></div></div>';
+  const _al=activeLimitation();
+  banner += _al
+    ? '<div class="card" style="border-color:rgba(168,123,255,.55);background:rgba(168,123,255,.08)"><div class="tiny" style="color:var(--violet)">Active limitation</div><div style="font-weight:600;margin-top:3px">'+_al.name+(_al.note?' — '+_al.note:'')+'</div><div class="histline">'+(_al.until?'expires '+fmtDate(_al.until):'until you remove it')+' · affected exercises excluded from recommendations</div><div class="row" style="margin-top:10px"><button class="btn sm" data-act="editlim">Edit</button><button class="btn sm danger" data-act="removelim">Remove</button></div></div>'
+    : '<button class="btn ghost full" data-act="addlim" style="margin:12px 0 0;color:var(--violet)">+ Add limitation · injury, equipment, avoid foot pressure</button>';
   const q=QUOTES[new Date().getDate()%QUOTES.length];
   if(pendingRec){ return resume+banner+recCard(pendingRec)
     +'<div class="row" style="margin-top:10px"><button class="cta secondary" data-act="recommend" style="flex:1">↻ New recommendation</button><button class="cta secondary" data-act="blank" style="flex:1">Empty workout</button></div>'
-    +miniDash(); }
+    +weekCard(); }
   return resume+banner+'<div class="card glow"><button class="cta" data-act="recommend">⚡ Tell me what to train today<span class="sub">Adaptive · recovery & volume aware</span></button>'
     +'<div class="row" style="margin-top:10px"><button class="cta secondary" data-act="readiness" style="flex:1">Readiness check-in</button><button class="cta secondary" data-act="blank" style="flex:1">Empty workout</button></div></div>'
-    +'<div class="card"><div class="tiny">Daily directive</div><p class="quote" style="margin:8px 0 0">"'+q+'"</p></div>'+miniDash();
+    +'<div class="card"><div class="tiny">Daily directive</div><p class="quote" style="margin:8px 0 0">"'+q+'"</p></div>'+weekCard();
 }
 function unsyncedCount(){ return (S.sessions||[]).filter(s=>s.completedAt&&s.synced===false).length; }
 function resyncAll(){ (S.sessions||[]).filter(s=>s.completedAt&&s.synced===false).forEach(s=>pushWorkout(s)); setTimeout(render,1400); }
@@ -544,6 +607,30 @@ function recCard(rec){ const ex=rec.exercises.map(c=>{ const e=exById(c.exId); c
   const tot=rec.exercises.reduce((s,c)=>s+c.sets,0);
   return '<div class="card glow"><div class="tiny" style="color:var(--accent)">Recommended for today · '+rec.exercises.length+' exercises · '+tot+' sets · ~'+rec.time+'min</div><h2 style="margin:8px 0 4px;font-size:20px">'+rec.title+'</h2><div style="margin-top:10px">'+ex+'</div><ul style="margin:12px 0 0;padding:0;list-style:none">'+why+'</ul><button class="cta" data-act="start-rec" style="margin-top:14px">Start this session<span class="sub">'+tot+' sets · ~'+rec.time+' min</span></button></div>'; }
 function musLabels(e){ return Object.entries(e.m).filter(([m,c])=>c>=0.5&&S.muscles[m]).map(([m])=>S.muscles[m].label).join(" / "); }
+function weekStatus(){ const sess=weekSessions(); const vol=weeklyVolume(sess); const target=S.settings.sessionsPerWeek;
+  const primaryBelow=[], otherBelow=[], trained=[];
+  Object.entries(S.muscles).forEach(([m,cfg])=>{ const v=vol[m]; if(v>=0.5) trained.push(m); if(v<cfg.min){ (cfg.tier==="primary"?primaryBelow:otherBelow).push(m); } });
+  const needsAttention=primaryBelow.concat(otherBelow).filter(m=>{ const st=recoveryStatus(m); return st!=="recovering"&&st!=="overloaded"; });
+  return {sess:sess.length, target, vol, primaryBelow, otherBelow, trained, needsAttention}; }
+function weekCard(){ const w=weekStatus();
+  const dots=Array.from({length:Math.max(w.target,w.sess)},(_,i)=>'<span style="width:13px;height:13px;border-radius:50%;background:'+(i<w.sess?'var(--green)':'var(--panel2)')+';border:1px solid var(--line);display:inline-block"></span>').join(" ");
+  const need=w.needsAttention.slice(0,5).map(m=>S.muscles[m].label.toLowerCase());
+  const recov=Object.keys(S.muscles).filter(m=>{const st=recoveryStatus(m); return st==="recovering"||st==="overloaded";}).slice(0,2).map(m=>S.muscles[m].label.toLowerCase());
+  const al=activeLimitation(); const avoid=[]; if(recov.length) avoid.push(recov.join(", ")+" recovering"); if(al) avoid.push(al.name.toLowerCase()+" — exercises excluded");
+  return '<div class="card"><div style="display:flex;justify-content:space-between;align-items:center"><div class="tiny">This week · Mon–Sun</div><div class="mono" style="font-weight:700;color:'+(w.sess>=w.target?'var(--green)':'var(--accent)')+'">'+w.sess+' / '+w.target+' sessions</div></div><div style="margin-top:9px">'+dots+'</div>'
+    +(need.length?'<div class="histline" style="margin-top:11px"><b>Still needs:</b> '+need.join(", ")+'</div>':'<div class="histline" style="margin-top:11px;color:var(--green)">All priority muscles met this week ✓</div>')
+    +(avoid.length?'<div class="histline" style="margin-top:3px"><b>Avoid today:</b> '+avoid.join("; ")+'</div>':'')
+    +'<button class="btn ghost sm full" data-act="goto-stats-week" style="margin-top:10px">Open full week view →</button></div>'; }
+function weekSummaryCard(){ const w=weekStatus();
+  const chip=(m)=>'<span class="statuspill" style="background:var(--panel2);color:var(--muted);margin:0 5px 5px 0;display:inline-block">'+S.muscles[m].label+'</span>';
+  const next=muscleScores({}).filter(s=>s.trainable&&s.v<s.cfg.gl).slice(0,4).map(s=>S.muscles[s.m].label.toLowerCase());
+  return '<div class="card glow"><div style="display:flex;justify-content:space-between;align-items:center"><div class="tiny" style="color:var(--accent)">This training week · Mon–Sun</div><div class="mono" style="font-weight:700;font-size:18px;color:'+(w.sess>=w.target?'var(--green)':'var(--accent)')+'">'+w.sess+' / '+w.target+'</div></div>'
+    +'<div class="histline" style="margin-top:6px">'+w.sess+' of '+w.target+' sessions'+(w.sess>=w.target?' — target met ✓':' — '+(w.target-w.sess)+' to go')+'</div><hr class="sub">'
+    +'<div class="tiny">Primary focus below weekly minimum</div><div style="margin-top:6px">'+(w.primaryBelow.length?w.primaryBelow.map(chip).join(""):'<span class="muted" style="font-size:12px">None — all primary muscles met ✓</span>')+'</div>'
+    +'<div class="tiny" style="margin-top:11px">Secondary / maintenance below minimum</div><div style="margin-top:6px">'+(w.otherBelow.length?w.otherBelow.map(chip).join(""):'<span class="muted" style="font-size:12px">None</span>')+'</div>'
+    +'<div class="tiny" style="margin-top:11px">Trained this week</div><div style="margin-top:6px">'+(w.trained.length?w.trained.map(chip).join(""):'<span class="muted" style="font-size:12px">Nothing logged yet this week</span>')+'</div>'
+    +(next.length?'<hr class="sub"><div class="tiny">Recommended next focus</div><div class="histline" style="margin-top:5px">'+next.join(", ")+'</div>':'')+'</div>'; }
+
 function miniDash(){ const flagged=Object.keys(S.muscles).map(m=>({m,g:goalStatus(m),v:weeklyVolume()[m],cfg:S.muscles[m]}))
     .filter(x=>x.cfg.tier!=="maintenance"||x.v<x.cfg.min).filter(x=>x.g.label==="Below min"||x.g.label==="Over cap").slice(0,4);
   if(!flagged.length) return ""; const rows=flagged.map(f=>'<div class="exline"><div class="nm">'+f.cfg.label+'</div><span class="statuspill" style="background:'+f.g.c+'22;color:'+f.g.c+'">'+f.g.label+' · '+f.v.toFixed(1)+'</span></div>').join("");
@@ -619,9 +706,17 @@ function renderSheet(){ const m=document.getElementById("sheetmount"); if(!sheet
     inner=w?('<div class="tiny">'+fmtDate(w.completedAt)+'</div><h2 style="font-size:17px;margin:6px 0 12px">'+(w.title||"Workout")+'</h2>'+w.entries.map(en=>{ const ex=exById(en.exId); const ws=workingSets(en);
       return '<div class="card" style="margin:8px 0;padding:12px"><div class="nm" style="font-weight:700">'+(ex?ex.name:en.exId)+'</div><div class="muted" style="font-size:12px;margin-top:4px">'+(en.sets.map(s=>(s.type==="warm"?"W ":"")+(s.weight||0)+"\u00d7"+(s.reps||0)).join("   ")||"\u2014")+'</div><div class="histline">'+ws.length+' working sets · '+musLabels(ex||{m:{}})+'</div></div>'; }).join("")
       +'<button class="btn full" data-editfromview="'+w.id+'" style="margin-top:6px">Edit this workout</button>'):'<div class="empty">Not found.</div>'; }
-  else if(sheet.type==="mperiod"){ const m=sheet.data; const cfg=S.muscles[m]; const sess=periodSessions(); const con=muscleContrib(m,sess); const plabel=statsPeriod==="all"?"all time":"last "+statsPeriod+" days";
+  else if(sheet.type==="mperiod"){ const m=sheet.data; const cfg=S.muscles[m]; const sess=periodSessions(); const con=muscleContrib(m,sess); const plabel=statsPeriod==="week"?"this week (Mon–Sun)":statsPeriod==="all"?"all time":"last "+statsPeriod+" days";
     inner='<div class="tiny">'+cfg.label+' · '+plabel+'</div><div class="kpi" style="margin-top:10px"><div class="k"><b>'+con.total.toFixed(1)+'</b><span>effective sets</span></div><div class="k"><b>'+con.direct.toFixed(1)+'</b><span>direct</span></div><div class="k"><b>'+con.secondary.toFixed(1)+'</b><span>secondary</span></div></div>'
       +'<div class="tiny" style="margin-top:14px">What made this number</div><div style="margin-top:6px">'+(con.rows.length?con.rows.map(r=>'<div class="contrib"><div><b>'+r.name+'</b><div class="muted" style="font-size:11px">'+r.sets+' sets × '+r.credit+' credit · '+(r.credit>=1?"direct":"secondary")+' · last '+fmtAgo(r.dates.sort().slice(-1)[0])+'</div></div><span class="c-ef">'+r.effective.toFixed(1)+'</span></div>').join(""):'<div class="empty" style="padding:10px">No sets in this period.</div>')+'</div>'; }
+  else if(sheet.type==="lim"){ const d=limDraft;
+    const presetBtn=(k)=>'<button class="btn sm" data-limrule="'+k+'" style="'+(d.rules.indexOf(k)>=0?"border-color:var(--accent);color:var(--accent)":"")+'">'+LIMIT_PRESETS[k].name+'</button>';
+    const durBtn=(v,l)=>'<button class="btn sm" data-limdur="'+v+'" style="'+(d.dur===v?"border-color:var(--accent);color:var(--accent)":"")+'">'+l+'</button>';
+    inner='<div class="tiny">Temporary limitation</div><p class="muted" style="font-size:12px;margin:6px 0 10px">Excludes affected exercises from recommendations until it expires or you remove it. You can still add any exercise manually.</p>'
+      +'<div class="field"><label>What to avoid</label><div class="row wrap">'+Object.keys(LIMIT_PRESETS).map(presetBtn).join("")+'</div></div>'
+      +'<div class="field"><label>Duration</label><div class="row wrap">'+LIMIT_DURATIONS.map(p=>durBtn(p[0],p[1])).join("")+'</div></div>'
+      +'<div class="field"><label>Note (optional)</label><textarea class="note" id="limNote" rows="2" placeholder="e.g. Broken pinky toe; avoid foot pressure.">'+(d.note||"")+'</textarea></div>'
+      +'<div class="row" style="margin-top:8px"><button class="btn accent full" data-limsave>Save limitation</button>'+(activeLimitation()?'<button class="btn danger" data-limremove>Remove</button>':"")+'</div>'; }
   else if(sheet.type==="exmenu"){ const i=sheet.data; const en=activeSession&&activeSession.entries[i]; const ex=en&&exById(en.exId);
     inner=ex?('<div class="tiny">'+ex.name+'</div><div style="margin-top:10px">'
       +'<button class="opt" data-mv="up-'+i+'" style="width:100%;text-align:left"><div class="nm">Move up</div><span class="sets">↑</span></button>'
@@ -648,6 +743,11 @@ function renderSheet(){ const m=document.getElementById("sheetmount"); if(!sheet
   m.querySelectorAll('[data-mv]').forEach(b=>b.onclick=()=>{ const p=b.dataset.mv.split("-"); const dir=p[0], idx=+p[1]; const e=activeSession.entries; if(dir==="up"&&idx>0){ [e[idx-1],e[idx]]=[e[idx],e[idx-1]]; } if(dir==="dn"&&idx<e.length-1){ [e[idx+1],e[idx]]=[e[idx],e[idx+1]]; } saveActive(); closeSheet(); render(); });
   m.querySelectorAll('[data-extimer]').forEach(b=>b.onclick=()=>{ const p=b.dataset.extimer.split("-"); const sec=+p[0], i=+p[1]; const ex=exById(activeSession.entries[i].exId); closeSheet(); if(ex) startRest(sec,ex.name); });
   m.querySelectorAll('[data-rmex2]').forEach(b=>b.onclick=()=>{ const i=+b.dataset.rmex2; const ex=exById(activeSession.entries[i].exId); closeSheet(); confirmSheet("Remove "+(ex?ex.name:"this exercise")+"?","Remove",()=>{ activeSession.entries.splice(i,1); saveActive(); render(); },{danger:true,title:"Remove exercise?"}); });
+  m.querySelectorAll('[data-limrule]').forEach(b=>b.onclick=()=>{ const k=b.dataset.limrule; const i=limDraft.rules.indexOf(k); if(i>=0) limDraft.rules.splice(i,1); else limDraft.rules.push(k); const n=m.querySelector('#limNote'); if(n) limDraft.note=n.value; renderSheet(); });
+  m.querySelectorAll('[data-limdur]').forEach(b=>b.onclick=()=>{ limDraft.dur=b.dataset.limdur; const n=m.querySelector('#limNote'); if(n) limDraft.note=n.value; renderSheet(); });
+  const _ln=m.querySelector('#limNote'); if(_ln) _ln.oninput=()=>{ limDraft.note=_ln.value; };
+  const _ls=m.querySelector('[data-limsave]'); if(_ls) _ls.onclick=()=>{ if(!limDraft.rules.length){ closeSheet(); return; } setLimitation(limDraft.rules.slice(),null,limDraft.note,limDraft.dur); closeSheet(); render(); };
+  const _lr=m.querySelector('[data-limremove]'); if(_lr) _lr.onclick=()=>{ clearLimitation(); closeSheet(); render(); };
   m.querySelectorAll('[data-pick]').forEach(b=>b.onclick=()=>{ activeSession.entries[sheet.data].exId=b.dataset.pick; saveActive(); closeSheet(); render(); });
   m.querySelectorAll('[data-add]').forEach(b=>b.onclick=()=>{ const ex=exById(b.dataset.add); activeSession.entries.push({exId:ex.id, sets:Array.from({length:ex.sl||2},()=>({weight:"",reps:"",type:"work",done:false}))}); saveActive(); closeSheet(); render(); });
 }
@@ -655,7 +755,7 @@ function renderSheet(){ const m=document.getElementById("sheetmount"); if(!sheet
 function completedSessions(){ return S.sessions.filter(s=>s.completedAt); }
 function monthKey(d){ const x=new Date(d); return x.getFullYear()+"-"+String(x.getMonth()+1).padStart(2,"0"); }
 function monthLabel(k){ const [y,m]=k.split("-"); return ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][+m-1]+" "+y.slice(2); }
-function periodRange(){ if(statsPeriod==="all") return null; const to=new Date(); const from=new Date(); from.setDate(from.getDate()-(+statsPeriod)); return {from,to}; }
+function periodRange(){ if(statsPeriod==="all") return null; if(statsPeriod==="week"){ const from=startOfWeek(); const to=new Date(from); to.setDate(to.getDate()+7); return {from,to}; } const to=new Date(); const from=new Date(); from.setDate(from.getDate()-(+statsPeriod)); return {from,to}; }
 function inPeriod(d){ const p=periodRange(); if(!p) return true; const t=new Date(d); return t>=p.from&&t<=p.to; }
 function periodSessions(){ return completedSessions().filter(s=>inPeriod(s.completedAt)); }
 function setsByBodyPartP(){ return weeklyVolume(periodSessions()); }
@@ -678,7 +778,7 @@ function calcStreak(){ let streak=0,cursor=startOfWeek(); for(let i=0;i<26;i++){
   if(i===0&&n<S.settings.sessionsPerWeek){ cursor.setDate(cursor.getDate()-7); continue; } if(n>=S.settings.sessionsPerWeek) streak++; else break; cursor.setDate(cursor.getDate()-7); } return streak; }
 
 function viewStats(){ const total=completedSessions().length; const streak=calcStreak(); const bm=bestMonth();
-  const pBtns=[["30","30d"],["90","90d"],["all","All"]].map(([v,l])=>'<button data-statsperiod="'+v+'" class="'+(statsPeriod===v?'on':'')+'">'+l+'</button>').join("");
+  const pBtns=[["week","Week"],["30","30d"],["90","90d"],["all","All"]].map(([v,l])=>'<button data-statsperiod="'+v+'" class="'+(statsPeriod===v?'on':'')+'">'+l+'</button>').join("");
   const weeks=weeklyCounts(10); const wmax=Math.max(1,...weeks.map(w=>w.count));
   const wbars=weeks.map(w=>'<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px"><div style="height:56px;width:100%;display:flex;align-items:flex-end"><i style="width:100%;height:'+Math.round(w.count/wmax*100)+'%;min-height:3px;background:'+(w.current?'var(--accent)':'var(--grey)')+';border-radius:4px 4px 0 0;display:block"></i></div><span class="mono" style="font-size:10px;color:var(--muted)">'+w.count+'</span></div>').join("");
   const sbp=setsByBodyPartP(); const ent=Object.entries(sbp).filter(([m,v])=>v>0).sort((a,b)=>b[1]-a[1]); const smax=Math.max(1,...ent.map(e=>e[1]));
@@ -687,10 +787,11 @@ function viewStats(){ const total=completedSessions().length; const streak=calcS
   const mu=mostUsedExercises(6); const muRows=mu.length?mu.map(x=>'<div class="exline" data-exhist="'+x.ex.id+'" style="padding:7px 0;cursor:pointer"><div class="nm" style="font-size:13px">'+(x.ex?x.ex.name:'?')+'</div><span class="sets">'+x.n+' '+(x.n===1?'session':'sessions')+'</span></div>').join(""):'<div class="empty" style="padding:16px">Nothing logged.</div>';
   const prog=exerciseProgression().slice(0,6); const progRows=prog.length?prog.map(p=>{ const up=p.pct>=0,c=up?'var(--green)':'var(--red)';
     return '<div class="exline" data-exhist="'+p.ex.id+'" style="padding:7px 0;cursor:pointer"><div><div class="nm" style="font-size:13px">'+p.ex.name+'</div><div class="histline">'+p.first.toFixed(0)+' → '+p.latest.toFixed(0)+'kg '+p.metric+' · '+p.n+' sessions</div></div><span class="statuspill" style="background:'+c+'22;color:'+c+'">'+(up?'▲':'▼')+' '+Math.abs(p.pct).toFixed(0)+'%</span></div>'; }).join(""):'<div class="empty" style="padding:16px">Log an exercise twice to see progression.</div>';
-  return '<div class="card"><div class="kpi"><div class="k" data-act="goto-history"><b>'+total+'</b><span>workouts</span></div><div class="k" data-act="goto-history"><b>'+streak+'</b><span>week streak</span></div><div class="k" data-act="goto-history"><b style="font-size:15px;line-height:2">'+(bm?monthLabel(bm.k):'\u2014')+'</b><span>best month'+(bm?' · '+bm.v:'')+'</span></div></div></div>'
+  const weekTop=statsPeriod==="week"?weekSummaryCard():"";
+  return weekTop+'<div class="card"><div class="kpi"><div class="k" data-act="goto-history"><b>'+total+'</b><span>workouts</span></div><div class="k" data-act="goto-history"><b>'+streak+'</b><span>week streak</span></div><div class="k" data-act="goto-history"><b style="font-size:15px;line-height:2">'+(bm?monthLabel(bm.k):'\u2014')+'</b><span>best month'+(bm?' · '+bm.v:'')+'</span></div></div></div>'
     +'<div class="card"><div class="tiny">Workouts · last 10 weeks</div><div style="display:flex;gap:4px;margin-top:10px;align-items:flex-end">'+wbars+'</div></div>'
     +'<div class="card" style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px"><span class="tiny">Window</span><div class="seg" style="width:60%">'+pBtns+'</div></div>'
-    +'<div class="card"><div class="tiny">Sets by body part · tap any row to explain this '+(statsPeriod==="all"?"period":statsPeriod+"-day window")+'</div><div style="margin-top:8px">'+sbpRows+'</div></div>'
+    +'<div class="card"><div class="tiny">Sets by body part · tap any row to explain this '+(statsPeriod==="week"?"week (Mon–Sun)":statsPeriod==="all"?"period":statsPeriod+"-day window")+'</div><div style="margin-top:8px">'+sbpRows+'</div></div>'
     +'<div class="card"><div class="tiny">Most-used exercises</div><div style="margin-top:6px">'+muRows+'</div></div>'
     +'<div class="card"><div class="tiny">Progression · biggest movers (e1RM)</div><div style="margin-top:6px">'+progRows+'</div></div>'; }
 
@@ -699,29 +800,31 @@ const BODY_GROUPS=[["Chest & push",["upper_chest","chest","triceps","front_delts
 const TIER_RANK={primary:0,secondary:1,maintenance:2};
 function viewBody(){
   const groups=BODY_GROUPS.map(([title,ms])=>{ const ordered=ms.slice().sort((a,b)=>TIER_RANK[S.muscles[a].tier]-TIER_RANK[S.muscles[b].tier]);
-    const cards=ordered.map(m=>{ const cfg=S.muscles[m]; const recm=REC_META[recoveryStatus(m)]; const v=weeklyVolume()[m];
+    const cards=ordered.map(m=>{ const cfg=S.muscles[m]; const rd=recoveryDisplay(m); const lt=lastTrainedMap()[m]; const v=weeklyVolume()[m];
       const below=v<cfg.min, over=v>=cfg.cap, above=v>=cfg.gh;
       const barC=below?"var(--blue)":over?"var(--red)":above?"var(--amber)":"var(--green)";
       const fill=Math.max(4,Math.min(100,Math.round(v/cfg.cap*100))); const tgt=Math.round(cfg.gl/cfg.cap*100);
       const exc=below?'<span class="gb" style="background:var(--blue)22;color:var(--blue)">Below min</span>':over?'<span class="gb" style="background:var(--red)22;color:var(--red)">Over cap</span>':'';
-      return '<div class="mcard" data-muscle="'+m+'"><div class="bartop" style="background:'+recm.c+'"></div>'
+      return '<div class="mcard" data-muscle="'+m+'"><div class="bartop" style="background:'+rd.c+'"></div>'
         +'<div class="mlabel">'+cfg.label+'</div>'
-        +'<div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:3px"><span style="font-size:10.5px;font-weight:700;color:'+recm.c+'">'+recm.label+'</span><span class="mono" style="font-size:12px;color:var(--muted)">'+v.toFixed(1)+'/'+cfg.gh+'</span></div>'
-        +'<div class="bar" style="margin-top:7px"><i style="width:'+fill+'%;background:'+barC+'"></i><span class="capmark" style="left:'+tgt+'%"></span></div>'
+        +'<div style="font-size:10.5px;font-weight:700;color:'+rd.c+';margin-top:3px">'+rd.label+'</div>'
+        +'<div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:3px"><span class="histline" style="font-size:10px">'+(lt?fmtAgo(lt.date):"never trained")+'</span><span class="mono" style="font-size:12px;color:var(--muted)">'+v.toFixed(1)+'/'+cfg.gh+'</span></div>'
+        +'<div class="bar" style="margin-top:6px"><i style="width:'+fill+'%;background:'+barC+'"></i><span class="capmark" style="left:'+tgt+'%"></span></div>'
         +(exc?'<div style="margin-top:7px">'+exc+'</div>':'')
         +'</div>'; }).join("");
     return '<div class="muted tiny" style="margin:14px 2px 2px">'+title+'</div><div class="mgrid">'+cards+'</div>'; }).join("");
   return '<div class="card"><div class="tiny">Muscle status</div><p class="muted" style="font-size:12px;margin:6px 0 8px">Colour = <b>can I train it today?</b> (recovery) · Bar = <b>have I given it enough this week?</b> (volume vs target). Tap a muscle for the full breakdown.</p>'
-    +'<div style="display:flex;gap:10px;flex-wrap:wrap;font-size:10px" class="muted"><span>● <span style="color:var(--green)">Ready</span></span><span>● <span style="color:var(--amber)">Caution</span></span><span>● <span style="color:var(--violet)">Recovering</span></span><span>● <span style="color:var(--red)">Overloaded</span></span><span>● <span style="color:var(--grey)">Untrained</span></span></div></div>'
+    +'<div style="display:flex;gap:10px;flex-wrap:wrap;font-size:10px" class="muted"><span>● <span style="color:var(--green)">Ready</span></span><span>● <span style="color:var(--amber)">Caution · nearly ready</span></span><span>● <span style="color:var(--violet)">Recovering</span></span><span>● <span style="color:var(--red)">Overloaded</span></span><span>● <span style="color:var(--grey)">Untrained</span></span></div></div>'
     +groups+'<div id="bodydetail">'+(bodyDetail?muscleDetail(bodyDetail):"")+'</div>'; }
-function muscleDetail(m){ const cfg=S.muscles[m]; const st=recoveryStatus(m); const rec=REC_META[st]; const g=goalStatus(m); const v=weeklyVolume()[m]; const lt=lastTrainedMap()[m]; const con=muscleContrib(m); const wait=readyInHours(m);
+function muscleDetail(m){ const cfg=S.muscles[m]; const st=recoveryStatus(m); const rd=recoveryDisplay(m); const g=goalStatus(m); const v=weeklyVolume()[m]; const lt=lastTrainedMap()[m]; const con=muscleContrib(m); const wait=readyInHours(m);
   const rows=con.rows.length?con.rows.map(r=>'<div class="contrib"><div><b>'+r.name+'</b><div class="muted" style="font-size:11px">'+r.sets+' sets × '+r.credit+' credit · '+(r.credit>=1?'direct':'secondary')+' · last '+fmtAgo(r.dates.sort().slice(-1)[0])+'</div></div><span class="c-ef">'+r.effective.toFixed(1)+'</span></div>').join(""):'<div class="empty" style="padding:10px">No sets this week.</div>';
   const recline=(st==="recovering"||st==="overloaded")?'<div class="recwarn" style="margin-top:10px">Trained '+fmtAgo(lt&&lt.date)+(wait>0?' — best to wait ~'+wait+'h before training it hard again.':' — give it a little more time.')+'</div>':'';
-  return '<div class="card reveal" style="border-color:'+rec.c+'55"><div style="display:flex;justify-content:space-between;align-items:center"><h2 style="font-size:19px">'+cfg.label+'</h2><button class="btn ghost sm" data-closedetail>✕</button></div>'
-    +'<div class="row wrap" style="gap:6px;margin-top:8px"><span class="statuspill" style="background:'+rec.c+'22;color:'+rec.c+'">Recovery: '+rec.label+'</span><span class="statuspill" style="background:'+g.c+'22;color:'+g.c+'">Goal: '+g.label+'</span><span class="statuspill" style="background:var(--panel2);color:var(--muted)">'+TIER_LABEL[cfg.tier]+'</span></div>'
+  return '<div class="card reveal" style="border-color:'+rd.c+'55"><div style="display:flex;justify-content:space-between;align-items:center"><h2 style="font-size:19px">'+cfg.label+'</h2><button class="btn ghost sm" data-closedetail>✕</button></div>'
+    +'<div class="histline" style="margin-top:6px">Last trained: <b style="color:#AEB9C7">'+lastTrainedStr(m)+'</b></div>'
+    +'<div class="row wrap" style="gap:6px;margin-top:8px"><span class="statuspill" style="background:'+rd.c+'22;color:'+rd.c+'">Status: '+rd.label+'</span><span class="statuspill" style="background:'+g.c+'22;color:'+g.c+'">Goal: '+g.label+'</span><span class="statuspill" style="background:var(--panel2);color:var(--muted)">'+TIER_LABEL[cfg.tier]+'</span></div>'
     +recline
     +'<div class="kpi" style="margin-top:12px"><div class="k"><b>'+v.toFixed(1)+'</b><span>effective sets</span></div><div class="k"><b>'+con.direct.toFixed(1)+'</b><span>direct</span></div><div class="k"><b>'+con.secondary.toFixed(1)+'</b><span>secondary</span></div></div>'
-    +'<div class="histline" style="margin-top:10px">Target '+cfg.gl+'–'+cfg.gh+' · min '+cfg.min+' · cap '+cfg.cap+' · last trained '+fmtAgo(lt&&lt.date)+'</div>'
+    +'<div class="histline" style="margin-top:10px">Target '+cfg.gl+'–'+cfg.gh+' · min '+cfg.min+' · cap '+cfg.cap+'</div>'
     +'<hr class="sub"><div class="tiny">What made this number</div><div style="margin-top:6px">'+rows+'</div></div>'; }
 
 /* ---------------- SETTINGS (P9: Library→here, readiness explained) ---------------- */
@@ -732,6 +835,7 @@ function viewSettings(){ const acct=authProfile?'<div class="card"><div class="t
     return '<div class="exline" style="padding:9px 0"><div style="flex:1"><div class="nm" style="font-size:13.5px">'+e.name+'</div><div class="histline">'+S.muscles[pm].label+' · '+e.equip+' · '+musLabels(e)+'</div></div><div class="row" style="gap:6px"><button class="btn sm" data-pref="'+e.id+'" style="color:'+prefC+'">'+e.pref+'</button><button class="btn sm" data-avail="'+e.id+'">'+e.avail+'</button></div></div>'; }).join("");
   const bw=(S.bodyweight||[]).slice(-1)[0];
   return acct
+    +'<div class="card"><div class="tiny">Injury / limitation</div>'+(activeLimitation()?'<div style="margin-top:8px;font-weight:600">'+activeLimitation().name+'</div><div class="histline">'+(activeLimitation().note||"")+(activeLimitation().until?' · expires '+fmtDate(activeLimitation().until):' · until removed')+'</div><div class="row" style="margin-top:10px"><button class="btn sm" data-act="editlim">Edit</button><button class="btn sm danger" data-act="removelim">Remove</button></div>':'<p class="muted" style="font-size:12.5px;margin:8px 0">Temporarily exclude exercises after an injury or when equipment is unavailable (e.g. broken toe → no foot-pressure exercises).</p><button class="btn full" data-act="addlim">Add limitation</button>')+'</div>'
     +'<div class="card"><div class="tiny">Readiness check-in</div><p class="muted" style="font-size:12.5px;margin:8px 0">Optional. It tunes <b>today\u2019s recommendation only</b> — it does not change muscle recovery colours. Low sleep/energy trims volume; high soreness leans toward isolation and caps sets at 2; muscles you flag to avoid are skipped today.</p><button class="btn full" data-act="readiness">Open readiness check-in</button></div>'
     +'<div class="card"><div class="tiny">Bodyweight</div><div class="row" style="margin-top:8px"><input class="inp" id="bwInput" inputmode="decimal" placeholder="'+(bw?bw.kg+" kg last":"kg")+'" style="flex:1"><button class="btn accent" data-act="logbw">Log</button></div></div>'
     +'<div class="card"><div class="tiny">Exercise management</div><p class="muted" style="font-size:12px;margin:6px 0">Tap <b>preference</b> to cycle love → like → neutral → avoid (drives recommendations). Tap <b>availability</b> to mark if a machine is usually free at your gym.</p><div style="margin-top:6px">'+exList+'</div></div>'
@@ -815,12 +919,15 @@ function editWorkout(id){ const s=S.sessions.find(x=>x.id===id); if(!s) return; 
 function duplicateWorkout(id){ const s=S.sessions.find(x=>x.id===id); if(!s) return; loggerOpen={}; activeSession={ id:uid(), startedAt:iso(new Date()), dateISO:new Date().toISOString().slice(0,10), title:s.title, mode:"manual", entries:s.entries.map(en=>({exId:en.exId, sets:en.sets.map(()=>({weight:"",reps:"",type:"work",done:false}))})) }; viewingLogger=true; saveActive(); try{ history.pushState({iron:"workout"},""); }catch(e){} go("today"); }
 function deleteWorkout(id){ confirmSheet("Delete this workout permanently? Stats, volume and muscle status will update.","Delete",()=>{ S.sessions=S.sessions.filter(x=>x.id!==id); persistLocal(); deleteWorkoutCloud(id); render(); },{danger:true,title:"Delete workout?"}); }
 function confirmSheet(msg,yesLabel,onYes,opts){ opts=opts||{}; openSheet("confirm",{msg,yesLabel,onYes,danger:opts.danger,title:opts.title}); }
+function openLimSheet(){ const al=activeLimitation(); limDraft=al?{rules:(al.rules||[]).slice(),dur:al.dur||"1week",note:al.note||""}:{rules:["foot_pressure"],dur:"1week",note:""}; openSheet("lim"); }
 
 
 function wireScreen(){
   const act=(name,fn)=>document.querySelectorAll('[data-act="'+name+'"]').forEach(b=>b.onclick=fn);
   act("recommend",()=>{ pendingRec=recommend(readinessDraft); render(); });
   act("resync",resyncAll);
+  act("addlim",openLimSheet); act("editlim",openLimSheet);
+  act("removelim",()=>confirmSheet("Remove the active limitation? Recommendations will include all exercises again.","Remove",()=>{ clearLimitation(); render(); },{danger:true,title:"Remove limitation?"}));
   act("readiness",()=>{ document.getElementById("app").innerHTML=header()+'<div class="reveal">'+viewReadiness()+'</div>'; wireScreen(); });
   act("back-today",()=>go("today"));
   act("rec-from-readiness",()=>{ readinessDraft.time=+(document.querySelector("[data-rtime]")||{value:60}).value; pendingRec=recommend(readinessDraft); go("today"); });
@@ -833,6 +940,7 @@ function wireScreen(){
   act("deleteedit",()=>{ const id=activeSession.editingId; activeSession=null; viewingLogger=false; saveActive(); deleteWorkout(id); go("history"); });
   act("add-ex",()=>openSheet("add"));
   act("goto-body",()=>go("body")); act("goto-history",()=>go("history"));
+  act("goto-stats-week",()=>{ statsPeriod="week"; go("stats"); });
   act("signout",signOut);
   // readiness scale buttons
   document.querySelectorAll("[data-rscale]").forEach(b=>b.onclick=()=>{ const [f,v]=b.dataset.rscale.split("-"); readinessDraft[f]=+v; document.getElementById("app").innerHTML=header()+'<div class="reveal">'+viewReadiness()+'</div>'; wireScreen(); });
