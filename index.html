@@ -140,6 +140,18 @@ button{font-family:inherit; cursor:pointer; border:none; color:inherit;}
 .scorechips .sc{flex:1; background:var(--panel2); border:1px solid var(--line); border-radius:10px; padding:9px 6px; text-align:center;}
 .scorechips .sc b{display:block; font-family:'JetBrains Mono',monospace; font-size:18px;}
 .scorechips .sc span{font-size:9px; text-transform:uppercase; letter-spacing:.05em; color:var(--muted);}
+/* prominent rest timer (item 2) */
+.restcard{pointer-events:auto; width:100%; max-width:488px; margin:0 16px; background:var(--panel2); border:1px solid var(--accent); border-radius:14px; padding:12px 14px; box-shadow:0 14px 40px rgba(0,0,0,.6);}
+.rest.done .restcard{border-color:var(--green); background:linear-gradient(135deg,rgba(47,210,122,.24),rgba(47,210,122,.06)); animation:restpulse .6s ease-in-out 3;}
+@keyframes restpulse{0%,100%{box-shadow:0 0 0 0 rgba(47,210,122,.55);}50%{box-shadow:0 0 0 7px rgba(47,210,122,0);}}
+.restbar{height:6px; border-radius:3px; background:var(--panel); overflow:hidden; margin-bottom:9px;}
+.restbar i{display:block; height:100%; background:var(--accent); border-radius:3px; transition:width 1s linear;}
+.rest.done .restbar i{background:var(--green);}
+.restrow{display:flex; justify-content:space-between; align-items:center; gap:10px;}
+.resttitle{font-weight:700; font-size:14.5px;} .restmeta{font-size:12px; color:var(--muted); margin-top:2px;}
+.restt{font-family:'JetBrains Mono',monospace; font-size:27px; font-weight:700; color:var(--accent); min-width:76px; text-align:right; line-height:1;}
+.restctl{display:flex; gap:8px; margin-top:10px;}
+.restctl button{flex:1; padding:8px; border-radius:9px; background:var(--panel); border:1px solid var(--line); color:var(--muted); font-size:12px; font-weight:600;}
 </style>
 </head>
 <body>
@@ -158,11 +170,21 @@ const CONFIG_VERSION = 2; /* engine+ui revision: recovery-aware v3 */
 const SUPABASE_URL = "https://utlhzxbjxvsyluyslfhe.supabase.co";
 const SUPABASE_KEY = "sb_publishable_xNfADG84azbA0wc1_ngVYw_MqxOANCz";
 
-/* Approved users (client-side UX gate; the real gate is Supabase signup settings — see DEPLOY). */
+/* App display name — change this one line to rename the app. Storage keys are intentionally
+   NOT derived from it, so renaming never breaks existing local or Supabase data. */
+const APP_NAME = "Iron Arc";
+const APP_TAGLINE = "Training Command";
+
+/* Approved users (client-side UX gate; the real gate is Supabase signup settings — see DEPLOY).
+   To add a person: add one line below with their real email (lowercase), display name and role.
+   role "admin" = full access, "user" = standard. Each user's data is private (per-user RLS). */
 const ADMIN_EMAIL = "adam.nbsearch@gmail.com";
 const ALLOWED_USERS = {
   "adam.nbsearch@gmail.com": { name:"Adam", role:"admin" },
   "timothywilson0911@gmail.com": { name:"Tim", role:"user" },
+  // ▼ Add Panda + Christian here once you send their emails (do not invent addresses):
+  // "panda.real.email@example.com":     { name:"Panda",     role:"user" },
+  // "christian.real.email@example.com": { name:"Christian", role:"user" },
 };
 
 /* rec:[blockH, cautionH] — hard working sets put a muscle in RECOVERING below blockH
@@ -258,7 +280,7 @@ const QUOTES = ["Discipline is choosing what you want most over what you want no
 const KEY="iron_arc_v2", ACTIVE_KEY="iron_arc_active_v2", PREF_SCORE={love:14,like:6,neutral:0,avoid:-40}, AVAIL_OK={always:true,usually:true,sometimes:true,rarely:false,no:false};
 function seed(){
   const muscles={}; for(const [k,v] of Object.entries(MUSCLES)) muscles[k]={...v};
-  return { cfgVersion:CONFIG_VERSION, settings:{sessionsPerWeek:4, units:"kg"}, muscles,
+  return { cfgVersion:CONFIG_VERSION, settings:{sessionsPerWeek:4, units:"kg", inputOrder:"wr"}, muscles,
     exercises:EXERCISES.map(e=>({...e, m:{...e.m}})), sessions:[], bodyweight:[], measurements:[], photos:[], readiness:null, updatedAt:null };
 }
 let S=load();
@@ -276,6 +298,7 @@ function load(){
 function persistLocal(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }
 function save(){ S.updatedAt=iso(new Date()); persistLocal(); scheduleCloudPush(); }
 function exById(id){ return S.exercises.find(e=>e.id===id); }
+function inputOrder(){ return (S.settings&&S.settings.inputOrder)==="rw"?"rw":"wr"; }
 function uid(){ try{ if(crypto&&crypto.randomUUID) return crypto.randomUUID(); }catch(e){} return "id-"+Date.now()+"-"+Math.random().toString(16).slice(2); }
 
 /* active-workout autosave (P1) — separate key, written on EVERY change */
@@ -460,6 +483,49 @@ const E1RM_MAX_REPS=10;
 function est1RM(w,r){ return (w>0&&r>0&&r<=E1RM_MAX_REPS)?+(w*(1+r/30)).toFixed(1):0; }
 function topSetLoad(sets){ return Math.max(0,...sets.map(s=>+s.weight||0)); }
 function bestSetVol(sets){ return Math.max(0,...sets.map(s=>(+s.weight||0)*(+s.reps||0))); }
+/* ===== PT-style form tips (item 3). Keyed by exercise id. Kept short + practical. ===== */
+const TIPS={
+ cable_curl:{feel:"Biceps (the contraction at the top).",avoid:"Swinging, shoulders rolling forward, forearms/elbows taking over.",cues:["Elbows pinned to your sides, don’t let them drift.","Curl with the biceps, not momentum.","Squeeze hard at the top, control the lowering.","Full stretch at the bottom each rep."]},
+ machine_curl:{feel:"Biceps, evenly through the range.",avoid:"Heaving the weight, lifting off the seat.",cues:["Chest against the pad, elbows on the support.","Drive the contraction, pause briefly at the top.","Slow 2–3s lowering, full stretch at the bottom."]},
+ preacher_curl:{feel:"Biceps, especially the lower stretch.",avoid:"Bouncing out of the bottom, elbow pain.",cues:["Back of arms flat on the pad.","Don’t fully lock/jerk at the bottom — stay controlled.","Full but smooth stretch, hard squeeze up top."]},
+ incline_db_curl:{feel:"Biceps with a long stretch (arms behind body).",avoid:"Shrugging, swinging.",cues:["Lie back, let arms hang for a deep stretch.","Curl without moving the upper arm.","Control the negative all the way down."]},
+ ezbar_curl:{feel:"Biceps; the angled grip is easier on wrists.",avoid:"Body swing, wrist strain.",cues:["Elbows tucked, minimal upper-arm movement.","Squeeze top, slow lower.","Keep wrists neutral."]},
+ assisted_chin:{feel:"Lats and biceps pulling you up.",avoid:"Yanking with arms only, neck craning.",cues:["Start from a full hang, shoulders engaged.","Drive elbows down to your ribs.","Chest to the bar, control the descent.","Think ‘pull the bar to you’, not ‘curl up’."]},
+ lat_pulldown:{feel:"Lats (outer back) doing the work.",avoid:"Leaning way back, arms-only pulling.",cues:["Slight lean back, chest up.","Pull elbows down and slightly back.","Bring the bar to upper chest, squeeze lats.","Control the bar back up, full stretch."]},
+ neutral_pulldown:{feel:"Lats, with a strong bottom contraction.",avoid:"Excessive swinging, shrugging.",cues:["Neutral grip, chest proud.","Lead with the elbows, drive to the ribs.","Pause at the bottom, slow return."]},
+ cs_row:{feel:"Mid-back and lats; squeeze the shoulder blades.",avoid:"Jerking the torso, traps shrugging up.",cues:["Chest on the pad the whole set.","Row to your lower ribs, elbows ~45°.","Squeeze shoulder blades together, control back."]},
+ machine_row:{feel:"Mid-back / lats.",avoid:"Using bodyweight to heave, shrugging.",cues:["Chest supported, brace.","Drive elbows back, squeeze the back.","Slow return, full stretch each rep."]},
+ incline_press:{feel:"Upper chest, some front delt and triceps.",avoid:"Shoulder joint pain, traps taking over, big lower-back arch.",cues:["Shoulder blades back and down.","Elbows slightly tucked, not flared to 90°.","Control the eccentric, press up and slightly in.","Stop the set if you feel shoulder pain."]},
+ chest_fly:{feel:"Stretch and squeeze across the chest.",avoid:"Pressing with bent arms, shoulder strain.",cues:["Soft elbow, keep the angle fixed.","Open until you feel a chest stretch — no further.","Squeeze hands toward the midline, control back."]},
+ pec_deck:{feel:"Chest, even contraction.",avoid:"Shoulders rolling forward, jerking.",cues:["Back flat on the pad, forearms on the pads.","Bring elbows together, squeeze 1s.","Slow controlled opening to a comfortable stretch."]},
+ db_fly:{feel:"Chest stretch and contraction.",avoid:"Turning it into a press, dropping into the stretch.",cues:["Soft elbows, fixed angle.","Lower under control to a stretch you can handle.","Hug the weights up, squeeze the chest."]},
+ cable_lat_raise:{feel:"Side delts only.",avoid:"Traps/neck, front delts, elbow pain, shrugging.",cues:["Lead with the elbow, not the hand.","Slight lean away from the stack if it helps.","Raise to about shoulder height, no higher.","Control the lowering, no swinging."]},
+ machine_lat_raise:{feel:"Side delts.",avoid:"Shrugging, using momentum.",cues:["Press out through the elbows/upper arm.","Up to shoulder height, pause, slow down.","Keep traps relaxed."]},
+ db_lat_raise:{feel:"Side delts.",avoid:"Traps, swinging the torso.",cues:["Lead with elbows, tiny forward tilt.","Stop at shoulder height, control down.","Light enough to feel the side delt, not the traps."]},
+ rear_delt_fly:{feel:"Rear delts (back of the shoulder).",avoid:"Squeezing mid-back instead, using momentum.",cues:["Slight bend, arms wide.","Think ‘open the arms’, lead with elbows.","Don’t over-squeeze the shoulder blades — keep tension on the rear delt."]},
+ reverse_pec_deck:{feel:"Rear delts.",avoid:"Mid-back/traps dominating, jerking.",cues:["Chest on the pad, soft elbows.","Drive arms back and slightly out.","Pause at the back, slow return."]},
+ face_pull:{feel:"Rear delts and upper back.",avoid:"Using too much weight, leaning back.",cues:["Pull rope toward your eyes/forehead.","Elbows high, externally rotate at the end.","Squeeze, then control forward."]},
+ tricep_pushdown:{feel:"Triceps, strong lockout.",avoid:"Elbows flaring/drifting, leaning over the bar.",cues:["Elbows pinned to your sides.","Only the forearms move.","Full lockout, squeeze, control back up."]},
+ leg_press:{feel:"Quads (and glutes deeper).",avoid:"Knee cave, lower back rounding off the seat, toe pain.",cues:["Feet shoulder-width, full foot pressure.","Lower to a deep but controlled range.","Don’t lock the knees hard at the top.","Keep your lower back flat on the seat."]},
+ rdl:{feel:"Hamstring stretch and glutes.",avoid:"Rounding the lower back, turning it into a squat.",cues:["Soft knees, hinge at the hips.","Bar/handles close to the legs.","Lower until you feel a hamstring stretch, back flat.","Drive hips forward to stand."]},
+ leg_ext:{feel:"Quads, hard contraction at the top.",avoid:"Knee pain, swinging.",cues:["Back against the pad, controlled tempo.","Squeeze quads at the top 1s.","Slow lower, don’t let the stack slam."]},
+ leg_curl:{feel:"Hamstrings.",avoid:"Hips lifting, jerking.",cues:["Hips down, brace.","Curl fully, squeeze at the top.","Slow controlled return."]},
+ calf_raise:{feel:"Calves through a big range.",avoid:"Bouncing, short range.",cues:["Full stretch at the bottom, pause.","Drive all the way up onto the toes.","Controlled — no bouncing the tendon."]},
+ machine_ohp:{feel:"Front/side delts and triceps.",avoid:"Lower-back arch, shoulder pinch.",cues:["Brace, ribs down.","Press up smoothly, don’t lock harshly.","Control the lowering to ear height."]},
+ plated_ohp:{feel:"Shoulders and triceps.",avoid:"Excessive arching, shrugging.",cues:["Brace core, neutral spine.","Press overhead, control down."]},
+ hack_squat:{feel:"Quads.",avoid:"Knee cave, heels lifting.",cues:["Full foot pressure, controlled depth.","Drive through the whole foot.","Don’t bounce out of the bottom."]},
+ ab_movement:{feel:"Abs contracting.",avoid:"Hip flexors/neck doing the work.",cues:["Curl the ribcage toward the pelvis.","Controlled, squeeze, slow return."]}
+};
+function exerciseTrend(exId){ const h=exerciseHistory(exId); if(h.length<2) return {label:"Early signal", c:"var(--muted)", note:"Log this a couple more times to read a trend."};
+  const metric=(sets)=>{ const e=Math.max(0,...sets.map(s=>est1RM(+s.weight||0,+s.reps||0))); return e>0?e:topSetLoad(sets); };
+  const ser=h.map(x=>metric(x.sets));   // newest first
+  if(h.length<3){ const up=ser[0]>ser[1]; return {label:up?"Trending up":"Early signal", c:up?"var(--green)":"var(--muted)", note:up?"Up on your last session — keep building.":"Mixed so far — keep logging to confirm a trend."}; }
+  const a=ser[0],b=ser[1],c=ser[2]; const flat=(x,y)=>Math.abs(x-y)/Math.max(1,y)<0.03;
+  if(a>b&&b>=c) return {label:"Progressing", c:"var(--green)", note:"Up two sessions running — add a rep or a small load bump."};
+  if(a<b&&b<=c) return {label:"Regressing", c:"var(--red)", note:"Down two sessions — likely fatigue. Consider a lighter day or a deload week."};
+  if(flat(a,b)&&flat(b,c)) return {label:"Stalled", c:"var(--amber)", note:"Flat for 3 sessions — change a variable: more reps, a small load increase, or a fresh variation."};
+  return {label:"Stable", c:"var(--accent)", note:"Holding steady — chase one more clean rep."}; }
+
 function exerciseHistory(exId){ const out=[];
   S.sessions.filter(s=>s.completedAt).forEach(sess=>{ (sess.entries||[]).forEach(en=>{ if(en.exId===exId){ const ws=workingSets(en); if(ws.length) out.push({date:sess.completedAt, sessionId:sess.id, sets:ws}); } }); });
   out.sort((a,b)=>new Date(b.date)-new Date(a.date)); return out; }
@@ -531,6 +597,7 @@ function recommend(r){ r=r||{}; const time=r.time||60; const maxEx=time<=30?3:ti
       if(worstIdx>=0) chosen.splice(worstIdx,1,{exId:cand.id,sets:2,caution:false}); } });
   if(chosen.length<Math.min(maxEx,3)) fill(true,-150);   // nothing fresh left — program caution work, flagged
   let tot=chosen.reduce((s,c)=>s+c.sets,0); while(tot>15){ const b=chosen.filter(c=>c.sets===3)[0]; if(!b) break; b.sets=2; tot--; }
+  chosen.sort((a,b)=>orderScore(a)-orderScore(b));   // strategic order
   /* ---- explainability (direct vs secondary precision) ---- */
   const covF={}; chosen.forEach(c=>{ const e=exById(c.exId); for(const [m,k] of Object.entries(e.m)){ if(k>=0.5) covF[m]=(covF[m]||0)+c.sets*k; } });
   const isDirect=(m)=>chosen.some(c=>exById(c.exId).m[m]>=1);
@@ -554,7 +621,8 @@ function recommend(r){ r=r||{}; const time=r.time||60; const maxEx=time<=30?3:ti
   if(highSore) why.push({t:"warn",x:"High soreness — leaning isolation, sets capped at 2."});
   if(lowEnergy) why.push({t:"warn",x:"Low energy/sleep — volume trimmed."});
   const musclesHit=Object.keys(covF).filter(m=>covF[m]>0).sort((a,b)=>covF[b]-covF[a]).map(m=>S.muscles[m].label);
-  return {title:musclesHit.slice(0,3).join(" · ")||"Recovery session", why, exercises:chosen, musclesHit, time}; }
+  const orderNote=chosen.length>1?"Order set for performance: compounds and priority muscles while you’re fresh, isolation and pump work last.":"";
+  return {title:musclesHit.slice(0,3).join(" · ")||"Recovery session", why, exercises:chosen, musclesHit, time, orderNote}; }
 
 /* SWAP / SUBSTITUTION (P3) */
 function swapSuggestions(exId){ const ex=exById(exId); if(!ex) return []; const pm=primaryMuscle(ex);
@@ -591,7 +659,7 @@ function render(){ const app=document.getElementById("app");
 }
 function seasonLabel(){ if(S.settings&&S.settings.season) return S.settings.season; return ["SUMMER","SUMMER","AUTUMN","AUTUMN","AUTUMN","WINTER","WINTER","WINTER","SPRING","SPRING","SPRING","SUMMER"][new Date().getMonth()]; }
 function header(){ const wk=weekSessions().length;
-  return '<div class="top"><div class="brand"><span class="dot"></span><div>IRON ARC<small>Training Command</small></div></div><span class="modepill">'+seasonLabel()+' · '+wk+'/'+S.settings.sessionsPerWeek+'</span></div>'+weekStrip(); }
+  return '<div class="top"><div class="brand"><span class="dot"></span><div>'+APP_NAME.toUpperCase()+'<small>'+APP_TAGLINE+'</small></div></div><span class="modepill">'+seasonLabel()+' · '+wk+'/'+S.settings.sessionsPerWeek+'</span></div>'+weekStrip(); }
 function weekStrip(){ const s=startOfWeek(); const names=["M","T","W","T","F","S","S"]; const today=dayKey(new Date()); let c="";
   for(let i=0;i<7;i++){ const d=new Date(s); d.setDate(d.getDate()+i); const done=S.sessions.some(x=>x.completedAt&&dayKey(x.completedAt)===dayKey(d)); const isT=dayKey(d)===today;
     c+='<div class="day '+(done?'done':'')+' '+(isT?'today':'')+'"><b>'+names[i]+'</b><span class="pip"></span></div>'; } return '<div class="weekstrip">'+c+'</div>'; }
@@ -620,11 +688,12 @@ function viewToday(){
 }
 function unsyncedCount(){ return (S.sessions||[]).filter(s=>s.completedAt&&s.synced===false).length; }
 function resyncAll(){ (S.sessions||[]).filter(s=>s.completedAt&&s.synced===false).forEach(s=>pushWorkout(s)); setTimeout(render,1400); }
-function recCard(rec){ const ex=rec.exercises.map(c=>{ const e=exById(c.exId); const tag=e.pref==="love"?' <span class="tag love">★</span>':e.pref==="avoid"?' <span class="tag avoid">avoid</span>':''; const ct=c.caution?' <span class="tag" style="color:var(--amber)">caution</span>':'';
-    return '<div class="exline"><div><div class="nm">'+e.name+tag+ct+'</div><div class="meta">'+musLabels(e)+' · '+e.rest+'s</div></div><div class="sets">'+c.sets+'×'+e.rl+'-'+e.rh+'</div></div>'; }).join("");
+function recCard(rec){ const N=rec.exercises.length; const ex=rec.exercises.map((c,i)=>{ const e=exById(c.exId); const tag=e.pref==="love"?' <span class="tag love">★</span>':e.pref==="avoid"?' <span class="tag avoid">avoid</span>':''; const ct=c.caution?' <span class="tag" style="color:var(--amber)">caution</span>':'';
+    const pos=positionTag(e,i,N); const pt=pos?' <span class="tag" style="color:'+(pos==="First"?"var(--accent)":"var(--muted)")+'">'+pos+'</span>':'';
+    return '<div class="exline"><div><div style="font-family:\'JetBrains Mono\',monospace;font-size:11px;color:var(--faint)">'+(i+1)+'</div></div><div style="flex:1"><div class="nm">'+e.name+tag+ct+pt+'</div><div class="meta">'+musLabels(e)+' · '+e.rest+'s rest</div></div><div class="sets">'+c.sets+'×'+e.rl+'-'+e.rh+'</div></div>'; }).join("");
   const why=rec.why.map(w=>'<li style="display:flex;gap:9px;padding:7px 0;border-top:1px dashed var(--line);font-size:13.5px;color:#C6D0DC"><span style="color:'+(w.t==='neg'?'var(--red)':w.t==='warn'?'var(--amber)':'var(--accent)')+'">'+(w.t==='neg'?'✕':w.t==='warn'?'!':'›')+'</span><span>'+w.x+'</span></li>').join("");
   const tot=rec.exercises.reduce((s,c)=>s+c.sets,0);
-  return '<div class="card glow"><div class="tiny" style="color:var(--accent)">Recommended for today · '+rec.exercises.length+' exercises · '+tot+' sets · ~'+rec.time+'min</div><h2 style="margin:8px 0 4px;font-size:20px">'+rec.title+'</h2><div style="margin-top:10px">'+ex+'</div><ul style="margin:12px 0 0;padding:0;list-style:none">'+why+'</ul><button class="cta" data-act="start-rec" style="margin-top:14px">Start this session<span class="sub">'+tot+' sets · ~'+rec.time+' min</span></button></div>'; }
+  return '<div class="card glow"><div class="tiny" style="color:var(--accent)">Recommended for today · '+rec.exercises.length+' exercises · '+tot+' sets · ~'+rec.time+'min</div><h2 style="margin:8px 0 4px;font-size:20px">'+rec.title+'</h2>'+(rec.orderNote?'<div class="histline" style="margin:6px 0 2px;color:var(--accent)">↕ '+rec.orderNote+'</div>':'')+'<div style="margin-top:10px">'+ex+'</div><ul style="margin:12px 0 0;padding:0;list-style:none">'+why+'</ul><button class="cta" data-act="start-rec" style="margin-top:14px">Start this session<span class="sub">'+tot+' sets · ~'+rec.time+' min</span></button></div>'; }
 function musLabels(e){ return Object.entries(e.m).filter(([m,c])=>c>=0.5&&S.muscles[m]).map(([m])=>S.muscles[m].label).join(" / "); }
 function weekStatus(){ const sess=weekSessions(); const vol=weeklyVolume(sess); const target=S.settings.sessionsPerWeek;
   const primaryBelow=[], otherBelow=[], trained=[];
@@ -685,14 +754,16 @@ function loggerEx(en,i){ const e=exById(en.exId); const cur=loggerCurrentIndex()
   const wins=evalWins(en,bests); const winhtml=wins.length?'<div class="win">'+wins.map(w=>'<span class="badge '+w.c+'">'+w.t+'</span>').join("")+'</div>':"";
   const flaghtml=flag?'<div class="win"><span class="badge warnb">⚠ '+flag+'</span></div>':"";
   const pm=primaryMuscle(e); const rs=pm?recoveryStatus(pm):"ready"; const recwarn=(rs==="recovering"||rs==="overloaded")?'<div class="recwarn">⚠ '+S.muscles[pm].label+' was trained recently — still '+REC_META[rs].label.toLowerCase()+'. Training it hard again today may cut into recovery.</div>':"";
-  return '<div class="card logex" data-ex="'+i+'"><div class="hd"><div style="flex:1" data-expand="'+i+'"><div class="nm">'+e.name+'</div><div class="histline">Last: <b>'+lastStr+'</b></div><div class="histline target">'+(prog.add?'↑ ':'')+'Mission: '+prog.note+'</div></div><div class="exmenu"><button class="swap" data-swap="'+i+'">⇄ Swap</button><button class="more" data-more="'+i+'">⋯</button></div></div>'
+  const tr=exerciseTrend(en.exId); const trendChip='<span class="tag" style="color:'+tr.c+';border:1px solid '+tr.c+'44">'+tr.label+'</span>';
+  return '<div class="card logex" data-ex="'+i+'"><div class="hd"><div style="flex:1" data-expand="'+i+'"><div class="nm">'+e.name+' '+trendChip+'</div><div class="histline">Last: <b>'+lastStr+'</b></div><div class="histline target">'+(prog.add?'↑ ':'')+'Next: '+prog.note+'</div><div class="histline" style="color:'+tr.c+'">'+tr.note+'</div></div><div class="exmenu"><button class="swap" data-tips="'+en.exId+'" style="color:var(--gold)">Form</button><button class="swap" data-swap="'+i+'">⇄ Swap</button><button class="more" data-more="'+i+'">⋯</button></div></div>'
     +recwarn
-    +'<div class="setgrid"><div class="sethead"><span>#</span><span>kg</span><span>reps</span><span>log</span></div>'+rows+'</div>'
+    +'<div class="setgrid"><div class="sethead"><span>#</span>'+(inputOrder()==="rw"?'<span>reps</span><span>kg</span>':'<span>kg</span><span>reps</span>')+'<span>log</span></div>'+rows+'</div>'
     +'<button class="btn ghost sm" data-addset="'+i+'" style="margin-top:4px">+ set</button>'+flaghtml+winhtml+'</div>'; }
 function setRow(ei,si,s){ const warm=s.type==="warm"; const g=warm?{w:"",r:""}:ghostFor(activeSession.entries[ei],si); const wEmpty=(s.weight===""||s.weight==null), rEmpty=(s.reps===""||s.reps==null);
-  return '<div class="setrow '+(warm?'warm':'')+'"><span class="sn" data-snum="'+ei+'-'+si+'" title="long-press to mark warm-up">'+(warm?'W':si+1)+'</span>'
-    +'<input class="inp'+(wEmpty&&g.w!==""?' ghosted':'')+'" inputmode="decimal" enterkeyhint="next" data-f="weight" data-ei="'+ei+'" data-si="'+si+'" value="'+(s.weight==null?"":s.weight)+'" placeholder="'+(g.w!==""?g.w:"–")+'">'
-    +'<input class="inp'+(rEmpty&&g.r!==""?' ghosted':'')+'" inputmode="numeric" enterkeyhint="done" data-f="reps" data-ei="'+ei+'" data-si="'+si+'" value="'+(s.reps==null?"":s.reps)+'" placeholder="'+(g.r!==""?g.r:"–")+'">'
+  const wInp='<input class="inp'+(wEmpty&&g.w!==""?' ghosted':'')+'" inputmode="decimal" data-f="weight" data-ei="'+ei+'" data-si="'+si+'" value="'+(s.weight==null?"":s.weight)+'" placeholder="'+(g.w!==""?g.w:"–")+'">';
+  const rInp='<input class="inp'+(rEmpty&&g.r!==""?' ghosted':'')+'" inputmode="numeric" data-f="reps" data-ei="'+ei+'" data-si="'+si+'" value="'+(s.reps==null?"":s.reps)+'" placeholder="'+(g.r!==""?g.r:"–")+'">';
+  const ro=inputOrder()==="rw"; const first=ro?rInp:wInp, second=ro?wInp:rInp;
+  return '<div class="setrow '+(warm?'warm':'')+'"><span class="sn" data-snum="'+ei+'-'+si+'" title="long-press to mark warm-up">'+(warm?'W':si+1)+'</span>'+first+second
     +'<button class="chk '+(isLogged(s)?'on':'')+'" data-log="'+ei+'-'+si+'" aria-label="log set">✓</button></div>'; }
 function evalWins(en,bests){ const ws=workingSets(en); if(!ws.length||bests.bestW<=0) return []; const out=[]; let mw=0,m1=0,vol=0;
   ws.forEach(s=>{ const w=+s.weight||0,r=+s.reps||0; vol+=w*r; if(w>mw)mw=w; const e=est1RM(w,r); if(e>m1)m1=e; });
@@ -719,7 +790,7 @@ function renderSheet(){ const m=document.getElementById("sheetmount"); if(!sheet
   else if(sheet.type==="add"){ const groups=libraryByMuscle();
     inner='<div class="tiny">Add exercise</div><div style="margin-top:10px">'+Object.entries(groups).map(([m,exs])=>'<div class="muted tiny" style="margin:12px 0 4px">'+(S.muscles[m]?S.muscles[m].label:m)+'</div>'+exs.map(e=>'<button class="opt" data-add="'+e.id+'" style="width:100%;text-align:left"><div><div class="nm">'+e.name+'</div><div class="meta">'+e.equip+' · '+e.rl+'-'+e.rh+' reps</div></div><span class="sets">+ add</span></button>').join("")).join("")+'</div>'; }
   else if(sheet.type==="exhist"){ const ex=exById(sheet.data); const b=exerciseBests(sheet.data); const h=exerciseHistory(sheet.data);
-    inner='<div class="tiny">'+ex.name+'</div><div class="kpi" style="margin-top:10px"><div class="k"><b>'+(b.bestW||0)+'</b><span>top kg</span></div><div class="k"><b>'+(b.best1rm||0).toFixed(0)+'</b><span>best e1RM</span></div><div class="k"><b>'+h.length+'</b><span>sessions</span></div></div>'
+    const _tr=exerciseTrend(sheet.data); inner='<div class="tiny">'+ex.name+'</div><div class="row" style="gap:6px;margin-top:8px;align-items:center"><span class="statuspill" style="background:'+_tr.c+'22;color:'+_tr.c+'">'+_tr.label+'</span>'+(TIPS[sheet.data]?'<button class="btn sm" data-tips="'+sheet.data+'" style="color:var(--gold)">View form tips</button>':'')+'</div><div class="ibody" style="margin-top:6px">'+_tr.note+'</div><div class="kpi" style="margin-top:12px"><div class="k"><b>'+(b.bestW||0)+'</b><span>top kg</span></div><div class="k"><b>'+(b.best1rm||0).toFixed(0)+'</b><span>best e1RM</span></div><div class="k"><b>'+h.length+'</b><span>sessions</span></div></div>'
       +'<div class="tiny" style="margin-top:14px">History</div><div style="margin-top:6px">'+(h.length?h.map(x=>'<div class="contrib"><div><b>'+fmtDate(x.date)+'</b><div class="muted" style="font-size:12px;margin-top:2px">'+x.sets.map(s=>(s.weight||0)+"\u00d7"+(s.reps||0)).join("  ")+'</div></div><span class="c-ef">'+x.sets.reduce((a,s)=>a+(+s.weight||0)*(+s.reps||0),0)+'kg</span></div>').join(""):'<div class="empty">No logged sessions.</div>')+'</div>'; }
   else if(sheet.type==="exwk"){ const w=S.sessions.find(s=>s.id===sheet.data);
     inner=w?('<div class="tiny">'+fmtDate(w.completedAt)+'</div><h2 style="font-size:17px;margin:6px 0 12px">'+(w.title||"Workout")+'</h2>'+w.entries.map(en=>{ const ex=exById(en.exId); const ws=workingSets(en);
@@ -728,6 +799,12 @@ function renderSheet(){ const m=document.getElementById("sheetmount"); if(!sheet
   else if(sheet.type==="mperiod"){ const m=sheet.data; const cfg=S.muscles[m]; const sess=periodSessions(); const con=muscleContrib(m,sess); const plabel=statsPeriod==="week"?"this week (Mon–Sun)":statsPeriod==="all"?"all time":"last "+statsPeriod+" days";
     inner='<div class="tiny">'+cfg.label+' · '+plabel+'</div><div class="kpi" style="margin-top:10px"><div class="k"><b>'+con.total.toFixed(1)+'</b><span>effective sets</span></div><div class="k"><b>'+con.direct.toFixed(1)+'</b><span>direct</span></div><div class="k"><b>'+con.secondary.toFixed(1)+'</b><span>secondary</span></div></div>'
       +'<div class="tiny" style="margin-top:14px">What made this number</div><div style="margin-top:6px">'+(con.rows.length?con.rows.map(r=>'<div class="contrib"><div><b>'+r.name+'</b><div class="muted" style="font-size:11px">'+r.sets+' sets × '+r.credit+' credit · '+(r.credit>=1?"direct":"secondary")+' · last '+fmtAgo(r.dates.sort().slice(-1)[0])+'</div></div><span class="c-ef">'+r.effective.toFixed(1)+'</span></div>').join(""):'<div class="empty" style="padding:10px">No sets in this period.</div>')+'</div>'; }
+  else if(sheet.type==="tips"){ const id=sheet.data; const ex=exById(id); const t=TIPS[id];
+    inner='<div class="tiny">'+(ex?ex.name:id)+' · form & coaching</div>'+(t?
+      '<div class="field" style="margin-top:10px"><label style="color:var(--green)">✅ Should feel</label><div class="ibody">'+t.feel+'</div></div>'
+      +'<div class="field"><label style="color:var(--red)">⛔ Should NOT mainly feel</label><div class="ibody">'+t.avoid+'</div></div>'
+      +'<div class="field"><label>Cues</label><ul style="margin:4px 0 0;padding-left:18px">'+t.cues.map(c=>'<li class="ibody" style="margin:3px 0">'+c+'</li>').join("")+'</ul></div>'
+      :'<div class="empty" style="padding:14px">No form notes for this exercise yet.</div>'); }
   else if(sheet.type==="lim"){ const d=limDraft;
     const presetBtn=(k)=>'<button class="btn sm" data-limrule="'+k+'" style="'+(d.rules.indexOf(k)>=0?"border-color:var(--accent);color:var(--accent)":"")+'">'+LIMIT_PRESETS[k].name+'</button>';
     const durBtn=(v,l)=>'<button class="btn sm" data-limdur="'+v+'" style="'+(d.dur===v?"border-color:var(--accent);color:var(--accent)":"")+'">'+l+'</button>';
@@ -760,6 +837,7 @@ function renderSheet(){ const m=document.getElementById("sheetmount"); if(!sheet
   const cl2=m.querySelector('[data-sheetclose2]'); if(cl2) cl2.onclick=closeSheet;
   const cy=m.querySelector('[data-confirmyes]'); if(cy) cy.onclick=()=>{ const fn=sheet.data&&sheet.data.onYes; closeSheet(); if(fn) fn(); };
   const rh=m.querySelector('[data-recaphist]'); if(rh) rh.onclick=()=>{ closeSheet(); go("history"); };
+  m.querySelectorAll('[data-tips]').forEach(b=>b.onclick=()=>openSheet("tips",b.dataset.tips));
   m.querySelectorAll('[data-mv]').forEach(b=>b.onclick=()=>{ const p=b.dataset.mv.split("-"); const dir=p[0], idx=+p[1]; const e=activeSession.entries; if(dir==="up"&&idx>0){ [e[idx-1],e[idx]]=[e[idx],e[idx-1]]; } if(dir==="dn"&&idx<e.length-1){ [e[idx+1],e[idx]]=[e[idx],e[idx+1]]; } saveActive(); closeSheet(); render(); });
   m.querySelectorAll('[data-extimer]').forEach(b=>b.onclick=()=>{ const p=b.dataset.extimer.split("-"); const sec=+p[0], i=+p[1]; const ex=exById(activeSession.entries[i].exId); closeSheet(); if(ex) startRest(sec,ex.name); });
   m.querySelectorAll('[data-rmex2]').forEach(b=>b.onclick=()=>{ const i=+b.dataset.rmex2; const ex=exById(activeSession.entries[i].exId); closeSheet(); confirmSheet("Remove "+(ex?ex.name:"this exercise")+"?","Remove",()=>{ activeSession.entries.splice(i,1); saveActive(); render(); },{danger:true,title:"Remove exercise?"}); });
@@ -907,6 +985,13 @@ function viewStats(){ const total=completedSessions().length; const streak=calcS
 /* ---------------- BODY (P6 two-layer + P7 grid + P5 attribution) ---------------- */
 const BODY_GROUPS=[["Chest & push",["upper_chest","chest","triceps","front_delts"]],["Back & pull",["back_lats","upper_back","biceps"]],["Delts",["side_delts","rear_delts"]],["Legs",["quads","hamstrings","glutes","calves"]],["Core & other",["abs","lower_back","forearms"]]];
 const TIER_RANK={primary:0,secondary:1,maintenance:2};
+/* Strategic exercise ordering (item 1): lower score = earlier in the session.
+   Compounds and priority/fresh muscles first; isolation + low-fatigue pump work last.
+   Putting compounds before isolation also avoids pre-fatiguing arms before big presses/pulls. */
+function orderScore(c){ const ex=exById(c.exId); if(!ex) return 100; const pm=primaryMuscle(ex); const tr=TIER_RANK[(S.muscles[pm]||{}).tier]; const t=(tr==null?1:tr);
+  let s=0; s+=ex.type==="compound"?0:30; s+=t*12; s-=Math.min(ex.fatigue||1,4)*4;
+  if(ex.type==="isolation"&&(ex.fatigue||1)<=1.2&&t>0) s+=15; return s; }
+function positionTag(ex,i,total){ if(i===0) return "First"; if(ex.type==="isolation"&&(ex.fatigue||1)<=1.2&&i>=total-1) return "Finisher"; return ""; }
 function viewBody(){
   const groups=BODY_GROUPS.map(([title,ms])=>{ const ordered=ms.slice().sort((a,b)=>TIER_RANK[S.muscles[a].tier]-TIER_RANK[S.muscles[b].tier]);
     const cards=ordered.map(m=>{ const cfg=S.muscles[m]; const rd=recoveryDisplay(m); const lt=lastTrainedMap()[m]; const v=weeklyVolume()[m];
@@ -943,7 +1028,13 @@ function viewSettings(){ const acct=authProfile?'<div class="card"><div class="t
   const exList=S.exercises.map(e=>{ const pm=primaryMuscle(e); const prefC={love:"var(--gold)",like:"var(--green)",neutral:"var(--muted)",avoid:"var(--red)"}[e.pref];
     return '<div class="exline" style="padding:9px 0"><div style="flex:1"><div class="nm" style="font-size:13.5px">'+e.name+'</div><div class="histline">'+S.muscles[pm].label+' · '+e.equip+' · '+musLabels(e)+'</div></div><div class="row" style="gap:6px"><button class="btn sm" data-pref="'+e.id+'" style="color:'+prefC+'">'+e.pref+'</button><button class="btn sm" data-avail="'+e.id+'">'+e.avail+'</button></div></div>'; }).join("");
   const bw=(S.bodyweight||[]).slice(-1)[0];
-  return acct
+  const TIERS=["primary","secondary","maintenance"]; const tierC={primary:"var(--gold)",secondary:"var(--accent)",maintenance:"var(--muted)"};
+  const muscleRows=Object.entries(S.muscles).map(([m,cfg])=>'<div class="exline" style="padding:7px 0"><div class="nm" style="font-size:13px">'+cfg.label+'</div><button class="btn sm" data-tier="'+m+'" style="color:'+tierC[cfg.tier]+';border-color:'+tierC[cfg.tier]+'55;min-width:104px">'+TIER_LABEL[cfg.tier]+'</button></div>').join("");
+  const profile='<div class="card"><div class="tiny">Training profile</div><p class="muted" style="font-size:12px;margin:6px 0 10px">Your goals are private to '+(authProfile?authProfile.name:"you")+' — editing here doesn’t affect other users.</p>'
+    +'<div class="exline" style="padding:8px 0"><div class="nm" style="font-size:13px">Weekly session target</div><div class="row" style="gap:8px;align-items:center"><button class="btn sm" data-act="target-dec">−</button><b class="mono" style="min-width:20px;text-align:center">'+S.settings.sessionsPerWeek+'</b><button class="btn sm" data-act="target-inc">+</button></div></div>'
+    +'<div class="exline" style="padding:8px 0"><div class="nm" style="font-size:13px">Set logging order</div><div class="seg" style="width:58%"><button data-inputorder="wr" class="'+(inputOrder()==="wr"?"on":"")+'">Weight → Reps</button><button data-inputorder="rw" class="'+(inputOrder()==="rw"?"on":"")+'">Reps → Weight</button></div></div>'
+    +'<hr class="sub"><div class="tiny">Muscle priorities</div><p class="muted" style="font-size:11.5px;margin:5px 0 4px">Tap to cycle Primary → Secondary → Maintenance. Drives recommendations and Body ordering.</p>'+muscleRows+'</div>';
+  return acct + profile
     +'<div class="card"><div class="tiny">Injury / limitation</div>'+(activeLimitation()?'<div style="margin-top:8px;font-weight:600">'+activeLimitation().name+'</div><div class="histline">'+(activeLimitation().note||"")+(activeLimitation().until?' · expires '+fmtDate(activeLimitation().until):' · until removed')+'</div><div class="row" style="margin-top:10px"><button class="btn sm" data-act="editlim">Edit</button><button class="btn sm danger" data-act="removelim">Remove</button></div>':'<p class="muted" style="font-size:12.5px;margin:8px 0">Temporarily exclude exercises after an injury or when equipment is unavailable (e.g. broken toe → no foot-pressure exercises).</p><button class="btn full" data-act="addlim">Add limitation</button>')+'</div>'
     +'<div class="card"><div class="tiny">Readiness check-in</div><p class="muted" style="font-size:12.5px;margin:8px 0">Optional. It tunes <b>today\u2019s recommendation only</b> — it does not change muscle recovery colours. Low sleep/energy trims volume; high soreness leans toward isolation and caps sets at 2; muscles you flag to avoid are skipped today.</p><button class="btn full" data-act="readiness">Open readiness check-in</button></div>'
     +'<div class="card"><div class="tiny">Bodyweight</div><div class="row" style="margin-top:8px"><input class="inp" id="bwInput" inputmode="decimal" placeholder="'+(bw?bw.kg+" kg last":"kg")+'" style="flex:1"><button class="btn accent" data-act="logbw">Log</button></div></div>'
@@ -963,7 +1054,7 @@ function viewReadiness(){ const r=readinessDraft; const sc=(f,lo,hi)=>{ let h=""
 /* ---------------- AUTH ---------------- */
 function authScreen(){ if(authMsg==="not_approved") return '<div style="padding:60px 8px;text-align:center"><div class="brand" style="justify-content:center"><span class="dot"></span><div>IRON ARC</div></div><div class="card" style="margin-top:30px"><h2 style="font-size:18px">Not approved yet</h2><p class="muted" style="margin-top:10px">This account isn\u2019t on the access list. Ask Adam to add your email, then sign in again.</p><button class="btn full" data-act="auth-retry" style="margin-top:14px">Back to sign in</button></div></div>';
   const tab=(id,l)=>'<button class="'+(authMode===id?'on':'')+'" data-authmode="'+id+'">'+l+'</button>';
-  return '<div style="padding:48px 6px 0;text-align:center"><div class="brand" style="justify-content:center;font-size:22px"><span class="dot"></span><div>IRON ARC<small>Training Command</small></div></div></div>'
+  return '<div style="padding:48px 6px 0;text-align:center"><div class="brand" style="justify-content:center;font-size:22px"><span class="dot"></span><div>'+APP_NAME.toUpperCase()+'<small>'+APP_TAGLINE+'</small></div></div></div>'
     +'<div class="card glow" style="margin-top:28px"><div class="seg" style="margin-bottom:14px">'+tab("magic","Magic link")+tab("password","Password")+'</div>'
     +'<div class="field"><label>Email</label><input class="inp" id="authEmail" inputmode="email" style="text-align:left" placeholder="you@email.com"></div>'
     +(authMode==="password"?'<div class="field"><label>Password</label><input class="inp" id="authPass" type="password" style="text-align:left" placeholder="\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022"></div><div class="row"><button class="btn accent full" data-act="auth-pass-in">Sign in</button><button class="btn full" data-act="auth-pass-up">Create account</button></div>':'<button class="btn accent full" data-act="auth-magic">Send magic link</button>')
@@ -984,10 +1075,20 @@ function wireAuth(){
 }
 
 /* ---------------- REST TIMER ---------------- */
-function startRest(sec,name){ clearInterval(restTimer); let left=sec; const mount=document.getElementById("restmount");
-  function paint(){ mount.innerHTML='<div class="rest"><div class="pill"><span class="muted" style="font-size:12px">'+(name||"Rest")+'</span><span class="t mono">'+Math.floor(left/60)+":"+String(left%60).padStart(2,"0")+'</span><button data-restadd>+30</button><button data-restskip>skip</button></div></div>';
-    mount.querySelector("[data-restadd]").onclick=()=>{ left+=30; paint(); }; mount.querySelector("[data-restskip]").onclick=()=>{ clearInterval(restTimer); mount.innerHTML=""; }; }
-  paint(); restTimer=setInterval(()=>{ left--; if(left<=0){ clearInterval(restTimer); mount.innerHTML=""; try{ navigator.vibrate&&navigator.vibrate([200,80,200]); }catch(e){} return; } paint(); },1000); }
+function restBeep(){ try{ const Ctx=window.AudioContext||window.webkitAudioContext; if(!Ctx) return; const ctx=new Ctx(); const o=ctx.createOscillator(), g=ctx.createGain(); o.connect(g); g.connect(ctx.destination); o.type="sine"; o.frequency.value=880;
+  g.gain.setValueAtTime(0.0001,ctx.currentTime); g.gain.exponentialRampToValueAtTime(0.3,ctx.currentTime+0.02); g.gain.exponentialRampToValueAtTime(0.0001,ctx.currentTime+0.5); o.start(); o.stop(ctx.currentTime+0.52); setTimeout(()=>{try{ctx.close();}catch(e){}},800); }catch(e){} }
+function startRest(sec,name,next){ clearInterval(restTimer); const total=Math.max(1,sec); let left=sec; const mount=document.getElementById("restmount");
+  function paint(done){ const mm=Math.floor(Math.max(0,left)/60), ss=String(Math.max(0,left)%60).padStart(2,"0"); const pct=Math.max(0,Math.min(100,Math.round((1-left/total)*100)));
+    mount.innerHTML='<div class="rest'+(done?' done':'')+'"><div class="restcard">'
+      +'<div class="restbar"><i style="width:'+(done?100:pct)+'%"></i></div>'
+      +'<div class="restrow"><div style="flex:1"><div class="resttitle">'+(done?"✅ Rest done — next set ready":"Resting")+'</div><div class="restmeta">'+(name||"")+(next?" · "+next:"")+'</div></div>'
+      +(done?'<button data-restgo class="btn accent sm">Go</button>':'<div class="restt">'+mm+":"+ss+'</div>')+'</div>'
+      +(done?'':'<div class="restctl"><button data-restsub>−15s</button><button data-restadd>+30s</button><button data-restskip>Skip rest</button></div>')
+      +'</div></div>';
+    if(done){ const g=mount.querySelector("[data-restgo]"); if(g) g.onclick=()=>{ clearInterval(restTimer); mount.innerHTML=""; }; }
+    else { mount.querySelector("[data-restadd]").onclick=()=>{ left+=30; paint(); }; const sb=mount.querySelector("[data-restsub]"); if(sb) sb.onclick=()=>{ left=Math.max(1,left-15); paint(); }; mount.querySelector("[data-restskip]").onclick=()=>{ clearInterval(restTimer); mount.innerHTML=""; }; } }
+  paint(false); restTimer=setInterval(()=>{ left--; if(left<=0){ clearInterval(restTimer); paint(true); try{ navigator.vibrate&&navigator.vibrate([200,100,200,100,300]); }catch(e){} restBeep();
+      setTimeout(()=>{ if(mount.querySelector(".rest.done")) mount.innerHTML=""; },9000); return; } paint(false); },1000); }
 function renderRest(){ /* timer self-manages its mount */ }
 function tickClock(){ const el=document.getElementById("elapsed"); if(!el||!activeSession){ stopClock(); return; } const sec=Math.max(0,Math.floor((Date.now()-new Date(activeSession.startedAt))/1000)); el.textContent=Math.floor(sec/60)+":"+String(sec%60).padStart(2,"0"); const sp=document.getElementById("setprog"); if(sp){ const c=loggerCounts(); sp.textContent=c.done+"/"+c.total; } }
 function startClock(){ stopClock(); tickClock(); loggerClock=setInterval(tickClock,1000); }
@@ -1065,16 +1166,21 @@ function wireScreen(){
   // P1 — tap ✓ commits the ghost values (one-tap log); only edit what you changed
   document.querySelectorAll("[data-log]").forEach(b=>b.onclick=()=>{ const [ei,si]=b.dataset.log.split("-").map(Number); const en=activeSession.entries[ei]; const st=en.sets[si];
     if(st.type!=="warm"){ const g=ghostFor(en,si); if((st.weight===""||st.weight==null)&&g.w!=="") st.weight=g.w; if((st.reps===""||st.reps==null)&&g.r!=="") st.reps=g.r; }
-    st.done=true; saveActive(); const ex=exById(en.exId); if(ex) startRest(ex.rest,ex.name); render(); });
-  // keyboard flow: weight → reps → log
-  document.querySelectorAll('.inp[data-f="weight"]').forEach(inp=>{ inp.onkeydown=(e)=>{ if(e.key==="Enter"){ e.preventDefault(); const r=document.querySelector('.inp[data-f="reps"][data-ei="'+inp.dataset.ei+'"][data-si="'+inp.dataset.si+'"]'); if(r) r.focus(); } }; });
-  document.querySelectorAll('.inp[data-f="reps"]').forEach(inp=>{ inp.onkeydown=(e)=>{ if(e.key==="Enter"){ e.preventDefault(); inp.blur(); const lg=document.querySelector('[data-log="'+inp.dataset.ei+'-'+inp.dataset.si+'"]'); if(lg) lg.click(); } }; });
+    st.done=true; saveActive(); const ex=exById(en.exId);
+    let nextInfo="exercise complete"; for(let k=si+1;k<en.sets.length;k++){ if(en.sets[k].type!=="warm"&&!isLogged(en.sets[k])){ nextInfo="next: set "+(k+1); break; } }
+    if(ex) startRest(ex.rest,ex.name,nextInfo); render(); });
+  // keyboard flow: first field → second field → log set (works in either input order)
+  document.querySelectorAll(".setrow").forEach(row=>{ const inps=row.querySelectorAll(".inp"); if(inps.length<2) return;
+    inps[0].setAttribute("enterkeyhint","next"); inps[1].setAttribute("enterkeyhint","done");
+    inps[0].onkeydown=(e)=>{ if(e.key==="Enter"){ e.preventDefault(); inps[1].focus(); } };
+    inps[1].onkeydown=(e)=>{ if(e.key==="Enter"){ e.preventDefault(); inps[1].blur(); const lg=row.querySelector("[data-log]"); if(lg) lg.click(); } }; });
   // long-press a set number to toggle warm-up (off the permanent row)
   document.querySelectorAll("[data-snum]").forEach(sn=>{ let t=null; const fire=()=>{ const [ei,si]=sn.dataset.snum.split("-").map(Number); const st=activeSession.entries[ei].sets[si]; st.type=st.type==="warm"?"work":"warm"; saveActive(); try{navigator.vibrate&&navigator.vibrate(25);}catch(e){} render(); };
     const start=(e)=>{ t=setTimeout(fire,450); }; const cancel=()=>{ if(t){clearTimeout(t); t=null;} };
     sn.addEventListener("mousedown",start); sn.addEventListener("touchstart",start,{passive:true}); ["mouseup","mouseleave","touchend","touchmove","touchcancel"].forEach(ev=>sn.addEventListener(ev,cancel)); });
   document.querySelectorAll("[data-expand]").forEach(b=>b.onclick=()=>{ const i=+b.dataset.expand; const en=activeSession.entries[i]; const cur=loggerCurrentIndex(); const def=(!entryDone(en)||i===cur); loggerOpen[i]=!(loggerOpen.hasOwnProperty(i)?loggerOpen[i]:def); render(); });
   document.querySelectorAll("[data-more]").forEach(b=>b.onclick=()=>openSheet("exmenu",+b.dataset.more));
+  document.querySelectorAll("[data-tips]").forEach(b=>b.onclick=()=>openSheet("tips",b.dataset.tips));
   document.querySelectorAll("[data-addset]").forEach(b=>b.onclick=()=>{ const ei=+b.dataset.addset; activeSession.entries[ei].sets.push({weight:"",reps:"",type:"work",done:false}); saveActive(); render(); });
   document.querySelectorAll("[data-rest]").forEach(b=>b.onclick=()=>startRest(+b.dataset.rest,b.dataset.exname));
   document.querySelectorAll("[data-swap]").forEach(b=>b.onclick=()=>openSheet("swap",+b.dataset.swap));
@@ -1091,6 +1197,11 @@ function wireScreen(){
   document.querySelectorAll("[data-exhist]").forEach(b=>b.onclick=()=>openSheet("exhist",b.dataset.exhist));
   document.querySelectorAll("[data-closedetail]").forEach(b=>b.onclick=()=>{ bodyDetail=null; render(); });
   // settings
+  // per-user training profile
+  document.querySelectorAll("[data-tier]").forEach(b=>b.onclick=()=>{ const m=b.dataset.tier; const order=["primary","secondary","maintenance"]; S.muscles[m].tier=order[(order.indexOf(S.muscles[m].tier)+1)%3]; save(); render(); });
+  act("target-inc",()=>{ S.settings.sessionsPerWeek=Math.min(7,(S.settings.sessionsPerWeek||4)+1); save(); render(); });
+  act("target-dec",()=>{ S.settings.sessionsPerWeek=Math.max(1,(S.settings.sessionsPerWeek||4)-1); save(); render(); });
+  document.querySelectorAll("[data-inputorder]").forEach(b=>b.onclick=()=>{ S.settings.inputOrder=b.dataset.inputorder; save(); render(); });
   document.querySelectorAll("[data-pref]").forEach(b=>b.onclick=()=>{ const e=exById(b.dataset.pref); const order=["love","like","neutral","avoid"]; e.pref=order[(order.indexOf(e.pref)+1)%4]; save(); pushExercisePref(e); render(); });
   document.querySelectorAll("[data-avail]").forEach(b=>b.onclick=()=>{ const e=exById(b.dataset.avail); const order=["always","usually","sometimes","rarely","no"]; e.avail=order[(order.indexOf(e.avail)+1)%5]; save(); pushExercisePref(e); render(); });
   act("logbw",()=>{ const v=+document.getElementById("bwInput").value; if(v>0){ const row={id:uid(),date:iso(new Date()),kg:v,synced:false}; S.bodyweight.push(row); save(); pushMeasurementRow(row.id,row.date,"bodyweight",v); render(); } });
@@ -1100,6 +1211,7 @@ function wireScreen(){
 }
 
 /* ============================================================================ BOOT — autosave recovery + back-guard + session ============================================================================ */
+try{ document.title=APP_NAME+" — "+APP_TAGLINE; }catch(e){}
 activeSession=loadActive(); if(activeSession) viewingLogger=false;   // P1: recover unfinished workout, show resume banner
 window.addEventListener("beforeunload",(e)=>{ if(activeSession && activeSession.entries.reduce((n,en)=>n+workingSets(en).length,0)>0){ e.preventDefault(); e.returnValue=""; } });
 window.addEventListener("popstate",()=>{ if(activeSession && viewingLogger){ try{ history.pushState({iron:"workout"},""); }catch(e){}
