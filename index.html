@@ -7,38 +7,39 @@
 <meta name="theme-color" content="#06080B" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Sora:wght@600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet" />
 <style>
 :root{
-  --bg:#06080B; --panel:#0E1218; --panel2:#151B24; --line:#1E2731;
-  --text:#EAF0F6; --muted:#7F8B9C; --faint:#4A5563;
-  --accent:#2DE2E6; --accent-ink:#06181A; --hot:#FF6A3D;
-  --grey:#39424E; --green:#2FD27A; --amber:#FFC23D; --red:#FF4D6D; --blue:#3B9EFF; --gold:#F4C84A; --violet:#A87BFF;
-  --r:16px; --rs:11px;
+  --bg:#0B0F15; --panel:#161D27; --panel2:#1E2733; --line:#28323F; --line2:#34404E;
+  --text:#F4F7FB; --muted:#94A0AE; --faint:#5E6976;
+  --accent:#3B82F6; --accent-ink:#FFFFFF; --hot:#FF8A4C;
+  --grey:#3A4654; --green:#34C759; --amber:#FF9F0A; --red:#FF5A52; --blue:#5AC8FA; --gold:#E0A53C; --violet:#BF7AF0;
+  --r:18px; --rs:12px; --ui:'Inter'; --display:'Sora';
+  --shadow:0 1px 0 rgba(255,255,255,.02), 0 18px 40px -26px rgba(0,0,0,.8);
 }
 *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
 html,body{margin:0;padding:0;}
-body{background:var(--bg); color:var(--text); font-family:'Sora',system-ui,sans-serif; font-size:15px; line-height:1.45; padding-bottom:86px;
-  background-image:radial-gradient(900px 500px at 80% -10%, rgba(45,226,230,.07), transparent 60%),radial-gradient(700px 500px at -10% 10%, rgba(255,106,61,.05), transparent 55%); background-attachment:fixed;}
+body{background:var(--bg); color:var(--text); font-family:var(--ui),system-ui,sans-serif; font-size:15px; line-height:1.5; padding-bottom:86px;
+}
 .mono{font-family:'JetBrains Mono',monospace;}
 .app{max-width:520px; margin:0 auto; padding:0 16px; position:relative; z-index:1;}
-h1,h2,h3{margin:0; font-weight:700; letter-spacing:-.01em;}
+h1,h2,h3{margin:0; font-weight:700; letter-spacing:-.015em; font-family:var(--display),var(--ui),sans-serif;}
 button{font-family:inherit; cursor:pointer; border:none; color:inherit;}
 .muted{color:var(--muted);} .tiny{font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted);}
 .top{display:flex; align-items:center; justify-content:space-between; padding:18px 0 8px;}
 .brand{display:flex; align-items:center; gap:10px; font-weight:800;}
-.brand .dot{width:12px; height:12px; border-radius:50%; background:var(--accent); box-shadow:0 0 16px var(--accent);}
+.brand .dot{width:11px; height:11px; border-radius:3px; background:var(--accent);}
 .brand small{display:block; font-weight:500; font-size:10px; letter-spacing:.22em; color:var(--muted); text-transform:uppercase;}
-.modepill{font-size:11px; padding:6px 11px; border-radius:999px; border:1px solid var(--line); color:var(--accent); background:rgba(45,226,230,.06);}
+.modepill{font-size:11px; font-weight:600; padding:6px 11px; border-radius:999px; border:1px solid var(--line); color:var(--muted); background:var(--panel2);}
 .weekstrip{display:flex; gap:6px; margin:10px 0 4px;}
 .day{flex:1; text-align:center; padding:9px 0 8px; border-radius:var(--rs); background:var(--panel); border:1px solid var(--line);}
 .day b{display:block; font-size:11px; color:var(--muted);} .day .pip{margin:5px auto 0; width:9px; height:9px; border-radius:50%; background:var(--grey);}
-.day.done .pip{background:var(--green); box-shadow:0 0 10px var(--green);} .day.today{border-color:var(--accent); background:rgba(45,226,230,.06);} .day.today b{color:var(--accent);}
+.day.done .pip{background:var(--green);} .day.today{border-color:var(--accent); background:rgba(59,130,246,.08);} .day.today b{color:var(--accent);}
 .card{background:var(--panel); border:1px solid var(--line); border-radius:var(--r); padding:16px; margin:12px 0;}
-.card.glow{border-color:rgba(45,226,230,.4); box-shadow:0 0 0 1px rgba(45,226,230,.12), 0 14px 50px rgba(45,226,230,.10);}
-.cta{width:100%; padding:20px; border-radius:var(--r); font-weight:800; font-size:18px; color:var(--accent-ink); background:linear-gradient(135deg,#48ECEF,#2DE2E6 55%,#16B8BC); box-shadow:0 12px 40px rgba(45,226,230,.30); display:flex; align-items:center; justify-content:center; gap:10px;}
+.card{box-shadow:var(--shadow);} .card.glow{border-color:var(--line2); background:linear-gradient(180deg,var(--panel2),var(--panel));}
+.cta{width:100%; padding:17px; border-radius:14px; font-family:var(--display); font-weight:800; font-size:16px; color:var(--accent-ink); background:var(--accent); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px;}
 .cta:active{transform:translateY(1px);} .cta .sub{display:block; font-size:11px; font-weight:600; letter-spacing:.06em; opacity:.7; text-transform:uppercase;}
-.cta.secondary{background:var(--panel2); color:var(--text); border:1px solid var(--line); box-shadow:none; font-size:15px; padding:15px;}
+.cta.secondary{background:var(--panel2); color:var(--text); border:1px solid var(--line); box-shadow:none; font-size:14px; font-weight:600; padding:14px; font-family:var(--ui);}
 .btn{padding:11px 14px; border-radius:var(--rs); background:var(--panel2); border:1px solid var(--line); font-weight:600; font-size:14px;}
 .btn.accent{background:var(--accent); color:var(--accent-ink); border-color:transparent;} .btn.ghost{background:transparent;}
 .btn.sm{padding:7px 10px; font-size:12px;} .btn.full{width:100%;} .btn.danger{color:var(--red); border-color:rgba(255,77,109,.3);}
@@ -46,7 +47,7 @@ button{font-family:inherit; cursor:pointer; border:none; color:inherit;}
 .resume{background:linear-gradient(135deg,rgba(255,106,61,.16),rgba(255,106,61,.05)); border:1px solid rgba(255,106,61,.5);}
 .exline{display:flex; align-items:center; justify-content:space-between; padding:11px 0; border-top:1px solid var(--line);} .exline:first-child{border-top:none;}
 .exline .nm{font-weight:600;} .exline .meta{font-size:12px; color:var(--muted);}
-.sets{font-family:'JetBrains Mono',monospace; font-size:13px; color:var(--accent); background:rgba(45,226,230,.08); padding:3px 9px; border-radius:8px; white-space:nowrap;}
+.sets{font-family:'JetBrains Mono',monospace; font-size:13px; color:var(--text); background:var(--panel2); border:1px solid var(--line); padding:3px 9px; border-radius:8px; white-space:nowrap;}
 .tag{display:inline-block; font-size:10px; padding:2px 7px; border-radius:6px; background:var(--panel2); color:var(--muted); margin-left:6px;}
 .tag.love{color:var(--gold);} .tag.avoid{color:var(--red);}
 .logex{margin:12px 0;} .logex .hd{display:flex; justify-content:space-between; align-items:flex-start; gap:10px;} .logex .hd .nm{font-weight:700; font-size:16px;}
@@ -55,7 +56,9 @@ button{font-family:inherit; cursor:pointer; border:none; color:inherit;}
 .exacts button.swap{color:var(--accent);} .exacts button.rm{color:var(--red);}
 .histline{font-size:12px; color:var(--muted); margin-top:3px;} .histline b{color:#AEB9C7; font-weight:600;} .target{color:var(--accent); font-weight:600;}
 .setgrid{margin-top:11px;}
-.sethead,.setrow{display:grid; grid-template-columns:30px 1fr 1fr 52px; gap:8px; align-items:center;}
+.sethead,.setrow{display:grid; grid-template-columns:24px 42px 1fr 1fr 52px; gap:7px; align-items:center;}
+.setrow.cur{background:rgba(59,130,246,.10); border-radius:12px; box-shadow:inset 0 0 0 1px rgba(59,130,246,.28); padding:5px 6px; margin:7px -6px 0;}
+.prevc{font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--faint); text-align:center; white-space:nowrap; overflow:hidden;}
 .sethead{font-size:10px; letter-spacing:.07em; text-transform:uppercase; color:var(--faint); margin-bottom:5px; padding:0 2px;}
 .setrow{margin-bottom:7px;} .setrow .sn{cursor:pointer; -webkit-user-select:none; user-select:none; font-family:'JetBrains Mono',monospace; color:var(--muted); font-size:13px; text-align:center;}
 .setrow.warm .sn{color:var(--amber);}
@@ -80,7 +83,7 @@ button{font-family:inherit; cursor:pointer; border:none; color:inherit;}
 .opt .nm{font-weight:600;} .opt .meta{font-size:11.5px; color:var(--muted);}
 .mgrid{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px;}
 .mcard{background:var(--panel2); border:1px solid var(--line); border-radius:12px; padding:11px; cursor:pointer; position:relative; overflow:hidden;}
-.mcard .bartop{position:absolute; top:0; left:0; right:0; height:4px;}
+.mcard{padding:0;} .mcard .bartop{position:absolute; top:0; left:0; right:0; height:4px;} .mcard .mbody{padding:13px;}
 .mcard .mlabel{font-weight:600; font-size:13.5px; margin-top:3px;}
 .mcard .stat{font-family:'JetBrains Mono',monospace; font-size:18px; margin-top:4px;}
 .mcard .gb{font-size:9px; padding:2px 6px; border-radius:5px; margin-top:6px; display:inline-block; font-weight:700;}
@@ -119,7 +122,7 @@ button{font-family:inherit; cursor:pointer; border:none; color:inherit;}
 .recwarn{font-size:11.5px; color:var(--amber); background:rgba(255,194,61,.10); border:1px solid rgba(255,194,61,.3); border-radius:9px; padding:7px 10px; margin:8px 0 2px;}
 .inp.ghosted::placeholder{color:var(--accent); opacity:.5; font-weight:600;}
 .stickfin{position:fixed; left:0; right:0; bottom:86px; z-index:45; display:flex; justify-content:center; pointer-events:none; padding:0 16px;}
-.stickfin .b{pointer-events:auto; width:100%; max-width:488px; padding:15px; border-radius:14px; font-weight:800; font-size:16px; color:var(--accent-ink); background:linear-gradient(135deg,#48ECEF,#2DE2E6 55%,#16B8BC); box-shadow:0 10px 34px rgba(45,226,230,.32);}
+.stickfin .b{pointer-events:auto; width:100%; max-width:488px; padding:15px; border-radius:14px; font-weight:800; font-size:16px; color:var(--accent-ink); background:var(--accent); box-shadow:0 10px 30px -10px rgba(0,0,0,.6);}
 .stickfin .b:active{transform:translateY(1px);}
 /* --- Insights v5 --- */
 .icard{background:var(--panel); border:1px solid var(--line); border-left:3px solid var(--accent); border-radius:12px; padding:12px 14px; margin:10px 0;}
@@ -700,15 +703,21 @@ function weekStatus(){ const sess=weekSessions(); const vol=weeklyVolume(sess); 
   Object.entries(S.muscles).forEach(([m,cfg])=>{ const v=vol[m]; if(v>=0.5) trained.push(m); if(v<cfg.min){ (cfg.tier==="primary"?primaryBelow:otherBelow).push(m); } });
   const needsAttention=primaryBelow.concat(otherBelow).filter(m=>{ const st=recoveryStatus(m); return st!=="recovering"&&st!=="overloaded"; });
   return {sess:sess.length, target, vol, primaryBelow, otherBelow, trained, needsAttention}; }
-function weekCard(){ const w=weekStatus();
-  const dots=Array.from({length:Math.max(w.target,w.sess)},(_,i)=>'<span style="width:13px;height:13px;border-radius:50%;background:'+(i<w.sess?'var(--green)':'var(--panel2)')+';border:1px solid var(--line);display:inline-block"></span>').join(" ");
+function weekCard(){ const w=weekStatus(); const mom=momentumScore();
+  const setsLogged=weekSessions().reduce((a,x)=>a+sessionSets(x),0); const setTarget=w.target*12;
+  const primaryAll=Object.values(S.muscles).filter(c=>c.tier==="primary").length; const primaryMet=primaryAll-w.primaryBelow.length; const primaryPct=primaryAll?Math.round(primaryMet/primaryAll*100):100;
   const need=w.needsAttention.slice(0,5).map(m=>S.muscles[m].label.toLowerCase());
   const recov=Object.keys(S.muscles).filter(m=>{const st=recoveryStatus(m); return st==="recovering"||st==="overloaded";}).slice(0,2).map(m=>S.muscles[m].label.toLowerCase());
   const al=activeLimitation(); const avoid=[]; if(recov.length) avoid.push(recov.join(", ")+" recovering"); if(al) avoid.push(al.name.toLowerCase()+" — exercises excluded");
-  const mom=momentumScore(); return '<div class="card"><div style="display:flex;justify-content:space-between;align-items:center"><div class="tiny">This week · Mon–Sun</div><div class="mono" style="font-weight:700;color:'+(w.sess>=w.target?'var(--green)':'var(--accent)')+'">'+w.sess+' / '+w.target+' sessions</div></div><div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px"><span class="histline">Momentum</span><span class="statuspill" style="background:'+momColor(mom.score)+'22;color:'+momColor(mom.score)+'">'+mom.score+'/100 · '+mom.label+'</span></div><div style="margin-top:9px">'+dots+'</div>'
-    +(need.length?'<div class="histline" style="margin-top:11px"><b>Still needs:</b> '+need.join(", ")+'</div>':'<div class="histline" style="margin-top:11px;color:var(--green)">All priority muscles met this week ✓</div>')
+  const dots=Array.from({length:Math.max(w.target,w.sess)},(_,i)=>'<span style="width:11px;height:11px;border-radius:3px;background:'+(i<w.sess?'var(--accent)':'var(--panel2)')+';border:1px solid var(--line);display:inline-block"></span>').join(" ");
+  const row=(l,v,c)=>'<div class="exline" style="padding:9px 0"><span class="histline">'+l+'</span><span class="mono" style="font-size:13.5px;color:'+(c||'var(--text)')+'">'+v+'</span></div>';
+  return '<div class="card"><div style="display:flex;justify-content:space-between;align-items:center"><div class="tiny">This week · Mon–Sun</div><div style="display:flex;gap:5px">'+dots+'</div></div><div style="margin-top:6px">'
+    + row("Sessions", w.sess+" / "+w.target, w.sess>=w.target?'var(--green)':'var(--accent)')
+    + row("Effective sets", setsLogged+" / "+setTarget+" min", setsLogged>=setTarget?'var(--green)':'var(--text)')
+    + row("Primary focus", primaryPct+"% complete", primaryPct>=100?'var(--green)':'var(--amber)') + '</div>'
+    +(need.length?'<div class="histline" style="margin-top:8px"><b>Still needs:</b> '+need.join(", ")+'</div>':'<div class="histline" style="margin-top:8px;color:var(--green)">All priority muscles met this week ✓</div>')
     +(avoid.length?'<div class="histline" style="margin-top:3px"><b>Avoid today:</b> '+avoid.join("; ")+'</div>':'')
-    +'<button class="btn ghost sm full" data-act="goto-stats-week" style="margin-top:10px">Open full week view →</button></div>'; }
+    +'<div class="row" style="margin-top:11px"><button class="btn ghost sm" data-act="momentum-explain" style="flex:1">Momentum '+mom.score+' · '+mom.label+'</button><button class="btn ghost sm" data-act="goto-stats-week" style="flex:1">Week view →</button></div></div>'; }
 function weekSummaryCard(){ const w=weekStatus();
   const chip=(m)=>'<span class="statuspill" style="background:var(--panel2);color:var(--muted);margin:0 5px 5px 0;display:inline-block">'+S.muscles[m].label+'</span>';
   const next=muscleScores({}).filter(s=>s.trainable&&s.v<s.cfg.gl).slice(0,4).map(s=>S.muscles[s.m].label.toLowerCase());
@@ -757,13 +766,16 @@ function loggerEx(en,i){ const e=exById(en.exId); const cur=loggerCurrentIndex()
   const tr=exerciseTrend(en.exId); const trendChip='<span class="tag" style="color:'+tr.c+';border:1px solid '+tr.c+'44">'+tr.label+'</span>';
   return '<div class="card logex" data-ex="'+i+'"><div class="hd"><div style="flex:1" data-expand="'+i+'"><div class="nm">'+e.name+' '+trendChip+'</div><div class="histline">Last: <b>'+lastStr+'</b></div><div class="histline target">'+(prog.add?'↑ ':'')+'Next: '+prog.note+'</div><div class="histline" style="color:'+tr.c+'">'+tr.note+'</div></div><div class="exmenu"><button class="swap" data-tips="'+en.exId+'" style="color:var(--gold)">Form</button><button class="swap" data-swap="'+i+'">⇄ Swap</button><button class="more" data-more="'+i+'">⋯</button></div></div>'
     +recwarn
-    +'<div class="setgrid"><div class="sethead"><span>#</span>'+(inputOrder()==="rw"?'<span>reps</span><span>kg</span>':'<span>kg</span><span>reps</span>')+'<span>log</span></div>'+rows+'</div>'
+    +'<div class="setgrid"><div class="sethead"><span>#</span><span>prev</span>'+(inputOrder()==="rw"?'<span>reps</span><span>kg</span>':'<span>kg</span><span>reps</span>')+'<span>log</span></div>'+rows+'</div>'
     +'<button class="btn ghost sm" data-addset="'+i+'" style="margin-top:4px">+ set</button>'+flaghtml+winhtml+'</div>'; }
-function setRow(ei,si,s){ const warm=s.type==="warm"; const g=warm?{w:"",r:""}:ghostFor(activeSession.entries[ei],si); const wEmpty=(s.weight===""||s.weight==null), rEmpty=(s.reps===""||s.reps==null);
+function prevForSet(en,si){ const last=exerciseHistory(en.exId).filter(h=>h.sessionId!==activeSession.editingId)[0]; if(!last) return ""; const ps=last.sets[si]; return ps?((ps.weight||0)+"×"+(ps.reps||0)):""; }
+function isCurrentSet(en,si){ const s=en.sets[si]; if(s.type==="warm"||isLogged(s)) return false; for(let k=0;k<si;k++){ if(en.sets[k].type!=="warm"&&!isLogged(en.sets[k])) return false; } return true; }
+function setRow(ei,si,s){ const en=activeSession.entries[ei]; const warm=s.type==="warm"; const g=warm?{w:"",r:""}:ghostFor(en,si); const wEmpty=(s.weight===""||s.weight==null), rEmpty=(s.reps===""||s.reps==null);
+  const prev=warm?"":prevForSet(en,si); const cur=isCurrentSet(en,si);
   const wInp='<input class="inp'+(wEmpty&&g.w!==""?' ghosted':'')+'" inputmode="decimal" data-f="weight" data-ei="'+ei+'" data-si="'+si+'" value="'+(s.weight==null?"":s.weight)+'" placeholder="'+(g.w!==""?g.w:"–")+'">';
   const rInp='<input class="inp'+(rEmpty&&g.r!==""?' ghosted':'')+'" inputmode="numeric" data-f="reps" data-ei="'+ei+'" data-si="'+si+'" value="'+(s.reps==null?"":s.reps)+'" placeholder="'+(g.r!==""?g.r:"–")+'">';
   const ro=inputOrder()==="rw"; const first=ro?rInp:wInp, second=ro?wInp:rInp;
-  return '<div class="setrow '+(warm?'warm':'')+'"><span class="sn" data-snum="'+ei+'-'+si+'" title="long-press to mark warm-up">'+(warm?'W':si+1)+'</span>'+first+second
+  return '<div class="setrow '+(warm?'warm ':'')+(cur?'cur':'')+'"><span class="sn" data-snum="'+ei+'-'+si+'" title="long-press to mark warm-up">'+(warm?'W':si+1)+'</span><span class="prevc">'+(prev||"·")+'</span>'+first+second
     +'<button class="chk '+(isLogged(s)?'on':'')+'" data-log="'+ei+'-'+si+'" aria-label="log set">✓</button></div>'; }
 function evalWins(en,bests){ const ws=workingSets(en); if(!ws.length||bests.bestW<=0) return []; const out=[]; let mw=0,m1=0,vol=0;
   ws.forEach(s=>{ const w=+s.weight||0,r=+s.reps||0; vol+=w*r; if(w>mw)mw=w; const e=est1RM(w,r); if(e>m1)m1=e; });
@@ -796,6 +808,10 @@ function renderSheet(){ const m=document.getElementById("sheetmount"); if(!sheet
     inner=w?('<div class="tiny">'+fmtDate(w.completedAt)+'</div><h2 style="font-size:17px;margin:6px 0 12px">'+(w.title||"Workout")+'</h2>'+w.entries.map(en=>{ const ex=exById(en.exId); const ws=workingSets(en);
       return '<div class="card" style="margin:8px 0;padding:12px"><div class="nm" style="font-weight:700">'+(ex?ex.name:en.exId)+'</div><div class="muted" style="font-size:12px;margin-top:4px">'+(en.sets.map(s=>(s.type==="warm"?"W ":"")+(s.weight||0)+"\u00d7"+(s.reps||0)).join("   ")||"\u2014")+'</div><div class="histline">'+ws.length+' working sets · '+musLabels(ex||{m:{}})+'</div></div>'; }).join("")
       +'<button class="btn full" data-editfromview="'+w.id+'" style="margin-top:6px">Edit this workout</button>'):'<div class="empty">Not found.</div>'; }
+  else if(sheet.type==="momentum"){ const m=momentumScore(); const w=weekStatus();
+    const rows=[["Sessions this week",w.sess+" / "+w.target],["Primary muscles met",m.primaryMet+" / "+m.primaryAll],["Weekly target streak",m.streak+" wk"],["Trained recently",m.consist>=0?"yes":"no"]];
+    inner='<div class="tiny">Momentum · '+m.score+' / 100 · '+m.label+'</div><p class="muted" style="font-size:12.5px;margin:8px 0 12px">A light motivation score — the concrete weekly numbers are what actually matter. It blends:</p>'
+      +rows.map(r=>'<div class="contrib"><div><b>'+r[0]+'</b></div><span class="c-ef">'+r[1]+'</span></div>').join(""); }
   else if(sheet.type==="mperiod"){ const m=sheet.data; const cfg=S.muscles[m]; const sess=periodSessions(); const con=muscleContrib(m,sess); const plabel=statsPeriod==="week"?"this week (Mon–Sun)":statsPeriod==="all"?"all time":"last "+statsPeriod+" days";
     inner='<div class="tiny">'+cfg.label+' · '+plabel+'</div><div class="kpi" style="margin-top:10px"><div class="k"><b>'+con.total.toFixed(1)+'</b><span>effective sets</span></div><div class="k"><b>'+con.direct.toFixed(1)+'</b><span>direct</span></div><div class="k"><b>'+con.secondary.toFixed(1)+'</b><span>secondary</span></div></div>'
       +'<div class="tiny" style="margin-top:14px">What made this number</div><div style="margin-top:6px">'+(con.rows.length?con.rows.map(r=>'<div class="contrib"><div><b>'+r.name+'</b><div class="muted" style="font-size:11px">'+r.sets+' sets × '+r.credit+' credit · '+(r.credit>=1?"direct":"secondary")+' · last '+fmtAgo(r.dates.sort().slice(-1)[0])+'</div></div><span class="c-ef">'+r.effective.toFixed(1)+'</span></div>').join(""):'<div class="empty" style="padding:10px">No sets in this period.</div>')+'</div>'; }
@@ -824,7 +840,7 @@ function renderSheet(){ const m=document.getElementById("sheetmount"); if(!sheet
   else if(sheet.type==="recap"){ const r=sheet.data;
     inner='<div style="text-align:center;padding:2px 0 4px"><div class="tiny" style="color:var(--accent)">Session complete</div><h2 style="font-size:20px;margin:4px 0">'+r.title+'</h2></div>'
       +'<div class="kpi" style="margin-top:6px"><div class="k"><b>'+(r.dur||"—")+'</b><span>minutes</span></div><div class="k"><b>'+r.setsN+'</b><span>working sets</span></div><div class="k"><b>'+r.exN+'</b><span>exercises</span></div></div>'
-      +(r.coach?'<div class="card" style="margin:12px 0 0;border-color:rgba(45,226,230,.3);background:rgba(45,226,230,.05)"><div class="tiny" style="color:var(--accent)">Coach says</div><div class="ibody" style="margin-top:4px;color:#C6D0DC">'+r.coach+'</div></div>':"")
+      +(r.coach?'<div class="card" style="margin:12px 0 0;border-color:rgba(59,130,246,.32);background:rgba(59,130,246,.07)"><div class="tiny" style="color:var(--accent)">Coach says</div><div class="ibody" style="margin-top:4px;color:#C6D0DC">'+r.coach+'</div></div>':"")
       +(r.muscles.length?'<div class="histline" style="margin-top:10px;text-align:center">Trained: '+r.muscles.join(" · ")+'</div>':"")
       +(r.prs.length?'<div class="tiny" style="margin-top:14px">Personal records 🏆</div><div style="margin-top:4px">'+r.prs.map(p=>'<div class="contrib"><div><b>'+p+'</b></div><span class="badge pr">PR</span></div>').join("")+'</div>':"")
       +'<div class="tiny" style="margin-top:14px">Volume added by muscle</div><div style="margin-top:6px">'+(r.parts.length?r.parts.map(p=>'<div class="exline" style="padding:6px 0"><div class="nm" style="font-size:13px">'+p.label+'</div><span class="sets">'+p.v.toFixed(1)+' sets</span></div>').join(""):'<div class="empty" style="padding:10px">No working sets logged.</div>')+'</div>'
@@ -994,20 +1010,22 @@ function orderScore(c){ const ex=exById(c.exId); if(!ex) return 100; const pm=pr
 function positionTag(ex,i,total){ if(i===0) return "First"; if(ex.type==="isolation"&&(ex.fatigue||1)<=1.2&&i>=total-1) return "Finisher"; return ""; }
 function viewBody(){
   const groups=BODY_GROUPS.map(([title,ms])=>{ const ordered=ms.slice().sort((a,b)=>TIER_RANK[S.muscles[a].tier]-TIER_RANK[S.muscles[b].tier]);
-    const cards=ordered.map(m=>{ const cfg=S.muscles[m]; const rd=recoveryDisplay(m); const lt=lastTrainedMap()[m]; const v=weeklyVolume()[m];
-      const below=v<cfg.min, over=v>=cfg.cap, above=v>=cfg.gh;
-      const barC=below?"var(--blue)":over?"var(--red)":above?"var(--amber)":"var(--green)";
-      const fill=Math.max(4,Math.min(100,Math.round(v/cfg.cap*100))); const tgt=Math.round(cfg.gl/cfg.cap*100);
-      const exc=below?'<span class="gb" style="background:var(--blue)22;color:var(--blue)">Below min</span>':over?'<span class="gb" style="background:var(--red)22;color:var(--red)">Over cap</span>':'';
-      return '<div class="mcard" data-muscle="'+m+'"><div class="bartop" style="background:'+rd.c+'"></div>'
+    const cards=ordered.map(m=>{ const cfg=S.muscles[m]; const rd=recoveryDisplay(m); const lt=lastTrainedMap()[m]; const v=weeklyVolume()[m]; const con=muscleContrib(m,weekSessions());
+      const below=v<cfg.min, over=v>=cfg.cap;
+      const barC=below?"var(--blue)":over?"var(--red)":"var(--accent)";
+      const fill=Math.max(3,Math.min(100,Math.round(v/cfg.gh*100))); const tgt=Math.round(cfg.min/cfg.gh*100);
+      const exc=below?'<span class="gb" style="background:rgba(90,200,250,.14);color:var(--blue)">Below min</span>':over?'<span class="gb" style="background:rgba(255,90,82,.14);color:var(--red)">Over cap</span>':'';
+      return '<div class="mcard" data-muscle="'+m+'"><div class="bartop" style="background:'+rd.c+'"></div><div class="mbody">'
         +'<div class="mlabel">'+cfg.label+'</div>'
-        +'<div style="font-size:10.5px;font-weight:700;color:'+rd.c+';margin-top:3px">'+rd.label+'</div>'
-        +'<div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:3px"><span class="histline" style="font-size:10px">'+(lt?fmtAgo(lt.date):"never trained")+'</span><span class="mono" style="font-size:12px;color:var(--muted)">'+v.toFixed(1)+'/'+cfg.gh+'</span></div>'
-        +'<div class="bar" style="margin-top:6px"><i style="width:'+fill+'%;background:'+barC+'"></i><span class="capmark" style="left:'+tgt+'%"></span></div>'
-        +(exc?'<div style="margin-top:7px">'+exc+'</div>':'')
-        +'</div>'; }).join("");
+        +'<div style="font-size:11px;font-weight:600;color:'+rd.c+';margin-top:3px">'+rd.label+'</div>'
+        +'<div class="histline" style="font-size:10.5px;margin-top:1px">'+(lt?fmtAgo(lt.date):"never trained")+'</div>'
+        +'<div class="histline mono" style="font-size:10.5px;margin-top:7px">Direct '+con.direct.toFixed(1)+' · Sec '+con.secondary.toFixed(1)+'</div>'
+        +'<div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:2px"><span class="histline" style="font-size:10px">effective sets</span><span class="mono" style="font-size:12.5px;color:var(--text)">'+v.toFixed(1)+'<span style="color:var(--faint)">/'+cfg.min+' min</span></span></div>'
+        +'<div class="bar" style="margin-top:5px"><i style="width:'+fill+'%;background:'+barC+'"></i><span class="capmark" style="left:'+tgt+'%"></span></div>'
+        +(exc?'<div style="margin-top:8px">'+exc+'</div>':'')
+        +'</div></div>'; }).join("");
     return '<div class="muted tiny" style="margin:14px 2px 2px">'+title+'</div><div class="mgrid">'+cards+'</div>'; }).join("");
-  return '<div class="card"><div class="tiny">Muscle status</div><p class="muted" style="font-size:12px;margin:6px 0 8px">Colour = <b>can I train it today?</b> (recovery) · Bar = <b>have I given it enough this week?</b> (volume vs target). Tap a muscle for the full breakdown.</p>'
+  return '<div class="card"><div class="tiny">Muscle status</div><p class="muted" style="font-size:12px;margin:6px 0 8px">Colour = <b>recovery</b> · Direct/Sec = where the volume came from · Bar = <b>effective sets vs weekly minimum</b>. Tap a muscle for full attribution.</p>'
     +'<div style="display:flex;gap:10px;flex-wrap:wrap;font-size:10px" class="muted"><span>● <span style="color:var(--green)">Ready</span></span><span>● <span style="color:var(--amber)">Caution · nearly ready</span></span><span>● <span style="color:var(--violet)">Recovering</span></span><span>● <span style="color:var(--red)">Overloaded</span></span><span>● <span style="color:var(--grey)">Untrained</span></span></div></div>'
     +groups+'<div id="bodydetail">'+(bodyDetail?muscleDetail(bodyDetail):"")+'</div>'; }
 function muscleDetail(m){ const cfg=S.muscles[m]; const st=recoveryStatus(m); const rd=recoveryDisplay(m); const g=goalStatus(m); const v=weeklyVolume()[m]; const lt=lastTrainedMap()[m]; const con=muscleContrib(m); const wait=readyInHours(m);
@@ -1155,6 +1173,7 @@ function wireScreen(){
   act("add-ex",()=>openSheet("add"));
   act("goto-body",()=>go("body")); act("goto-history",()=>go("history"));
   act("goto-stats-week",()=>{ statsPeriod="week"; go("stats"); });
+  act("momentum-explain",()=>openSheet("momentum"));
   act("signout",signOut);
   // readiness scale buttons
   document.querySelectorAll("[data-rscale]").forEach(b=>b.onclick=()=>{ const [f,v]=b.dataset.rscale.split("-"); readinessDraft[f]=+v; document.getElementById("app").innerHTML=header()+'<div class="reveal">'+viewReadiness()+'</div>'; wireScreen(); });
