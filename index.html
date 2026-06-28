@@ -169,7 +169,7 @@ button{font-family:inherit; cursor:pointer; border:none; color:inherit;}
 /* ============================================================================
    CONFIG — edit freely; first run seeds this, your in-app edits persist.
    ============================================================================ */
-const CONFIG_VERSION = 2; /* engine+ui revision: recovery-aware v3 */
+const CONFIG_VERSION = 5; /* v5: confirmed SportsArt DF-105 bi/tri machine */
 const SUPABASE_URL = "https://utlhzxbjxvsyluyslfhe.supabase.co";
 const SUPABASE_KEY = "sb_publishable_xNfADG84azbA0wc1_ngVYw_MqxOANCz";
 
@@ -182,6 +182,8 @@ const APP_TAGLINE = "Training Command";
    To add a person: add one line below with their real email (lowercase), display name and role.
    role "admin" = full access, "user" = standard. Each user's data is private (per-user RLS). */
 const ADMIN_EMAIL = "adam.nbsearch@gmail.com";
+/* availability confirmed from the gym tour — these override any stale saved/cloud value on load */
+const FORCE_AVAIL = ["assisted_dip","machine_lat_raise","machine_tricep_ext","bitri_machine_curl","bitri_machine_ext","back_extension"];
 const ALLOWED_USERS = {
   "adam.nbsearch@gmail.com": { name:"Adam", role:"admin" },
   "timothywilson0911@gmail.com": { name:"Tim", role:"user" },
@@ -235,7 +237,7 @@ const EXERCISES = [
  {id:"incline_db_curl", name:"DB Incline Curl", type:"isolation", equip:"dumbbell", pattern:"curl", pref:"like", avail:"always", rest:75, rl:8, rh:12, sl:2, sh:3, fatigue:1.3, m:{biceps:1, forearms:.25}},
  {id:"cable_lat_raise", name:"Cable Lateral Raise", type:"isolation", equip:"cable", pattern:"lateral_raise", pref:"love", avail:"always", rest:60, rl:12, rh:20, sl:2, sh:3, fatigue:1, m:{side_delts:1, upper_back:.25}},
  {id:"db_lat_raise", name:"DB Lateral Raise", type:"isolation", equip:"dumbbell", pattern:"lateral_raise", pref:"like", avail:"always", rest:60, rl:12, rh:20, sl:2, sh:3, fatigue:1, m:{side_delts:1, upper_back:.25}},
- {id:"machine_lat_raise", name:"Machine Lateral Raise", type:"isolation", equip:"machine", pattern:"lateral_raise", pref:"like", avail:"usually", rest:60, rl:12, rh:20, sl:2, sh:3, fatigue:1, m:{side_delts:1}},
+ {id:"machine_lat_raise", name:"Machine Lateral Raise", type:"isolation", equip:"machine", pattern:"lateral_raise", pref:"like", avail:"no", rest:60, rl:12, rh:20, sl:2, sh:3, fatigue:1, m:{side_delts:1}},
  {id:"rear_delt_fly", name:"Rear Delt Fly", type:"isolation", equip:"cable", pattern:"rear_delt", pref:"love", avail:"always", rest:60, rl:12, rh:18, sl:2, sh:3, fatigue:1, m:{rear_delts:1, upper_back:.5}},
  {id:"reverse_pec_deck", name:"Reverse Pec Deck", type:"isolation", equip:"machine", pattern:"rear_delt", pref:"like", avail:"always", rest:60, rl:12, rh:18, sl:2, sh:3, fatigue:1, m:{rear_delts:1, upper_back:.5}},
  {id:"face_pull", name:"Cable Face Pull", type:"isolation", equip:"cable", pattern:"rear_delt", pref:"like", avail:"always", rest:60, rl:12, rh:18, sl:2, sh:3, fatigue:1, m:{rear_delts:1, upper_back:.5}},
@@ -245,6 +247,30 @@ const EXERCISES = [
  {id:"leg_curl", name:"Seated Leg Curl", type:"isolation", equip:"machine", pattern:"leg_curl", pref:"like", avail:"always", rest:90, rl:8, rh:15, sl:2, sh:3, fatigue:1.5, m:{hamstrings:1, calves:.25}},
  {id:"calf_raise", name:"Calf Raise", type:"isolation", equip:"machine", pattern:"calf", pref:"like", avail:"always", rest:75, rl:8, rh:15, sl:2, sh:3, fatigue:1, m:{calves:1}},
  {id:"ab_movement", name:"Ab Movement", type:"isolation", equip:"cable", pattern:"ab", pref:"neutral", avail:"always", rest:60, rl:10, rh:20, sl:2, sh:3, fatigue:1, m:{abs:1}},
+ /* ===== v3 gym-specific additions (Plus Fitness Waterloo). Cable/dumbbell/barbell/bench = confirmed.
+    Plate/pin machines that could not be confirmed from the page/tour are avail:"no" — flip to "always" in Settings if your gym has them. ===== */
+ {id:"rope_pushdown", name:"Rope Tricep Pushdown", type:"isolation", equip:"cable", pattern:"pushdown", pref:"like", avail:"always", rest:75, rl:8, rh:15, sl:2, sh:3, fatigue:1.2, m:{triceps:1, forearms:.25}},
+ {id:"straightbar_pushdown", name:"Straight-Bar Pushdown", type:"isolation", equip:"cable", pattern:"pushdown", pref:"like", avail:"always", rest:75, rl:8, rh:15, sl:2, sh:3, fatigue:1.2, m:{triceps:1}},
+ {id:"overhead_rope_ext", name:"Overhead Cable Tricep Ext.", type:"isolation", equip:"cable", pattern:"overhead_ext", pref:"like", avail:"always", rest:75, rl:10, rh:15, sl:2, sh:3, fatigue:1.3, m:{triceps:1}},
+ {id:"single_overhead_ext", name:"Single-Arm Overhead Cable Ext.", type:"isolation", equip:"cable", pattern:"overhead_ext", pref:"neutral", avail:"always", rest:60, rl:10, rh:15, sl:2, sh:3, fatigue:1.2, m:{triceps:1}},
+ {id:"crossbody_ext", name:"Cross-Body Cable Tricep Ext.", type:"isolation", equip:"cable", pattern:"crossbody_ext", pref:"neutral", avail:"always", rest:60, rl:10, rh:15, sl:2, sh:3, fatigue:1.1, m:{triceps:1}},
+ {id:"db_overhead_ext", name:"DB Overhead Tricep Ext.", type:"isolation", equip:"dumbbell", pattern:"overhead_ext", pref:"like", avail:"always", rest:75, rl:8, rh:15, sl:2, sh:3, fatigue:1.4, m:{triceps:1}},
+ {id:"bench_dip", name:"Bench Dip", type:"compound", equip:"bodyweight", pattern:"dip", pref:"neutral", avail:"always", rest:90, rl:8, rh:15, sl:2, sh:3, fatigue:1.5, m:{triceps:1, chest:.5, front_delts:.25}},
+ {id:"assisted_dip", name:"Assisted Dip", type:"compound", equip:"machine", pattern:"dip", pref:"like", avail:"always", rest:120, rl:6, rh:12, sl:2, sh:3, fatigue:2, m:{triceps:1, chest:.5, front_delts:.25}},
+ {id:"machine_tricep_ext", name:"Machine Tricep Extension", type:"isolation", equip:"machine", pattern:"machine_tri", pref:"like", avail:"always", rest:75, rl:8, rh:15, sl:2, sh:3, fatigue:1.3, m:{triceps:1}},
+ {id:"hammer_curl", name:"DB Hammer Curl", type:"isolation", equip:"dumbbell", pattern:"hammer_curl", pref:"like", avail:"always", rest:75, rl:8, rh:12, sl:2, sh:3, fatigue:1.3, m:{biceps:1, forearms:.5}},
+ {id:"bayesian_curl", name:"Cable Bayesian Curl", type:"isolation", equip:"cable", pattern:"bayesian_curl", pref:"neutral", avail:"always", rest:75, rl:8, rh:14, sl:2, sh:3, fatigue:1.2, m:{biceps:1, forearms:.25}},
+ {id:"bitri_machine_curl", name:"Bi/Tri Machine — Curl", type:"isolation", equip:"machine", pattern:"machine_curl2", pref:"neutral", avail:"no", rest:75, rl:8, rh:14, sl:2, sh:3, fatigue:1.2, m:{biceps:1}},
+ {id:"bitri_machine_ext", name:"Bi/Tri Machine — Extension", type:"isolation", equip:"machine", pattern:"machine_tri", pref:"neutral", avail:"no", rest:75, rl:8, rh:14, sl:2, sh:3, fatigue:1.2, m:{triceps:1}},
+ {id:"straight_arm_pulldown", name:"Straight-Arm Pulldown", type:"isolation", equip:"cable", pattern:"straight_arm", pref:"like", avail:"always", rest:75, rl:10, rh:15, sl:2, sh:3, fatigue:1.3, m:{back_lats:1, triceps:.25}},
+ {id:"seated_cable_row", name:"Seated Cable Row", type:"compound", equip:"cable", pattern:"horizontal_pull", pref:"like", avail:"always", rest:120, rl:8, rh:12, sl:2, sh:3, fatigue:2, m:{upper_back:1, back_lats:.5, rear_delts:.5, biceps:.25}},
+ {id:"single_db_row", name:"Single-Arm DB Row", type:"compound", equip:"dumbbell", pattern:"horizontal_pull", pref:"neutral", avail:"always", rest:90, rl:8, rh:12, sl:2, sh:3, fatigue:2, m:{back_lats:1, upper_back:.5, biceps:.25}},
+ {id:"hip_thrust", name:"Barbell Hip Thrust", type:"compound", equip:"barbell", pattern:"hip_thrust", pref:"like", avail:"always", rest:150, rl:6, rh:12, sl:2, sh:3, fatigue:2.5, m:{glutes:1, hamstrings:.5}},
+ {id:"cable_kickback", name:"Cable Glute Kickback", type:"isolation", equip:"cable", pattern:"kickback", pref:"neutral", avail:"always", rest:60, rl:10, rh:15, sl:2, sh:3, fatigue:1.1, m:{glutes:1, hamstrings:.25}},
+ {id:"legpress_calf", name:"Leg-Press Calf Raise", type:"isolation", equip:"machine", pattern:"calf", pref:"like", avail:"always", rest:75, rl:8, rh:15, sl:2, sh:3, fatigue:1, m:{calves:1}},
+ {id:"cable_crunch", name:"Cable Crunch", type:"isolation", equip:"cable", pattern:"ab", pref:"like", avail:"always", rest:60, rl:10, rh:20, sl:2, sh:3, fatigue:1, m:{abs:1}},
+ {id:"hanging_leg_raise", name:"Hanging Leg Raise", type:"isolation", equip:"bodyweight", pattern:"ab_raise", pref:"neutral", avail:"always", rest:75, rl:8, rh:15, sl:2, sh:3, fatigue:1.2, m:{abs:1, lower_back:.25}},
+ {id:"back_extension", name:"Back Extension (45 deg)", type:"isolation", equip:"machine", pattern:"back_ext", pref:"neutral", avail:"always", rest:90, rl:10, rh:15, sl:2, sh:3, fatigue:1.4, m:{lower_back:1, glutes:.5, hamstrings:.5}},
 ];
 /* ===== Exercise metadata for temporary limitations (toe/foot, legs, standing) =====
    foot_pressure: 0 none · 1 light · 2 heavy (drives through forefoot/toe).
@@ -292,8 +318,9 @@ function load(){
     if(d.cfgVersion!==CONFIG_VERSION){ const fresh=seed();
       fresh.sessions=d.sessions||[]; fresh.bodyweight=d.bodyweight||[]; fresh.measurements=d.measurements||[]; fresh.photos=d.photos||[];
       fresh.settings={...fresh.settings,...(d.settings||{})};
+      if(d.muscles){ for(const k in fresh.muscles){ if(d.muscles[k]&&d.muscles[k].tier) fresh.muscles[k].tier=d.muscles[k].tier; } }
       const pref={}; (d.exercises||[]).forEach(e=>pref[e.id]={pref:e.pref,avail:e.avail});
-      fresh.exercises.forEach(e=>{ if(pref[e.id]){ e.pref=pref[e.id].pref; e.avail=pref[e.id].avail; }});
+      fresh.exercises.forEach(e=>{ if(pref[e.id]){ e.pref=pref[e.id].pref; if(FORCE_AVAIL.indexOf(e.id)<0) e.avail=pref[e.id].avail; }});
       return fresh; }
     d.measurements=d.measurements||[]; d.photos=d.photos||[]; d.bodyweight=d.bodyweight||[]; return d;
   }catch(e){ return seed(); }
@@ -350,7 +377,7 @@ async function hydrateFromCloud(){
     const rb=seed();
     if(stR.data&&stR.data.data){ const d=stR.data.data; rb.settings={...rb.settings,...(d.settings||{})}; if(d.muscles) rb.muscles=d.muscles; }
     if(exR.data&&exR.data.length){ const byId={}; exR.data.forEach(r=>byId[r.slug]=r);  // overlay saved prefs onto the full v2 library (keep new exercises)
-      rb.exercises.forEach(e=>{ const r=byId[e.id]; if(r){ if(r.pref) e.pref=r.pref; if(r.avail) e.avail=r.avail; if(r.muscles&&Object.keys(r.muscles).length) e.m=r.muscles; } }); }
+      rb.exercises.forEach(e=>{ const r=byId[e.id]; if(r){ if(r.pref) e.pref=r.pref; if(r.avail && FORCE_AVAIL.indexOf(e.id)<0) e.avail=r.avail; if(r.muscles&&Object.keys(r.muscles).length) e.m=r.muscles; } }); }
     const weByW={}; (weR.data||[]).forEach(we=>{(weByW[we.workout_id]=weByW[we.workout_id]||[]).push(we);});
     const setByWe={}; (setR.data||[]).forEach(s=>{(setByWe[s.workout_exercise_id]=setByWe[s.workout_exercise_id]||[]).push(s);});
     rb.sessions=(wR.data||[]).map(w=>{ const wes=(weByW[w.id]||[]).sort((a,b)=>a.order_index-b.order_index);
@@ -517,7 +544,29 @@ const TIPS={
  machine_ohp:{feel:"Front/side delts and triceps.",avoid:"Lower-back arch, shoulder pinch.",cues:["Brace, ribs down.","Press up smoothly, don’t lock harshly.","Control the lowering to ear height."]},
  plated_ohp:{feel:"Shoulders and triceps.",avoid:"Excessive arching, shrugging.",cues:["Brace core, neutral spine.","Press overhead, control down."]},
  hack_squat:{feel:"Quads.",avoid:"Knee cave, heels lifting.",cues:["Full foot pressure, controlled depth.","Drive through the whole foot.","Don’t bounce out of the bottom."]},
- ab_movement:{feel:"Abs contracting.",avoid:"Hip flexors/neck doing the work.",cues:["Curl the ribcage toward the pelvis.","Controlled, squeeze, slow return."]}
+ ab_movement:{feel:"Abs contracting.",avoid:"Hip flexors/neck doing the work.",cues:["Curl the ribcage toward the pelvis.","Controlled, squeeze, slow return."]},
+ rope_pushdown:{feel:"Triceps, with a strong spread at the bottom.",avoid:"Elbows flaring or drifting forward, shoulders hunching.",cues:["Pin your elbows to your sides.","Only the forearms move.","Spread the rope apart at the bottom, full lockout.","Control the rope back up."]},
+ straightbar_pushdown:{feel:"Triceps lockout.",avoid:"Leaning over the bar, elbows drifting.",cues:["Elbows tight to your sides.","Push down to a full lockout.","Slow the bar back up, keep tension."]},
+ overhead_rope_ext:{feel:"Triceps long head — a deep stretch overhead.",avoid:"Lower-back arch, elbows flaring wide.",cues:["Face away from the stack, hinge slightly.","Keep upper arms by your ears.","Reach into a full overhead stretch, then extend.","Control back to the stretch."]},
+ single_overhead_ext:{feel:"One triceps long head at a time.",avoid:"Twisting the torso, elbow flaring.",cues:["Upper arm by your ear, elbow pointed forward.","Extend fully, squeeze.","Slow eccentric into the stretch."]},
+ crossbody_ext:{feel:"Triceps (lateral head) across the body.",avoid:"Using the shoulder to pull.",cues:["Pull the handle across and down past the opposite hip.","Keep the upper arm still.","Squeeze at full extension, control back."]},
+ db_overhead_ext:{feel:"Triceps long head stretch.",avoid:"Lower-back arch, elbows splaying.",cues:["Both hands under one dumbbell overhead.","Elbows in, lower behind the head for a stretch.","Press up to lockout, control down."]},
+ bench_dip:{feel:"Triceps (some lower chest).",avoid:"Shoulder pain, dropping too deep, shrugging.",cues:["Hands on the bench behind you, chest up.","Lower until elbows ~90°, no deeper if shoulders complain.","Press to lockout through the triceps.","Add a plate on the lap to progress."]},
+ assisted_dip:{feel:"Triceps and lower chest.",avoid:"Excessive forward lean (unless chest-focused), shoulder pain.",cues:["Stay fairly upright for triceps bias.","Lower under control to ~90°.","Press to a strong lockout.","Use the pad assist to hit clean reps."]},
+ machine_tricep_ext:{feel:"Triceps, evenly through the range.",avoid:"Heaving, half reps.",cues:["Set the seat so elbows align with the pivot.","Extend fully, brief squeeze.","Slow controlled return."]},
+ hammer_curl:{feel:"Biceps and brachialis (outer arm/forearm).",avoid:"Swinging, shoulders rolling in.",cues:["Neutral grip, thumbs up.","Elbows pinned, curl without swinging.","Squeeze top, slow lower, full stretch."]},
+ bayesian_curl:{feel:"Biceps with a long stretch behind the body.",avoid:"Shoulder doing the lifting, swinging.",cues:["Step forward of the low pulley, arm trailing behind.","Curl with the upper arm fixed.","Feel the stretch at the bottom each rep."]},
+ bitri_machine_curl:{feel:"Biceps, fixed-path contraction.",avoid:"Lifting off the seat, partial reps.",cues:["Chest/arms against the pad.","Curl to full contraction, pause.","Slow eccentric, full stretch."]},
+ bitri_machine_ext:{feel:"Triceps, fixed-path lockout.",avoid:"Heaving with the body.",cues:["Set elbows to the pivot.","Extend fully, squeeze.","Control the return."]},
+ straight_arm_pulldown:{feel:"Lats (under the armpit), arms nearly straight.",avoid:"Bending the elbows into a pushdown, using triceps.",cues:["Soft fixed elbow, hinge slightly forward.","Drive the bar down to your thighs with the lats.","Feel the lat stretch at the top, control up."]},
+ seated_cable_row:{feel:"Mid-back and lats; squeeze the shoulder blades.",avoid:"Heaving the torso, shrugging up.",cues:["Tall chest, slight lean.","Row to the lower ribs, elbows back.","Squeeze the back, control the stretch forward."]},
+ single_db_row:{feel:"One lat/mid-back at a time.",avoid:"Twisting the torso, shrugging.",cues:["Brace on a bench, flat back.","Row the dumbbell to your hip.","Squeeze, slow lower, full stretch."]},
+ hip_thrust:{feel:"Glutes squeezing at the top.",avoid:"Lower-back hyperextension, pushing through the toes.",cues:["Shoulders on the bench, chin tucked.","Drive through the heels, ribs down.","Squeeze the glutes hard at the top, brief pause.","Control the descent."]},
+ cable_kickback:{feel:"One glute contracting.",avoid:"Arching the lower back, swinging the leg.",cues:["Hinge slightly, brace the core.","Drive the heel back and up using the glute.","Squeeze at the top, control forward."]},
+ legpress_calf:{feel:"Calves through a big range.",avoid:"Bouncing, short range, knee locking hard.",cues:["Balls of feet on the bottom of the platform.","Full stretch down, drive up onto the toes.","Pause top and bottom — no bouncing."]},
+ cable_crunch:{feel:"Abs crunching the ribcage down.",avoid:"Pulling with the arms, hinging at the hips.",cues:["Kneel, rope by your head, hips fixed.","Crunch the ribs toward the pelvis.","Squeeze, slow return — keep tension on the abs."]},
+ hanging_leg_raise:{feel:"Lower abs lifting.",avoid:"Swinging, using momentum, hip flexors taking over.",cues:["Hang controlled, posterior pelvic tilt.","Curl the pelvis up, not just the legs.","Lower slowly, no swinging.","Bend the knees to regress."]},
+ back_extension:{feel:"Glutes, hamstrings and lower back working together.",avoid:"Rounding then hyperextending the spine, swinging up.",cues:["Hips on the pad, feet locked.","Hinge down with a flat back.","Squeeze glutes to raise; stop in a straight line, do not over-arch.","Hold a plate to the chest to progress."]}
 };
 function exerciseTrend(exId){ const h=exerciseHistory(exId); if(h.length<2) return {label:"Early signal", c:"var(--muted)", note:"Log this a couple more times to read a trend."};
   const metric=(sets)=>{ const e=Math.max(0,...sets.map(s=>est1RM(+s.weight||0,+s.reps||0))); return e>0?e:topSetLoad(sets); };
@@ -580,6 +629,12 @@ function recommend(r){ r=r||{}; const time=r.time||60; const maxEx=time<=30?3:ti
       const usable=sc.trainable||relaxed; if(!usable) continue; const dim=(covered[m]||0)>0?0.35:1;
       val+=(sc.trainable?sc.score:Math.max(sc.score,-40))*c*dim; }
     val+=PREF_SCORE[ex.pref]*1.2;
+    /* intra-session variety: avoid two near-identical exercises in one workout */
+    const pm=primaryMuscle(ex);
+    for(const c of chosen){ const ce=exById(c.exId); if(!ce) continue;
+      if(ce.pattern===ex.pattern){ val-=130; break; } }                                  // same movement pattern already in session
+    if(val>-9999){ const samePrimary=chosen.some(c=>{ const ce=exById(c.exId); return ce&&primaryMuscle(ce)===pm&&ce.pattern!==ex.pattern; });
+      if(samePrimary) val-=42; }                                                          // same primary muscle, different pattern — mild (variety across angles)
     if(highSore&&ex.type==="compound") val-=22; if(lowEnergy&&ex.fatigue>=2.5) val-=18; return {val,bad,cautionLead}; }
   function fill(relaxed,thresh){ let safety=0;
     while(chosen.length<maxEx && safety++<60){ let best=null,bestEx=null,bestCaution=false;
@@ -629,9 +684,13 @@ function recommend(r){ r=r||{}; const time=r.time||60; const maxEx=time<=30?3:ti
 
 /* SWAP / SUBSTITUTION (P3) */
 function swapSuggestions(exId){ const ex=exById(exId); if(!ex) return []; const pm=primaryMuscle(ex);
-  return S.exercises.filter(e=>e.id!==exId && primaryMuscle(e)===pm && AVAIL_OK[e.avail] && !limBlock(e))
-    .map(e=>({e, samePattern:e.pattern===ex.pattern}))
-    .sort((a,b)=>(b.samePattern-a.samePattern)||(PREF_SCORE[b.e.pref]-PREF_SCORE[a.e.pref]))
+  const inWorkout=new Set((activeSession?activeSession.entries:[]).map(en=>en.exId));                 // exercises already in this workout
+  const patternsInWorkout=new Set((activeSession?activeSession.entries:[]).filter(en=>en.exId!==exId).map(en=>{ const e=exById(en.exId); return e?e.pattern:null; }));
+  return S.exercises.filter(e=>e.id!==exId && !inWorkout.has(e.id) && primaryMuscle(e)===pm && AVAIL_OK[e.avail] && !limBlock(e))   // never an exercise already in the workout
+    .map(e=>({e, dupPattern:patternsInWorkout.has(e.pattern)?1:0, samePatternAsCur:e.pattern===ex.pattern?1:0}))
+    .sort((a,b)=>(a.dupPattern-b.dupPattern)                       // patterns not already in the workout first (no same-pattern duplicates)
+                ||(a.samePatternAsCur-b.samePatternAsCur)          // prefer a meaningfully different variation than the one being swapped
+                ||(PREF_SCORE[b.e.pref]-PREF_SCORE[a.e.pref]))     // then by your preference
     .slice(0,6).map(x=>x.e); }
 function libraryByMuscle(){ const groups={}; S.exercises.forEach(e=>{ const pm=primaryMuscle(e); (groups[pm]=groups[pm]||[]).push(e); }); return groups; }
 /* ============================================================================ UI STATE + ROUTER ============================================================================ */
