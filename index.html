@@ -108,6 +108,23 @@ button{font-family:inherit; cursor:pointer; border:none; color:inherit;}
 .seg{display:flex; background:var(--panel2); border:1px solid var(--line); border-radius:10px; padding:3px; gap:3px;}
 .seg button{flex:1; padding:8px; border-radius:8px; background:transparent; font-size:12px; font-weight:600; color:var(--muted);}
 .seg button.on{background:var(--accent); color:var(--accent-ink);}
+.seg.mini button{padding:6px 4px; font-size:11px;}
+.srch{width:100%;}
+.recgrid{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:12px;}
+.recgrid .rc{background:var(--panel2); border:1px solid var(--line); border-radius:12px; padding:10px 12px;}
+.recgrid .rc span{display:block; font-size:10px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted);}
+.recgrid .rc b{display:block; font-family:'JetBrains Mono',monospace; font-size:20px; color:var(--accent); margin-top:2px;}
+.recgrid .rc b i{font-style:normal; font-size:12px; color:var(--muted);}
+.recgrid .rc small{display:block; font-size:10px; color:var(--faint); margin-top:2px;}
+.chartwrap{background:var(--panel2); border:1px solid var(--line); border-radius:12px; padding:10px 8px 4px; margin-top:8px;}
+.badge.rm5{background:var(--accent); color:var(--accent-ink);}
+.badge.rm10{background:rgba(91,140,255,.18); color:var(--blue); border:1px solid rgba(91,140,255,.4);}
+.chips{display:flex; gap:6px; overflow-x:auto; padding:2px 0 6px; -webkit-overflow-scrolling:touch;}
+.chips button{white-space:nowrap; font-size:12px; padding:7px 11px; border-radius:999px; background:var(--panel2); border:1px solid var(--line); color:var(--muted); font-weight:600;}
+.chips button.on{background:var(--accent); color:var(--accent-ink); border-color:var(--accent);}
+.achrow{display:flex; justify-content:space-between; align-items:center; gap:8px; padding:9px 0; border-top:1px dashed var(--line);}
+.achrow:first-child{border-top:none;}
+.achrow .am{font-size:12.5px; font-weight:600;} .achrow .ad{font-size:11px; color:var(--muted); margin-top:2px;}
 /* --- live logger v3 (Fable polish) --- */
 .lhead{position:sticky; top:0; z-index:30; background:linear-gradient(180deg,var(--panel),rgba(14,18,24,.94)); border:1px solid var(--line); border-radius:var(--r); padding:13px 16px; margin:12px 0; display:flex; justify-content:space-between; align-items:center; gap:10px; backdrop-filter:blur(8px);}
 .lhead .ttl{font-weight:700; font-size:16px; letter-spacing:-.01em;}
@@ -169,7 +186,7 @@ button{font-family:inherit; cursor:pointer; border:none; color:inherit;}
 /* ============================================================================
    CONFIG — edit freely; first run seeds this, your in-app edits persist.
    ============================================================================ */
-const CONFIG_VERSION = 5; /* v5: confirmed SportsArt DF-105 bi/tri machine */
+const CONFIG_VERSION = 6; /* v6: gym-specific recommendable library + 5RM/10RM achievements + charts + Reports tab */
 const SUPABASE_URL = "https://utlhzxbjxvsyluyslfhe.supabase.co";
 const SUPABASE_KEY = "sb_publishable_xNfADG84azbA0wc1_ngVYw_MqxOANCz";
 
@@ -217,65 +234,79 @@ const TIER_LABEL={primary:"Primary focus", secondary:"Secondary", maintenance:"M
 
 /* pattern drives swap suggestions. credit: 1.0 primary, .5 secondary, .25 minor. */
 const EXERCISES = [
- {id:"hack_squat", name:"Hack Squat", type:"compound", equip:"machine", pattern:"squat", pref:"avoid", avail:"usually", rest:150, rl:6, rh:10, sl:2, sh:3, fatigue:3, m:{quads:1, glutes:.5}},
- {id:"leg_press", name:"Leg Press", type:"compound", equip:"machine", pattern:"squat", pref:"like", avail:"always", rest:150, rl:8, rh:12, sl:2, sh:3, fatigue:2.5, m:{quads:1, glutes:.5}},
- {id:"leg_ext", name:"Leg Extension", type:"isolation", equip:"machine", pattern:"leg_ext", pref:"neutral", avail:"always", rest:75, rl:10, rh:15, sl:2, sh:3, fatigue:1.5, m:{quads:1}},
- {id:"lat_pulldown", name:"Plated Lat Pulldown", type:"compound", equip:"machine", pattern:"vertical_pull", pref:"like", avail:"always", rest:120, rl:8, rh:12, sl:2, sh:3, fatigue:2, m:{back_lats:1, biceps:.5, upper_back:.5, rear_delts:.25}},
- {id:"neutral_pulldown", name:"Neutral-Grip Pulldown", type:"compound", equip:"machine", pattern:"vertical_pull", pref:"like", avail:"always", rest:120, rl:8, rh:12, sl:2, sh:3, fatigue:2, m:{back_lats:1, biceps:.5, upper_back:.5}},
- {id:"assisted_chin", name:"Assisted Chin-Up", type:"compound", equip:"machine", pattern:"vertical_pull", pref:"love", avail:"always", rest:120, rl:6, rh:12, sl:2, sh:3, fatigue:2.5, m:{back_lats:1, biceps:.5, upper_back:.5, rear_delts:.25}},
- {id:"cs_row", name:"Chest-Supported Row", type:"compound", equip:"machine", pattern:"horizontal_pull", pref:"like", avail:"always", rest:120, rl:8, rh:12, sl:2, sh:3, fatigue:2, m:{upper_back:1, back_lats:.5, rear_delts:.5, biceps:.25}},
- {id:"machine_row", name:"Machine Row", type:"compound", equip:"machine", pattern:"horizontal_pull", pref:"like", avail:"always", rest:120, rl:8, rh:12, sl:2, sh:3, fatigue:2, m:{upper_back:1, back_lats:.5, rear_delts:.5, biceps:.25}},
- {id:"incline_press", name:"Machine Incline Press", type:"compound", equip:"machine", pattern:"incline_press", pref:"like", avail:"always", rest:120, rl:6, rh:12, sl:2, sh:3, fatigue:2.5, m:{upper_chest:1, front_delts:.5, triceps:.5}},
- {id:"chest_fly", name:"Cable Chest Fly", type:"isolation", equip:"cable", pattern:"chest_fly", pref:"love", avail:"always", rest:75, rl:10, rh:15, sl:2, sh:3, fatigue:1.5, m:{upper_chest:.5, chest:1, front_delts:.25}},
- {id:"pec_deck", name:"Pec Deck", type:"isolation", equip:"machine", pattern:"chest_fly", pref:"like", avail:"always", rest:75, rl:10, rh:15, sl:2, sh:3, fatigue:1.3, m:{chest:1, upper_chest:.5, front_delts:.25}},
- {id:"db_fly", name:"Dumbbell Fly", type:"isolation", equip:"dumbbell", pattern:"chest_fly", pref:"neutral", avail:"usually", rest:75, rl:10, rh:15, sl:2, sh:3, fatigue:1.4, m:{chest:1, upper_chest:.5, front_delts:.25}},
- {id:"tricep_pushdown", name:"Cable Tricep Pushdown", type:"isolation", equip:"cable", pattern:"pushdown", pref:"like", avail:"always", rest:75, rl:8, rh:12, sl:2, sh:3, fatigue:1.2, m:{triceps:1, forearms:.25}},
- {id:"cable_curl", name:"Cable Bicep Curl", type:"isolation", equip:"cable", pattern:"curl", pref:"love", avail:"always", rest:75, rl:8, rh:12, sl:2, sh:3, fatigue:1.2, m:{biceps:1, forearms:.5}},
- {id:"machine_curl", name:"Machine Bicep Curl", type:"isolation", equip:"machine", pattern:"curl", pref:"like", avail:"always", rest:75, rl:8, rh:12, sl:2, sh:3, fatigue:1.2, m:{biceps:1, forearms:.25}},
- {id:"ezbar_curl", name:"EZ-Bar Curl", type:"isolation", equip:"barbell", pattern:"curl", pref:"neutral", avail:"usually", rest:90, rl:6, rh:12, sl:2, sh:3, fatigue:1.5, m:{biceps:1, forearms:.5}},
- {id:"preacher_curl", name:"Preacher Curl", type:"isolation", equip:"machine", pattern:"curl", pref:"neutral", avail:"sometimes", rest:90, rl:6, rh:12, sl:2, sh:3, fatigue:1.5, m:{biceps:1, forearms:.25}},
- {id:"incline_db_curl", name:"DB Incline Curl", type:"isolation", equip:"dumbbell", pattern:"curl", pref:"like", avail:"always", rest:75, rl:8, rh:12, sl:2, sh:3, fatigue:1.3, m:{biceps:1, forearms:.25}},
- {id:"cable_lat_raise", name:"Cable Lateral Raise", type:"isolation", equip:"cable", pattern:"lateral_raise", pref:"love", avail:"always", rest:60, rl:12, rh:20, sl:2, sh:3, fatigue:1, m:{side_delts:1, upper_back:.25}},
- {id:"db_lat_raise", name:"DB Lateral Raise", type:"isolation", equip:"dumbbell", pattern:"lateral_raise", pref:"like", avail:"always", rest:60, rl:12, rh:20, sl:2, sh:3, fatigue:1, m:{side_delts:1, upper_back:.25}},
- {id:"machine_lat_raise", name:"Machine Lateral Raise", type:"isolation", equip:"machine", pattern:"lateral_raise", pref:"like", avail:"no", rest:60, rl:12, rh:20, sl:2, sh:3, fatigue:1, m:{side_delts:1}},
- {id:"rear_delt_fly", name:"Rear Delt Fly", type:"isolation", equip:"cable", pattern:"rear_delt", pref:"love", avail:"always", rest:60, rl:12, rh:18, sl:2, sh:3, fatigue:1, m:{rear_delts:1, upper_back:.5}},
- {id:"reverse_pec_deck", name:"Reverse Pec Deck", type:"isolation", equip:"machine", pattern:"rear_delt", pref:"like", avail:"always", rest:60, rl:12, rh:18, sl:2, sh:3, fatigue:1, m:{rear_delts:1, upper_back:.5}},
- {id:"face_pull", name:"Cable Face Pull", type:"isolation", equip:"cable", pattern:"rear_delt", pref:"like", avail:"always", rest:60, rl:12, rh:18, sl:2, sh:3, fatigue:1, m:{rear_delts:1, upper_back:.5}},
- {id:"machine_ohp", name:"Machine Shoulder Press", type:"compound", equip:"machine", pattern:"overhead_press", pref:"neutral", avail:"always", rest:120, rl:8, rh:12, sl:2, sh:3, fatigue:2.5, m:{front_delts:1, side_delts:.5, triceps:.5}},
- {id:"plated_ohp", name:"Plated Shoulder Press", type:"compound", equip:"machine", pattern:"overhead_press", pref:"neutral", avail:"always", rest:120, rl:8, rh:12, sl:2, sh:3, fatigue:2.5, m:{front_delts:1, side_delts:.5, triceps:.5}},
- {id:"rdl", name:"Romanian Deadlift", type:"compound", equip:"barbell", pattern:"hinge", pref:"neutral", avail:"usually", rest:150, rl:5, rh:8, sl:2, sh:3, fatigue:3.5, m:{hamstrings:1, glutes:.5, lower_back:.5}},
- {id:"leg_curl", name:"Seated Leg Curl", type:"isolation", equip:"machine", pattern:"leg_curl", pref:"like", avail:"always", rest:90, rl:8, rh:15, sl:2, sh:3, fatigue:1.5, m:{hamstrings:1, calves:.25}},
- {id:"calf_raise", name:"Calf Raise", type:"isolation", equip:"machine", pattern:"calf", pref:"like", avail:"always", rest:75, rl:8, rh:15, sl:2, sh:3, fatigue:1, m:{calves:1}},
- {id:"ab_movement", name:"Ab Movement", type:"isolation", equip:"cable", pattern:"ab", pref:"neutral", avail:"always", rest:60, rl:10, rh:20, sl:2, sh:3, fatigue:1, m:{abs:1}},
- /* ===== v3 gym-specific additions (Plus Fitness Waterloo). Cable/dumbbell/barbell/bench = confirmed.
-    Plate/pin machines that could not be confirmed from the page/tour are avail:"no" — flip to "always" in Settings if your gym has them. ===== */
- {id:"rope_pushdown", name:"Rope Tricep Pushdown", type:"isolation", equip:"cable", pattern:"pushdown", pref:"like", avail:"always", rest:75, rl:8, rh:15, sl:2, sh:3, fatigue:1.2, m:{triceps:1, forearms:.25}},
- {id:"straightbar_pushdown", name:"Straight-Bar Pushdown", type:"isolation", equip:"cable", pattern:"pushdown", pref:"like", avail:"always", rest:75, rl:8, rh:15, sl:2, sh:3, fatigue:1.2, m:{triceps:1}},
- {id:"overhead_rope_ext", name:"Overhead Cable Tricep Ext.", type:"isolation", equip:"cable", pattern:"overhead_ext", pref:"like", avail:"always", rest:75, rl:10, rh:15, sl:2, sh:3, fatigue:1.3, m:{triceps:1}},
- {id:"single_overhead_ext", name:"Single-Arm Overhead Cable Ext.", type:"isolation", equip:"cable", pattern:"overhead_ext", pref:"neutral", avail:"always", rest:60, rl:10, rh:15, sl:2, sh:3, fatigue:1.2, m:{triceps:1}},
- {id:"crossbody_ext", name:"Cross-Body Cable Tricep Ext.", type:"isolation", equip:"cable", pattern:"crossbody_ext", pref:"neutral", avail:"always", rest:60, rl:10, rh:15, sl:2, sh:3, fatigue:1.1, m:{triceps:1}},
- {id:"db_overhead_ext", name:"DB Overhead Tricep Ext.", type:"isolation", equip:"dumbbell", pattern:"overhead_ext", pref:"like", avail:"always", rest:75, rl:8, rh:15, sl:2, sh:3, fatigue:1.4, m:{triceps:1}},
- {id:"bench_dip", name:"Bench Dip", type:"compound", equip:"bodyweight", pattern:"dip", pref:"neutral", avail:"always", rest:90, rl:8, rh:15, sl:2, sh:3, fatigue:1.5, m:{triceps:1, chest:.5, front_delts:.25}},
- {id:"assisted_dip", name:"Assisted Dip", type:"compound", equip:"machine", pattern:"dip", pref:"like", avail:"always", rest:120, rl:6, rh:12, sl:2, sh:3, fatigue:2, m:{triceps:1, chest:.5, front_delts:.25}},
- {id:"machine_tricep_ext", name:"Machine Tricep Extension", type:"isolation", equip:"machine", pattern:"machine_tri", pref:"like", avail:"always", rest:75, rl:8, rh:15, sl:2, sh:3, fatigue:1.3, m:{triceps:1}},
- {id:"hammer_curl", name:"DB Hammer Curl", type:"isolation", equip:"dumbbell", pattern:"hammer_curl", pref:"like", avail:"always", rest:75, rl:8, rh:12, sl:2, sh:3, fatigue:1.3, m:{biceps:1, forearms:.5}},
- {id:"bayesian_curl", name:"Cable Bayesian Curl", type:"isolation", equip:"cable", pattern:"bayesian_curl", pref:"neutral", avail:"always", rest:75, rl:8, rh:14, sl:2, sh:3, fatigue:1.2, m:{biceps:1, forearms:.25}},
- {id:"bitri_machine_curl", name:"Bi/Tri Machine — Curl", type:"isolation", equip:"machine", pattern:"machine_curl2", pref:"neutral", avail:"no", rest:75, rl:8, rh:14, sl:2, sh:3, fatigue:1.2, m:{biceps:1}},
- {id:"bitri_machine_ext", name:"Bi/Tri Machine — Extension", type:"isolation", equip:"machine", pattern:"machine_tri", pref:"neutral", avail:"no", rest:75, rl:8, rh:14, sl:2, sh:3, fatigue:1.2, m:{triceps:1}},
- {id:"straight_arm_pulldown", name:"Straight-Arm Pulldown", type:"isolation", equip:"cable", pattern:"straight_arm", pref:"like", avail:"always", rest:75, rl:10, rh:15, sl:2, sh:3, fatigue:1.3, m:{back_lats:1, triceps:.25}},
- {id:"seated_cable_row", name:"Seated Cable Row", type:"compound", equip:"cable", pattern:"horizontal_pull", pref:"like", avail:"always", rest:120, rl:8, rh:12, sl:2, sh:3, fatigue:2, m:{upper_back:1, back_lats:.5, rear_delts:.5, biceps:.25}},
- {id:"single_db_row", name:"Single-Arm DB Row", type:"compound", equip:"dumbbell", pattern:"horizontal_pull", pref:"neutral", avail:"always", rest:90, rl:8, rh:12, sl:2, sh:3, fatigue:2, m:{back_lats:1, upper_back:.5, biceps:.25}},
- {id:"hip_thrust", name:"Barbell Hip Thrust", type:"compound", equip:"barbell", pattern:"hip_thrust", pref:"like", avail:"always", rest:150, rl:6, rh:12, sl:2, sh:3, fatigue:2.5, m:{glutes:1, hamstrings:.5}},
- {id:"cable_kickback", name:"Cable Glute Kickback", type:"isolation", equip:"cable", pattern:"kickback", pref:"neutral", avail:"always", rest:60, rl:10, rh:15, sl:2, sh:3, fatigue:1.1, m:{glutes:1, hamstrings:.25}},
- {id:"legpress_calf", name:"Leg-Press Calf Raise", type:"isolation", equip:"machine", pattern:"calf", pref:"like", avail:"always", rest:75, rl:8, rh:15, sl:2, sh:3, fatigue:1, m:{calves:1}},
- {id:"cable_crunch", name:"Cable Crunch", type:"isolation", equip:"cable", pattern:"ab", pref:"like", avail:"always", rest:60, rl:10, rh:20, sl:2, sh:3, fatigue:1, m:{abs:1}},
- {id:"hanging_leg_raise", name:"Hanging Leg Raise", type:"isolation", equip:"bodyweight", pattern:"ab_raise", pref:"neutral", avail:"always", rest:75, rl:8, rh:15, sl:2, sh:3, fatigue:1.2, m:{abs:1, lower_back:.25}},
- {id:"back_extension", name:"Back Extension (45 deg)", type:"isolation", equip:"machine", pattern:"back_ext", pref:"neutral", avail:"always", rest:90, rl:10, rh:15, sl:2, sh:3, fatigue:1.4, m:{lower_back:1, glutes:.5, hamstrings:.5}},
+ /* ---- LEGS ---- */
+ {id:"leg_press", name:"Leg Press", type:"compound", equip:"machine", pattern:"leg_press", pref:"like", avail:"always", rec:true, src:"confirmed", rest:150, rl:8, rh:12, sl:2, sh:3, fatigue:2.5, m:{quads:1, glutes:.5}, aliases:"df-101 sportsart squat quads"},
+ {id:"plate_leg_press", name:"Plate-Loaded Leg Press", type:"compound", equip:"machine", pattern:"plate_leg_press", pref:"like", avail:"always", rec:true, src:"confirmed", rest:150, rl:8, rh:12, sl:2, sh:3, fatigue:2.7, m:{quads:1, glutes:.5}, aliases:"plate loaded squat press quads legs"},
+ {id:"leg_ext", name:"Leg Extension", type:"isolation", equip:"machine", pattern:"leg_ext", pref:"neutral", avail:"always", rec:true, src:"confirmed", rest:75, rl:10, rh:15, sl:2, sh:3, fatigue:1.5, m:{quads:1}, aliases:"df-100-a sportsart quads extension"},
+ {id:"leg_curl", name:"Seated Leg Curl", type:"isolation", equip:"machine", pattern:"leg_curl", pref:"like", avail:"always", rec:true, src:"confirmed", rest:90, rl:8, rh:15, sl:2, sh:3, fatigue:1.5, m:{hamstrings:1, calves:.25}, aliases:"df-100-b sportsart hamstring leg curl"},
+ {id:"calf_raise", name:"Calf Extension", type:"isolation", equip:"machine", pattern:"calf", pref:"like", avail:"always", rec:true, src:"confirmed", rest:75, rl:8, rh:15, sl:2, sh:3, fatigue:1, m:{calves:1}, aliases:"df-101-b leg press calf raise calves"},
+ {id:"legpress_calf", name:"Leg-Press Calf Raise", type:"isolation", equip:"machine", pattern:"calf", pref:"like", avail:"always", rec:true, src:"confirmed", rest:75, rl:8, rh:15, sl:2, sh:3, fatigue:1, m:{calves:1}, aliases:"calf raise calves leg press"},
+ {id:"seated_calf_raise", name:"Seated Calf Raise", type:"isolation", equip:"machine", pattern:"seated_calf", pref:"like", avail:"always", rec:true, src:"confirmed", rest:75, rl:10, rh:18, sl:2, sh:3, fatigue:1, m:{calves:1}, aliases:"plate loaded seated calf raise calves soleus"},
+ {id:"hack_squat", name:"Hack Squat", type:"compound", equip:"machine", pattern:"squat", pref:"avoid", avail:"usually", rec:false, src:"manual", rest:150, rl:6, rh:10, sl:2, sh:3, fatigue:3, m:{quads:1, glutes:.5}, aliases:"v-squat squat press quads manual"},
+ {id:"rdl", name:"Romanian Deadlift", type:"compound", equip:"barbell", pattern:"hinge", pref:"neutral", avail:"usually", rec:false, src:"manual", rest:150, rl:5, rh:8, sl:2, sh:3, fatigue:3.5, m:{hamstrings:1, glutes:.5, lower_back:.5}, aliases:"rdl barbell hinge hamstrings manual"},
+ {id:"hip_thrust", name:"Barbell Hip Thrust", type:"compound", equip:"barbell", pattern:"hip_thrust", pref:"like", avail:"always", rec:true, src:"confirmed", rest:150, rl:6, rh:12, sl:2, sh:3, fatigue:2.5, m:{glutes:1, hamstrings:.5}, aliases:"glutes barbell bench thrust"},
+ {id:"cable_kickback", name:"Cable Glute Kickback", type:"isolation", equip:"cable", pattern:"kickback", pref:"neutral", avail:"always", rec:true, src:"cable", rest:60, rl:10, rh:15, sl:2, sh:3, fatigue:1.1, m:{glutes:1, hamstrings:.25}, aliases:"glutes cable crossover kickback"},
+ /* ---- BACK / LATS ---- */
+ {id:"lat_pulldown", name:"Lat Pulldown", type:"compound", equip:"machine", pattern:"vertical_pull", pref:"like", avail:"always", rec:true, src:"confirmed", rest:120, rl:8, rh:12, sl:2, sh:3, fatigue:2, m:{back_lats:1, biceps:.5, upper_back:.5, rear_delts:.25}, aliases:"sportsart df-103 wide grip pulldown lats vertical pull"},
+ {id:"neutral_pulldown", name:"Neutral-Grip Pulldown", type:"compound", equip:"machine", pattern:"vertical_pull", pref:"like", avail:"always", rec:true, src:"confirmed", rest:120, rl:8, rh:12, sl:2, sh:3, fatigue:2, m:{back_lats:1, biceps:.5, upper_back:.5}, aliases:"close neutral grip pulldown lats vertical pull"},
+ {id:"assisted_chin", name:"Assisted Chin-Up", type:"compound", equip:"machine", pattern:"vertical_pull", pref:"love", avail:"always", rec:true, src:"confirmed", rest:120, rl:6, rh:12, sl:2, sh:3, fatigue:2.5, m:{back_lats:1, biceps:.5, upper_back:.5, rear_delts:.25}, aliases:"df-107-a assisted chin up pull up lats"},
+ {id:"machine_row", name:"Mid Row Machine", type:"compound", equip:"machine", pattern:"mid_row", pref:"like", avail:"always", rec:true, src:"confirmed", rest:120, rl:8, rh:12, sl:2, sh:3, fatigue:2, m:{upper_back:1, back_lats:.5, rear_delts:.5, biceps:.25}, aliases:"df-103 sportsart mid row seated row upper back"},
+ {id:"cs_row", name:"Chest-Supported Row", type:"compound", equip:"machine", pattern:"horizontal_pull", pref:"like", avail:"always", rec:false, src:"manual", rest:120, rl:8, rh:12, sl:2, sh:3, fatigue:2, m:{upper_back:1, back_lats:.5, rear_delts:.5, biceps:.25}, aliases:"chest supported row plate row upper back manual"},
+ {id:"seated_cable_row", name:"Seated Cable Row", type:"compound", equip:"cable", pattern:"cable_row", pref:"like", avail:"always", rec:false, src:"manual", rest:120, rl:8, rh:12, sl:2, sh:3, fatigue:2, m:{upper_back:1, back_lats:.5, rear_delts:.5, biceps:.25}, aliases:"cable row seated row upper back manual"},
+ {id:"plate_row", name:"Plate-Loaded Row", type:"compound", equip:"machine", pattern:"plate_row", pref:"neutral", avail:"always", rec:false, src:"manual", rest:120, rl:8, rh:12, sl:2, sh:3, fatigue:2, m:{upper_back:1, back_lats:.5, rear_delts:.5, biceps:.25}, aliases:"plate loaded row t-bar chest supported upper back manual"},
+ {id:"single_db_row", name:"Single-Arm DB Row", type:"compound", equip:"dumbbell", pattern:"horizontal_pull", pref:"neutral", avail:"usually", rec:false, src:"manual", rest:90, rl:8, rh:12, sl:2, sh:3, fatigue:2, m:{back_lats:1, upper_back:.5, biceps:.25}, aliases:"one arm dumbbell row lats manual"},
+ {id:"straight_arm_pulldown", name:"Straight-Arm Pulldown", type:"isolation", equip:"cable", pattern:"straight_arm", pref:"like", avail:"always", rec:false, src:"manual", rest:75, rl:10, rh:15, sl:2, sh:3, fatigue:1.3, m:{back_lats:1, triceps:.25}, aliases:"straight arm cable pulldown lats manual"},
+ /* ---- CHEST / UPPER CHEST ---- */
+ {id:"incline_press", name:"Machine Incline Chest Press", type:"compound", equip:"machine", pattern:"incline_press", pref:"like", avail:"always", rec:true, src:"confirmed", rest:120, rl:6, rh:12, sl:2, sh:3, fatigue:2.5, m:{upper_chest:1, front_delts:.5, triceps:.5}, aliases:"df-108-b sportsart incline press upper chest"},
+ {id:"machine_chest_press", name:"Machine Chest Press", type:"compound", equip:"machine", pattern:"chest_press", pref:"like", avail:"always", rec:true, src:"confirmed", rest:120, rl:6, rh:12, sl:2, sh:3, fatigue:2.5, m:{chest:1, upper_chest:.5, front_delts:.5, triceps:.5}, aliases:"df-103 sportsart chest press flat press"},
+ {id:"seated_chest_press", name:"Seated Chest Press", type:"compound", equip:"machine", pattern:"seated_chest_press", pref:"like", avail:"always", rec:true, src:"confirmed", rest:120, rl:6, rh:12, sl:2, sh:3, fatigue:2.5, m:{chest:1, front_delts:.5, triceps:.5}, aliases:"df-108 sportsart seated chest press multi press"},
+ {id:"pec_deck", name:"Pec Deck", type:"isolation", equip:"machine", pattern:"chest_fly", pref:"like", avail:"always", rec:true, src:"confirmed", rest:75, rl:10, rh:15, sl:2, sh:3, fatigue:1.3, m:{chest:1, upper_chest:.5, front_delts:.25}, aliases:"df-104-b pec fly pec deck chest"},
+ {id:"chest_fly", name:"Cable Chest Fly", type:"isolation", equip:"cable", pattern:"chest_fly", pref:"love", avail:"always", rec:true, src:"cable", rest:75, rl:10, rh:15, sl:2, sh:3, fatigue:1.5, m:{upper_chest:.5, chest:1, front_delts:.25}, aliases:"cable crossover fly chest pec"},
+ {id:"incline_cable_fly", name:"Incline Cable Fly", type:"isolation", equip:"cable", pattern:"incline_fly", pref:"like", avail:"always", rec:true, src:"cable", rest:75, rl:10, rh:15, sl:2, sh:3, fatigue:1.5, m:{upper_chest:1, chest:.5, front_delts:.25}, aliases:"incline cable fly upper chest pec low to high"},
+ {id:"db_fly", name:"Dumbbell Fly", type:"isolation", equip:"dumbbell", pattern:"chest_fly", pref:"neutral", avail:"usually", rec:true, src:"confirmed", rest:75, rl:10, rh:15, sl:2, sh:3, fatigue:1.4, m:{chest:1, upper_chest:.5, front_delts:.25}, aliases:"dumbbell fly chest pec"},
+ /* ---- SHOULDERS / DELTS ---- */
+ {id:"machine_ohp", name:"Machine Shoulder Press", type:"compound", equip:"machine", pattern:"overhead_press", pref:"neutral", avail:"always", rec:true, src:"confirmed", rest:120, rl:8, rh:12, sl:2, sh:3, fatigue:2.5, m:{front_delts:1, side_delts:.5, triceps:.5}, aliases:"df-108-a sportsart seated shoulder press overhead delts"},
+ {id:"plated_ohp", name:"Plated Shoulder Press", type:"compound", equip:"machine", pattern:"overhead_press", pref:"neutral", avail:"always", rec:false, src:"manual", rest:120, rl:8, rh:12, sl:2, sh:3, fatigue:2.5, m:{front_delts:1, side_delts:.5, triceps:.5}, aliases:"plate loaded shoulder press overhead delts manual"},
+ {id:"cable_lat_raise", name:"Cable Lateral Raise", type:"isolation", equip:"cable", pattern:"lateral_raise", pref:"love", avail:"always", rec:true, src:"cable", rest:60, rl:12, rh:20, sl:2, sh:3, fatigue:1, m:{side_delts:1, upper_back:.25}, aliases:"cable side lateral raise side delts"},
+ {id:"db_lat_raise", name:"DB Lateral Raise", type:"isolation", equip:"dumbbell", pattern:"lateral_raise", pref:"like", avail:"always", rec:true, src:"confirmed", rest:60, rl:12, rh:20, sl:2, sh:3, fatigue:1, m:{side_delts:1, upper_back:.25}, aliases:"dumbbell side lateral raise side delts"},
+ {id:"machine_lat_raise", name:"Machine Lateral Raise", type:"isolation", equip:"machine", pattern:"lateral_raise", pref:"like", avail:"no", rec:false, src:"unavailable", rest:60, rl:12, rh:20, sl:2, sh:3, fatigue:1, m:{side_delts:1}, aliases:"machine lateral raise side delts not available"},
+ {id:"reverse_pec_deck", name:"Rear Delt Fly Machine", type:"isolation", equip:"machine", pattern:"rear_delt", pref:"like", avail:"always", rec:true, src:"confirmed", rest:60, rl:12, rh:18, sl:2, sh:3, fatigue:1, m:{rear_delts:1, upper_back:.5}, aliases:"df-104-a sportsart rear deltoid reverse pec deck rear delts"},
+ {id:"rear_delt_fly", name:"Cable Rear Delt Fly", type:"isolation", equip:"cable", pattern:"rear_delt", pref:"love", avail:"always", rec:true, src:"cable", rest:60, rl:12, rh:18, sl:2, sh:3, fatigue:1, m:{rear_delts:1, upper_back:.5}, aliases:"cable rear delt fly reverse fly rear delts"},
+ {id:"face_pull", name:"Cable Face Pull", type:"isolation", equip:"cable", pattern:"face_pull", pref:"like", avail:"always", rec:true, src:"cable", rest:60, rl:12, rh:18, sl:2, sh:3, fatigue:1, m:{rear_delts:1, upper_back:.5}, aliases:"cable face pull rope rear delts upper back"},
+ /* ---- TRICEPS ---- */
+ {id:"tricep_pushdown", name:"Cable Tricep Pushdown", type:"isolation", equip:"cable", pattern:"pushdown", pref:"like", avail:"always", rec:true, src:"cable", rest:75, rl:8, rh:12, sl:2, sh:3, fatigue:1.2, m:{triceps:1, forearms:.25}, aliases:"cable tricep pushdown pressdown triceps"},
+ {id:"rope_pushdown", name:"Rope Tricep Pushdown", type:"isolation", equip:"cable", pattern:"pushdown", pref:"like", avail:"always", rec:true, src:"cable", rest:75, rl:8, rh:15, sl:2, sh:3, fatigue:1.2, m:{triceps:1, forearms:.25}, aliases:"rope tricep pushdown pressdown triceps"},
+ {id:"straightbar_pushdown", name:"Straight-Bar Tricep Pushdown", type:"isolation", equip:"cable", pattern:"pushdown", pref:"like", avail:"always", rec:true, src:"cable", rest:75, rl:8, rh:15, sl:2, sh:3, fatigue:1.2, m:{triceps:1}, aliases:"straight bar tricep pushdown pressdown triceps"},
+ {id:"overhead_rope_ext", name:"Overhead Cable Tricep Extension", type:"isolation", equip:"cable", pattern:"overhead_ext", pref:"like", avail:"always", rec:true, src:"cable", rest:75, rl:10, rh:15, sl:2, sh:3, fatigue:1.3, m:{triceps:1}, aliases:"overhead cable rope tricep extension triceps long head"},
+ {id:"single_overhead_ext", name:"Single-Arm Cable Tricep Extension", type:"isolation", equip:"cable", pattern:"single_arm_ext", pref:"neutral", avail:"always", rec:true, src:"cable", rest:60, rl:10, rh:15, sl:2, sh:3, fatigue:1.2, m:{triceps:1}, aliases:"single arm overhead cable tricep extension triceps"},
+ {id:"machine_tricep_ext", name:"Machine Tricep Extension", type:"isolation", equip:"machine", pattern:"machine_ext", pref:"like", avail:"always", rec:true, src:"confirmed", rest:75, rl:8, rh:15, sl:2, sh:3, fatigue:1.3, m:{triceps:1}, aliases:"df-105-b sportsart machine tricep extension dip triceps"},
+ {id:"assisted_dip", name:"Assisted Dip", type:"compound", equip:"machine", pattern:"dip", pref:"like", avail:"always", rec:true, src:"confirmed", rest:120, rl:6, rh:12, sl:2, sh:3, fatigue:2, m:{triceps:1, chest:.5, front_delts:.25}, aliases:"df-107-b assisted dip shoulder dip triceps"},
+ {id:"db_overhead_ext", name:"DB Overhead Tricep Ext.", type:"isolation", equip:"dumbbell", pattern:"overhead_ext", pref:"like", avail:"always", rec:false, src:"manual", rest:75, rl:8, rh:15, sl:2, sh:3, fatigue:1.4, m:{triceps:1}, aliases:"dumbbell overhead tricep extension triceps manual"},
+ {id:"bench_dip", name:"Bench Dip", type:"compound", equip:"bodyweight", pattern:"dip", pref:"neutral", avail:"always", rec:false, src:"manual", rest:90, rl:8, rh:15, sl:2, sh:3, fatigue:1.5, m:{triceps:1, chest:.5, front_delts:.25}, aliases:"bench dip bodyweight triceps manual"},
+ {id:"crossbody_ext", name:"Cross-Body Cable Tricep Ext.", type:"isolation", equip:"cable", pattern:"crossbody_ext", pref:"neutral", avail:"no", rec:false, src:"unavailable", rest:60, rl:10, rh:15, sl:2, sh:3, fatigue:1.1, m:{triceps:1}, aliases:"cross body cable tricep extension not used"},
+ {id:"bitri_machine_ext", name:"Bi/Tri Machine (Ext) — unconfirmed", type:"isolation", equip:"machine", pattern:"machine_ext", pref:"neutral", avail:"no", rec:false, src:"unavailable", rest:75, rl:8, rh:14, sl:2, sh:3, fatigue:1.2, m:{triceps:1}, aliases:"unconfirmed duplicate machine tricep extension"},
+ /* ---- BICEPS ---- */
+ {id:"cable_curl", name:"Cable Bicep Curl", type:"isolation", equip:"cable", pattern:"curl", pref:"love", avail:"always", rec:true, src:"cable", rest:75, rl:8, rh:12, sl:2, sh:3, fatigue:1.2, m:{biceps:1, forearms:.5}, aliases:"cable bicep curl biceps"},
+ {id:"machine_curl", name:"Machine Bicep Curl", type:"isolation", equip:"machine", pattern:"machine_curl", pref:"like", avail:"always", rec:true, src:"confirmed", rest:75, rl:8, rh:12, sl:2, sh:3, fatigue:1.2, m:{biceps:1, forearms:.25}, aliases:"df-105-a sportsart machine bicep curl biceps"},
+ {id:"rope_hammer_curl", name:"Rope Hammer Curl", type:"isolation", equip:"cable", pattern:"hammer_curl", pref:"like", avail:"always", rec:true, src:"cable", rest:75, rl:8, rh:12, sl:2, sh:3, fatigue:1.3, m:{biceps:1, forearms:.5}, aliases:"rope hammer curl cable biceps brachialis forearms"},
+ {id:"single_arm_cable_curl", name:"Single-Arm Cable Curl", type:"isolation", equip:"cable", pattern:"single_arm_curl", pref:"like", avail:"always", rec:true, src:"cable", rest:60, rl:8, rh:12, sl:2, sh:3, fatigue:1.2, m:{biceps:1, forearms:.25}, aliases:"single arm cable curl biceps"},
+ {id:"db_curl", name:"Dumbbell Curl", type:"isolation", equip:"dumbbell", pattern:"curl", pref:"like", avail:"usually", rec:true, src:"confirmed", rest:75, rl:8, rh:12, sl:2, sh:3, fatigue:1.3, m:{biceps:1, forearms:.25}, aliases:"dumbbell bicep curl biceps"},
+ {id:"hammer_curl", name:"DB Hammer Curl", type:"isolation", equip:"dumbbell", pattern:"hammer_curl", pref:"like", avail:"usually", rec:false, src:"manual", rest:75, rl:8, rh:12, sl:2, sh:3, fatigue:1.3, m:{biceps:1, forearms:.5}, aliases:"dumbbell hammer curl biceps brachialis forearms manual"},
+ {id:"bayesian_curl", name:"Cable Bayesian Curl", type:"isolation", equip:"cable", pattern:"bayesian_curl", pref:"neutral", avail:"always", rec:false, src:"manual", rest:75, rl:8, rh:14, sl:2, sh:3, fatigue:1.2, m:{biceps:1, forearms:.25}, aliases:"bayesian cable curl behind body biceps manual"},
+ {id:"incline_db_curl", name:"DB Incline Curl", type:"isolation", equip:"dumbbell", pattern:"curl", pref:"like", avail:"usually", rec:false, src:"manual", rest:75, rl:8, rh:12, sl:2, sh:3, fatigue:1.3, m:{biceps:1, forearms:.25}, aliases:"incline dumbbell curl biceps manual"},
+ {id:"ezbar_curl", name:"EZ-Bar Curl", type:"isolation", equip:"barbell", pattern:"curl", pref:"neutral", avail:"usually", rec:false, src:"manual", rest:90, rl:6, rh:12, sl:2, sh:3, fatigue:1.5, m:{biceps:1, forearms:.5}, aliases:"ez bar barbell curl biceps manual"},
+ {id:"preacher_curl", name:"Preacher Curl", type:"isolation", equip:"machine", pattern:"curl", pref:"neutral", avail:"sometimes", rec:false, src:"manual", rest:90, rl:6, rh:12, sl:2, sh:3, fatigue:1.5, m:{biceps:1, forearms:.25}, aliases:"preacher curl machine biceps manual"},
+ {id:"bitri_machine_curl", name:"Bi/Tri Machine (Curl) — unconfirmed", type:"isolation", equip:"machine", pattern:"machine_curl2", pref:"neutral", avail:"no", rec:false, src:"unavailable", rest:75, rl:8, rh:14, sl:2, sh:3, fatigue:1.2, m:{biceps:1}, aliases:"unconfirmed duplicate machine bicep curl"},
+ /* ---- CORE / LOWER BACK ---- */
+ {id:"ab_movement", name:"Machine Ab Crunch", type:"isolation", equip:"machine", pattern:"ab_crunch", pref:"neutral", avail:"always", rec:true, src:"confirmed", rest:60, rl:10, rh:20, sl:2, sh:3, fatigue:1, m:{abs:1}, aliases:"df-106-b sportsart abdominal crunch machine abs core"},
+ {id:"back_extension", name:"Back Extension", type:"isolation", equip:"machine", pattern:"back_extension", pref:"neutral", avail:"always", rec:true, src:"confirmed", rest:90, rl:10, rh:15, sl:2, sh:3, fatigue:1.4, m:{lower_back:1, glutes:.5, hamstrings:.5}, aliases:"df-106-a hyperextension 45 degree lower back core"},
+ {id:"cable_crunch", name:"Cable Crunch", type:"isolation", equip:"cable", pattern:"cable_crunch", pref:"like", avail:"always", rec:false, src:"manual", rest:60, rl:10, rh:20, sl:2, sh:3, fatigue:1, m:{abs:1}, aliases:"cable crunch kneeling abs core manual"},
+ {id:"hanging_leg_raise", name:"Hanging Leg Raise", type:"isolation", equip:"bodyweight", pattern:"ab_raise", pref:"neutral", avail:"usually", rec:false, src:"manual", rest:75, rl:8, rh:15, sl:2, sh:3, fatigue:1.2, m:{abs:1, lower_back:.25}, aliases:"hanging leg knee raise abs core manual"},
 ];
 /* ===== Exercise metadata for temporary limitations (toe/foot, legs, standing) =====
    foot_pressure: 0 none · 1 light · 2 heavy (drives through forefoot/toe).
    standing_loaded: bears load while standing. lower_body: primary leg movement. */
-const FOOT_PRESSURE={ hack_squat:2, leg_press:2, rdl:2, calf_raise:2, leg_ext:0, leg_curl:0 };
+const FOOT_PRESSURE={ hack_squat:2, leg_press:2, plate_leg_press:2, rdl:2, calf_raise:2, legpress_calf:2, seated_calf_raise:2, leg_ext:0, leg_curl:0 };
 const STANDING_LOADED={ hack_squat:true, rdl:true, calf_raise:true };
 const LEG_MUSCLES=new Set(["quads","hamstrings","glutes","calves"]);
 function footPressure(ex){ return FOOT_PRESSURE[ex.id]||0; }
@@ -320,7 +351,8 @@ function load(){
       fresh.settings={...fresh.settings,...(d.settings||{})};
       if(d.muscles){ for(const k in fresh.muscles){ if(d.muscles[k]&&d.muscles[k].tier) fresh.muscles[k].tier=d.muscles[k].tier; } }
       const pref={}; (d.exercises||[]).forEach(e=>pref[e.id]={pref:e.pref,avail:e.avail});
-      fresh.exercises.forEach(e=>{ if(pref[e.id]){ e.pref=pref[e.id].pref; if(FORCE_AVAIL.indexOf(e.id)<0) e.avail=pref[e.id].avail; }});
+      /* v6: gym inventory (avail + rec) is authoritative from seed; only user love/like preference is carried over */
+      fresh.exercises.forEach(e=>{ if(pref[e.id]&&pref[e.id].pref) e.pref=pref[e.id].pref; });
       return fresh; }
     d.measurements=d.measurements||[]; d.photos=d.photos||[]; d.bodyweight=d.bodyweight||[]; return d;
   }catch(e){ return seed(); }
@@ -377,7 +409,7 @@ async function hydrateFromCloud(){
     const rb=seed();
     if(stR.data&&stR.data.data){ const d=stR.data.data; rb.settings={...rb.settings,...(d.settings||{})}; if(d.muscles) rb.muscles=d.muscles; }
     if(exR.data&&exR.data.length){ const byId={}; exR.data.forEach(r=>byId[r.slug]=r);  // overlay saved prefs onto the full v2 library (keep new exercises)
-      rb.exercises.forEach(e=>{ const r=byId[e.id]; if(r){ if(r.pref) e.pref=r.pref; if(r.avail && FORCE_AVAIL.indexOf(e.id)<0) e.avail=r.avail; if(r.muscles&&Object.keys(r.muscles).length) e.m=r.muscles; } }); }
+      rb.exercises.forEach(e=>{ const r=byId[e.id]; if(r){ if(r.pref) e.pref=r.pref; if(r.muscles&&Object.keys(r.muscles).length) e.m=r.muscles; } }); }  // v6: avail+rec stay authoritative from seed
     const weByW={}; (weR.data||[]).forEach(we=>{(weByW[we.workout_id]=weByW[we.workout_id]||[]).push(we);});
     const setByWe={}; (setR.data||[]).forEach(s=>{(setByWe[s.workout_exercise_id]=setByWe[s.workout_exercise_id]||[]).push(s);});
     rb.sessions=(wR.data||[]).map(w=>{ const wes=(weByW[w.id]||[]).sort((a,b)=>a.order_index-b.order_index);
@@ -566,7 +598,16 @@ const TIPS={
  legpress_calf:{feel:"Calves through a big range.",avoid:"Bouncing, short range, knee locking hard.",cues:["Balls of feet on the bottom of the platform.","Full stretch down, drive up onto the toes.","Pause top and bottom — no bouncing."]},
  cable_crunch:{feel:"Abs crunching the ribcage down.",avoid:"Pulling with the arms, hinging at the hips.",cues:["Kneel, rope by your head, hips fixed.","Crunch the ribs toward the pelvis.","Squeeze, slow return — keep tension on the abs."]},
  hanging_leg_raise:{feel:"Lower abs lifting.",avoid:"Swinging, using momentum, hip flexors taking over.",cues:["Hang controlled, posterior pelvic tilt.","Curl the pelvis up, not just the legs.","Lower slowly, no swinging.","Bend the knees to regress."]},
- back_extension:{feel:"Glutes, hamstrings and lower back working together.",avoid:"Rounding then hyperextending the spine, swinging up.",cues:["Hips on the pad, feet locked.","Hinge down with a flat back.","Squeeze glutes to raise; stop in a straight line, do not over-arch.","Hold a plate to the chest to progress."]}
+ back_extension:{feel:"Glutes, hamstrings and lower back working together.",avoid:"Rounding then hyperextending the spine, swinging up.",cues:["Hips on the pad, feet locked.","Hinge down with a flat back.","Squeeze glutes to raise; stop in a straight line, do not over-arch.","Hold a plate to the chest to progress."]},
+ db_curl:{feel:"Biceps through a full curl.",avoid:"Swinging the dumbbells, shoulders rising.",cues:["Elbows pinned to your sides.","Curl up, squeeze, lower under control.","Full stretch at the bottom each rep.","Keep wrists neutral, no flicking."]},
+ single_arm_cable_curl:{feel:"One biceps, peak contraction.",avoid:"Rotating the torso, elbow drifting back.",cues:["Stand side-on to the stack, elbow fixed.","Curl across to the shoulder, squeeze.","Slow negative, full stretch.","Match reps both arms."]},
+ rope_hammer_curl:{feel:"Biceps + brachialis/forearms.",avoid:"Heaving, shoulders swinging.",cues:["Neutral grip on the rope, elbows pinned.","Curl and pull the rope ends apart at the top.","Control the lowering, full stretch."]},
+ machine_chest_press:{feel:"Chest driving the press.",avoid:"Flaring elbows hard, shrugging.",cues:["Handles at mid-chest, slight elbow tuck.","Press and squeeze the chest together.","Control back to a stretch, don't bounce."]},
+ seated_chest_press:{feel:"Chest and front delts pressing.",avoid:"Over-arching, elbows behind the body.",cues:["Back flat on the pad, feet planted.","Press smoothly, stop short of lockout.","Lower to a comfortable stretch, no shoulder pinch."]},
+ incline_cable_fly:{feel:"Upper chest stretch and squeeze.",avoid:"Turning it into a press, shrugging.",cues:["Pulleys low, drive hands up and together.","Soft elbow bend held constant.","Squeeze at the top, slow stretch down."]},
+ plate_leg_press:{feel:"Quads and glutes driving.",avoid:"Knees caving, lower back rounding off the seat.",cues:["Feet shoulder-width on the platform.","Lower to ~90 degrees, hips stay down.","Drive through mid-foot, don't lock out hard."]},
+ seated_calf_raise:{feel:"Calves (soleus) through a full stretch.",avoid:"Bouncing, half reps.",cues:["Pad on the lower thighs, balls of feet on the step.","Drop the heels for a deep stretch.","Press up tall, pause at the top."]},
+ plate_row:{feel:"Mid-back and lats pulling.",avoid:"Yanking with the lower back, shrugging early.",cues:["Chest on the pad if available, neutral spine.","Drive the elbows back, squeeze the shoulder blades.","Control the stretch, don't let the plates crash."]}
 };
 function exerciseTrend(exId){ const h=exerciseHistory(exId); if(h.length<2) return {label:"Early signal", c:"var(--muted)", note:"Log this a couple more times to read a trend."};
   const metric=(sets)=>{ const e=Math.max(0,...sets.map(s=>est1RM(+s.weight||0,+s.reps||0))); return e>0?e:topSetLoad(sets); };
@@ -583,6 +624,128 @@ function exerciseHistory(exId){ const out=[];
   out.sort((a,b)=>new Date(b.date)-new Date(a.date)); return out; }
 function exerciseBests(exId){ let bw=0,br=0,b1=0,bv=0; exerciseHistory(exId).forEach(h=>{ let v=0;
   h.sets.forEach(s=>{ const w=+s.weight||0,r=+s.reps||0; v+=w*r; if(w>bw)bw=w; if(r>br)br=r; const e=est1RM(w,r); if(e>b1)b1=e; }); if(v>bv)bv=v; }); return {bestW:bw,bestReps:br,best1rm:b1,bestVol:bv}; }
+
+/* ============================================================================ v6 — ACHIEVEMENTS (5RM / 10RM / weight PR), CHARTS, SEARCH ============================================================================
+   All derived from logged WORKING sets only (warm-ups already excluded by workingSets()).
+   5RM = heaviest weight ever lifted for >=5 reps on an exercise; 10RM = >=10 reps.
+   No estimated 1RM is used for RM records. Computed from history each render, so editing
+   an old workout never creates duplicate achievement spam. */
+function topWeightAtReps(sets,minReps){ var w=0; (sets||[]).forEach(function(s){ var ww=+s.weight||0, rr=+s.reps||0; if(rr>=minReps && ww>w) w=ww; }); return w; }
+function repsAtWeight(sets,weight,minReps){ var r=0; (sets||[]).forEach(function(s){ var ww=+s.weight||0, rr=+s.reps||0; if(ww===weight && rr>=minReps && rr>r) r=rr; }); return r; }
+/* current records with the date each was first achieved (oldest->newest scan) */
+function exerciseRecords(exId){ var h=exerciseHistory(exId).slice().reverse();
+  var top={w:0,reps:0,date:null}, rm5={w:0,reps:0,date:null}, rm10={w:0,reps:0,date:null}, vol={v:0,date:null};
+  h.forEach(function(s){ var sTop=0,sTopReps=0,sVol=0;
+    s.sets.forEach(function(st){ var w=+st.weight||0,r=+st.reps||0; sVol+=w*r; if(w>sTop){ sTop=w; sTopReps=r; } });
+    var r5=topWeightAtReps(s.sets,5), r10=topWeightAtReps(s.sets,10);
+    if(sTop>top.w){ top={w:sTop,reps:sTopReps,date:s.date}; }
+    if(r5>rm5.w){ rm5={w:r5,reps:repsAtWeight(s.sets,r5,5),date:s.date}; }
+    if(r10>rm10.w){ rm10={w:r10,reps:repsAtWeight(s.sets,r10,10),date:s.date}; }
+    if(sVol>vol.v){ vol={v:sVol,date:s.date}; }
+  });
+  return {top:top, rm5:rm5, rm10:rm10, vol:vol, n:h.length}; }
+/* chronological achievement timeline across all exercises (newest first). first:true => first-ever record */
+function achievementTimeline(limit){
+  var sessions=completedSessions().slice().sort(function(a,b){ return new Date(a.completedAt)-new Date(b.completedAt); });
+  var best={}, events=[];
+  sessions.forEach(function(sess){ (sess.entries||[]).forEach(function(en){ var ws=workingSets(en); if(!ws.length) return; var ex=exById(en.exId); if(!ex) return;
+    var b=best[en.exId]||(best[en.exId]={top:0,rm5:0,rm10:0});
+    var sTop=0,sTopReps=0; ws.forEach(function(s){ var w=+s.weight||0,r=+s.reps||0; if(w>sTop){ sTop=w; sTopReps=r; } });
+    var r10=topWeightAtReps(ws,10); var r5=topWeightAtReps(ws,5);
+    if(r10>b.rm10){ events.push({type:"10RM",first:b.rm10===0,exId:en.exId,name:ex.name,weight:r10,reps:repsAtWeight(ws,r10,10),date:sess.completedAt,sessionId:sess.id}); }
+    if(r5>b.rm5 && r5>r10){ events.push({type:"5RM",first:b.rm5===0,exId:en.exId,name:ex.name,weight:r5,reps:repsAtWeight(ws,r5,5),date:sess.completedAt,sessionId:sess.id}); }   // distinct 5RM only (heavier than the 10RM weight)
+    if(sTop>b.top && sTopReps<5){ events.push({type:"PR",first:b.top===0,exId:en.exId,name:ex.name,weight:sTop,reps:sTopReps,date:sess.completedAt,sessionId:sess.id}); }   // standalone weight PR only for heavy sub-5-rep sets; 5RM/10RM cover the rest
+    if(r10>b.rm10) b.rm10=r10; if(r5>b.rm5) b.rm5=r5; if(sTop>b.top) b.top=sTop;
+  }); });
+  events.sort(function(a,b){ return new Date(b.date)-new Date(a.date); });
+  return limit?events.slice(0,limit):events; }
+function sessionAchievements(sess){ if(!sess) return []; return achievementTimeline(0).filter(function(e){ return e.sessionId===sess.id; }); }
+function achBadgeClass(t){ return t==="5RM"?"rm5":t==="10RM"?"rm10":"pr"; }
+function achText(a){ return (a.first?"First ":"New ")+(a.type==="PR"?"weight PR":a.type)+" — "+a.name+": "+a.weight+"kg × "+a.reps; }
+/* per-session metric series (oldest->newest) for charts */
+function exerciseSeries(exId,metric){ var h=exerciseHistory(exId).slice().reverse(); var out=[];
+  h.forEach(function(s){ var v=null;
+    if(metric==="top") v=topSetLoad(s.sets);
+    else if(metric==="rm5") v=topWeightAtReps(s.sets,5);
+    else if(metric==="rm10") v=topWeightAtReps(s.sets,10);
+    else if(metric==="vol") v=s.sets.reduce(function(a,st){ return a+(+st.weight||0)*(+st.reps||0); },0);
+    else if(metric==="sets") v=s.sets.length;
+    if(v!=null && (metric==="vol"||metric==="sets"||metric==="top"||v>0)) out.push({date:s.date,val:v});
+  });
+  return out; }
+function metricUnit(m){ return m==="sets"?"sets":"kg"; }
+function metricLabel(m){ return {top:"Top working weight",rm5:"5RM (heaviest at 5+ reps)",rm10:"10RM (heaviest at 10+ reps)",vol:"Session volume",sets:"Working sets"}[m]||m; }
+function fmtNum(v){ return (Math.round(v*10)/10).toString(); }
+/* lightweight inline SVG line chart — mobile friendly, dark UI, no dependencies */
+function lineChartSVG(series,opts){ opts=opts||{}; var unit=opts.unit||"";
+  if(!series||!series.length) return '<div class="empty" style="padding:22px 12px">Not enough data yet — log this exercise to see the trend.</div>';
+  var W=320,H=140,padL=34,padR=12,padT=12,padB=22; var ys=series.map(function(p){return p.val;});
+  var minY=Math.min.apply(null,ys), maxY=Math.max.apply(null,ys); if(minY===maxY){ minY=minY-(minY?Math.abs(minY)*0.1||1:1); maxY=maxY+(Math.abs(maxY)*0.1||1); }
+  var iw=W-padL-padR, ih=H-padT-padB, n=series.length;
+  function X(i){ return n<=1? padL+iw/2 : padL+(i/(n-1))*iw; }
+  function Y(v){ return padT+ih-((v-minY)/(maxY-minY))*ih; }
+  var pts=series.map(function(p,i){ return X(i).toFixed(1)+","+Y(p.val).toFixed(1); });
+  var dots=series.map(function(p,i){ return '<circle cx="'+X(i).toFixed(1)+'" cy="'+Y(p.val).toFixed(1)+'" r="2.6" fill="var(--accent)"/>'; }).join("");
+  var line=n>1?'<polyline points="'+pts.join(" ")+'" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>':'';
+  var gl='<line x1="'+padL+'" y1="'+padT+'" x2="'+padL+'" y2="'+(padT+ih)+'" stroke="var(--line)" stroke-width="1"/><line x1="'+padL+'" y1="'+(padT+ih)+'" x2="'+(W-padR)+'" y2="'+(padT+ih)+'" stroke="var(--line)" stroke-width="1"/>';
+  var labMax='<text x="'+(padL-4)+'" y="'+(padT+4)+'" text-anchor="end" font-size="9" fill="var(--muted)">'+fmtNum(maxY)+'</text>';
+  var labMin='<text x="'+(padL-4)+'" y="'+(padT+ih)+'" text-anchor="end" font-size="9" fill="var(--muted)">'+fmtNum(minY)+'</text>';
+  var d0='<text x="'+padL+'" y="'+(H-6)+'" font-size="9" fill="var(--muted)">'+fmtDate(series[0].date)+'</text>';
+  var d1=n>1?'<text x="'+(W-padR)+'" y="'+(H-6)+'" text-anchor="end" font-size="9" fill="var(--muted)">'+fmtDate(series[n-1].date)+'</text>':'';
+  var last=series[n-1].val; var lastLab='<text x="'+(W-padR)+'" y="'+Math.max(10,Y(last)-6).toFixed(1)+'" text-anchor="end" font-size="10" font-weight="700" fill="var(--accent)">'+fmtNum(last)+(unit?(" "+unit):"")+'</text>';
+  return '<svg viewBox="0 0 '+W+' '+H+'" width="100%" style="display:block">'+gl+line+dots+labMax+labMin+d0+d1+lastLab+'</svg>'; }
+/* search matching across name / muscles / equipment / pattern / source / aliases */
+function exMatches(e,q){ if(!q) return true; q=String(q).toLowerCase().trim(); if(!q) return true;
+  var pm=primaryMuscle(e); var sec=Object.keys(e.m||{}).map(function(k){ return S.muscles[k]?S.muscles[k].label:k; }).join(" ");
+  var hay=[e.name,(S.muscles[pm]?S.muscles[pm].label:pm||""),sec,e.equip||"",(e.pattern||"").replace(/_/g," "),e.src||"",e.aliases||""].join(" ").toLowerCase();
+  return q.split(/\s+/).every(function(tok){ return hay.indexOf(tok)>=0; }); }
+function escAttr(s){ return String(s==null?"":s).replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+/* ---- Reports tab cards ---- */
+function recentAchievementsCard(limit){ var evs=achievementTimeline(limit||8);
+  if(!evs.length) return '<div class="card"><div class="tiny">Recent achievements 🏆</div><div class="empty" style="padding:14px">Log working sets to start earning 5RM, 10RM and weight PRs.</div></div>';
+  return '<div class="card"><div class="tiny">Recent achievements 🏆</div><div style="margin-top:6px">'+evs.map(function(a){ return '<div class="achrow" data-exhist="'+a.exId+'" style="cursor:pointer"><div><div class="am">'+a.name+'</div><div class="ad">'+a.weight+'kg × '+a.reps+' · '+fmtDate(a.date)+'</div></div><span class="badge '+achBadgeClass(a.type)+'">'+(a.first?"First ":"")+a.type+'</span></div>'; }).join("")+'</div></div>'; }
+function diagnoseCard(){ var prog=exerciseProgression();
+  var up=prog.filter(function(p){ return p.n>=2&&p.pct>=4; }).slice(0,3);
+  var flat=prog.filter(function(p){ return p.n>=3&&p.pct<=1.5; }).slice(0,3);
+  var na=needsAttentionPrimary().map(function(m){ return S.muscles[m].label; });
+  var vol=weeklyVolume(); var over=Object.entries(S.muscles).filter(function(pr){ return vol[pr[0]]>=pr[1].cap*0.85; }).map(function(pr){ return S.muscles[pr[0]].label+" ("+vol[pr[0]].toFixed(1)+"/"+pr[1].cap+")"; }).slice(0,3);
+  function ln(c,label,items,empty){ return '<div style="margin-top:10px"><div class="tiny" style="color:'+c+'">'+label+'</div><div class="ibody" style="margin-top:2px">'+(items.length?items.join(" · "):empty)+'</div></div>'; }
+  return '<div class="card"><div class="tiny">Coach diagnosis</div>'
+    +ln("var(--green)","Improving",up.map(function(p){ return p.ex.name+" +"+p.pct.toFixed(0)+"%"; }),"Not enough repeat data yet.")
+    +ln("var(--amber)","Stalled",flat.map(function(p){ return p.ex.name+" (flat over "+p.n+")"; }),"Nothing clearly stalled.")
+    +ln("var(--blue)","Needs direct work",na,"All primary muscles covered this week.")
+    +ln("var(--red)","Near / over cap",over,"Nothing overloaded.")+'</div>'; }
+function viewReports(){
+  var w=weekStatus(); var mom=momentumScore(); var setsW=weekSessions().reduce(function(a,s){ return a+sessionSets(s); },0);
+  var primaryAll=Object.values(S.muscles).filter(function(c){ return c.tier==="primary"; }).length; var primaryMet=primaryAll-w.primaryBelow.length;
+  var below=w.needsAttention.map(function(m){ return S.muscles[m].label; });
+  var tl=w.sess>=w.target?"var(--green)":w.sess>=w.target-1?"var(--amber)":"var(--red)";
+  var weekH='<div class="card"><div style="display:flex;justify-content:space-between;align-items:center"><div class="tiny">This week · Mon–Sun</div><span class="statuspill" style="background:'+tl+'22;color:'+tl+'">'+mom.label+'</span></div>'
+    +'<div class="kpi" style="margin-top:10px"><div class="k"><b style="color:'+tl+'">'+w.sess+'/'+w.target+'</b><span>sessions</span></div><div class="k"><b>'+setsW+'</b><span>working sets</span></div><div class="k"><b style="color:'+(primaryMet===primaryAll?"var(--green)":"var(--amber)")+'">'+primaryMet+'/'+primaryAll+'</b><span>primary done</span></div></div>'
+    +(below.length?'<div class="ibody" style="margin-top:10px">Below weekly minimum: '+below.join(", ")+'.</div>':'<div class="ibody" style="margin-top:10px">Every primary muscle has met its weekly minimum. 🔥</div>')+'</div>';
+  var histList=S.exercises.map(function(e){ return {e:e,n:exerciseHistory(e.id).length}; }).filter(function(x){ return x.n>=1; }).sort(function(a,b){ return b.n-a.n; });
+  if(!repExId||!histList.find(function(x){ return x.e.id===repExId; })) repExId=histList.length?histList[0].e.id:null;
+  var trendH;
+  if(!repExId){ trendH='<div class="card"><div class="tiny">Progress trends</div><div class="empty" style="padding:18px">Log a few sessions to chart your progress.</div></div>'; }
+  else { var fq=(repSearch||"").toLowerCase();
+    var chips=histList.filter(function(x){ return !fq||exMatches(x.e,fq); }).slice(0,40).map(function(x){ return '<button data-repexid="'+x.e.id+'" class="'+(x.e.id===repExId?"on":"")+'">'+x.e.name+'</button>'; }).join("");
+    var metrics=[["top","Top kg"],["rm5","5RM"],["rm10","10RM"],["vol","Volume"],["sets","Sets"]];
+    var seg='<div class="seg mini" style="margin-top:8px">'+metrics.map(function(mn){ return '<button data-repmetric="'+mn[0]+'" class="'+(repMetric===mn[0]?"on":"")+'">'+mn[1]+'</button>'; }).join("")+'</div>';
+    var ex=exById(repExId); var rec=exerciseRecords(repExId); var chart=lineChartSVG(exerciseSeries(repExId,repMetric),{unit:metricUnit(repMetric)});
+    trendH='<div class="card"><div class="tiny">Progress trends</div>'
+      +'<input class="inp srch" id="repSearch" placeholder="Search exercises..." value="'+escAttr(repSearch||"")+'" style="margin-top:8px">'
+      +'<div class="chips" style="margin-top:8px">'+(chips||'<span class="muted" style="font-size:12px">No matches</span>')+'</div>'
+      +'<div style="font-weight:700;font-size:14px;margin-top:4px">'+ex.name+'</div><div class="histline">'+metricLabel(repMetric)+'</div>'
+      +seg+'<div class="chartwrap">'+chart+'</div>'
+      +'<div class="histline" style="margin-top:8px">5RM '+(rec.rm5.w?rec.rm5.w+"kg×"+rec.rm5.reps:"—")+' · 10RM '+(rec.rm10.w?rec.rm10.w+"kg×"+rec.rm10.reps:"—")+' · Top '+(rec.top.w?rec.top.w+"kg":"—")+'</div></div>'; }
+  var ent=Object.keys(S.muscles).map(function(m){ var c=muscleContrib(m,weekSessions()); return {m:m,total:c.total,direct:c.direct,secondary:c.secondary}; }).filter(function(x){ return x.total>0; }).sort(function(a,b){ return b.total-a.total; });
+  var mmax=Math.max.apply(null,[1].concat(ent.map(function(x){ return x.total; })));
+  var mrows=ent.length?ent.map(function(x){ var dp=Math.round(x.direct/mmax*100), sp=Math.round(x.secondary/mmax*100);
+    return '<div class="exline" data-muscle-stat="'+x.m+'" style="padding:7px 0;cursor:pointer"><div style="flex:1"><div class="nm" style="font-size:13px">'+S.muscles[x.m].label+'</div><div class="bar" style="margin-top:5px;display:flex"><i style="width:'+dp+'%;background:var(--accent)"></i><i style="width:'+sp+'%;background:var(--grey)"></i></div></div><span class="mono" style="margin-left:10px">'+x.total.toFixed(1)+'</span></div>'; }).join(""):'<div class="empty" style="padding:16px">No sets logged this week yet.</div>';
+  var muscleH='<div class="card"><div class="tiny">Effective sets by muscle · this week</div><p class="muted" style="font-size:11px;margin:4px 0 0"><span style="color:var(--accent)">▮</span> direct · <span style="color:var(--grey)">▮</span> secondary</p><div style="margin-top:6px">'+mrows+'</div></div>';
+  return '<div class="reportshd" style="margin:10px 2px 2px;display:flex;align-items:center;gap:8px"><span style="font-size:18px">📊</span><div class="tiny" style="font-size:13px;text-transform:none;color:var(--text);font-weight:700">Reports · experimental analysis</div></div>'
+    +weekH+trendH+muscleH+recentAchievementsCard(10)+diagnoseCard(); }
+
 function incrementFor(e){ return (e.m.quads||e.m.hamstrings||e.m.glutes||e.m.back_lats>=1)?5:2.5; }
 function progressionFor(exId){ const e=exById(exId); const last=exerciseHistory(exId)[0];
   if(!last||!last.sets.length) return {weight:"",reps:"",note:"Find a working weight in "+e.rl+"-"+e.rh+" reps.",add:false};
@@ -616,7 +779,7 @@ function recommend(r){ r=r||{}; const time=r.time||60; const maxEx=time<=30?3:ti
   const scored=muscleScores(r); const wk=weekSessions().length; const remaining=S.settings.sessionsPerWeek-wk;
   const belowMin=scored.filter(s=>s.v<s.cfg.min&&s.trainable);
   const lim=activeLimitation();
-  const pool=S.exercises.filter(e=>AVAIL_OK[e.avail]&&!limBlock(e)); const chosen=[]; const covered={}; const now=new Date();
+  const pool=S.exercises.filter(e=>AVAIL_OK[e.avail]&&e.rec!==false&&!limBlock(e)); const chosen=[]; const covered={}; const now=new Date();  // v6: only recommendable/familiar gym exercises
   const lastExMap=lastExerciseMap(), lastPatMap=lastPatternMap(), ltMap=lastTrainedMap();
   /* relaxed=true lets the fallback pass program a caution/recovering muscle when nothing fresher exists */
   function exValue(ex,relaxed){ let val=0,bad=false,cautionLead=false;
@@ -669,7 +832,7 @@ function recommend(r){ r=r||{}; const time=r.time||60; const maxEx=time<=30?3:ti
       if(lim&&directOpts.length&&directOpts.every(e=>limBlock(e))) reason="active limitation blocks all direct options";
       else if(chosen.length>=maxEx) reason="session already at its exercise cap";
       else if(!directOpts.length) reason="no direct exercise available";
-      why.push({t:"warn",x:b.cfg.label+" below minimum but not trained directly — "+reason+"."}); } });
+      why.push({t:"warn",x:b.cfg.label+" below minimum but not directly trained — "+reason+"."}); } });
   scored.filter(s=>s.status==="recovering"||s.status==="overloaded").sort((a,b)=>(b.cfg.tier==="primary")-(a.cfg.tier==="primary")).slice(0,2).forEach(s=>{ const w=readyInHours(s.m); const lt=ltMap[s.m];
     why.push({t:"neg",x:s.cfg.label+" trained "+fmtAgo(lt&&lt.date)+" — "+(s.status==="overloaded"?"at weekly cap, still ":"")+"recovering"+(w>0?", wait ~"+w+"h":"")+" (not included due to recovery)."}); });
   if(lim){ const nm=limitationBlockedNames(); const ex2=nm.slice(0,2).join(" and ")||"some exercises"; why.push({t:"neg",x:ex2+(nm.length>2?" + others":"")+" excluded due to active limitation: "+lim.name+(lim.area?" ("+lim.area+")":"")+"."}); }
@@ -686,15 +849,17 @@ function recommend(r){ r=r||{}; const time=r.time||60; const maxEx=time<=30?3:ti
 function swapSuggestions(exId){ const ex=exById(exId); if(!ex) return []; const pm=primaryMuscle(ex);
   const inWorkout=new Set((activeSession?activeSession.entries:[]).map(en=>en.exId));                 // exercises already in this workout
   const patternsInWorkout=new Set((activeSession?activeSession.entries:[]).filter(en=>en.exId!==exId).map(en=>{ const e=exById(en.exId); return e?e.pattern:null; }));
-  return S.exercises.filter(e=>e.id!==exId && !inWorkout.has(e.id) && primaryMuscle(e)===pm && AVAIL_OK[e.avail] && !limBlock(e))   // never an exercise already in the workout
-    .map(e=>({e, dupPattern:patternsInWorkout.has(e.pattern)?1:0, samePatternAsCur:e.pattern===ex.pattern?1:0}))
+  return S.exercises.filter(e=>e.id!==exId && !inWorkout.has(e.id) && primaryMuscle(e)===pm && AVAIL_OK[e.avail] && !limBlock(e))   // never an exercise already in the workout; unavailable excluded
+    .map(e=>({e, dupPattern:patternsInWorkout.has(e.pattern)?1:0, recRank:(e.rec?0:1), samePatternAsCur:e.pattern===ex.pattern?1:0}))
     .sort((a,b)=>(a.dupPattern-b.dupPattern)                       // patterns not already in the workout first (no same-pattern duplicates)
+                ||(a.recRank-b.recRank)                            // familiar/default gym options before manual-only
                 ||(a.samePatternAsCur-b.samePatternAsCur)          // prefer a meaningfully different variation than the one being swapped
                 ||(PREF_SCORE[b.e.pref]-PREF_SCORE[a.e.pref]))     // then by your preference
-    .slice(0,6).map(x=>x.e); }
+    .slice(0,8).map(x=>x.e); }
 function libraryByMuscle(){ const groups={}; S.exercises.forEach(e=>{ const pm=primaryMuscle(e); (groups[pm]=groups[pm]||[]).push(e); }); return groups; }
 /* ============================================================================ UI STATE + ROUTER ============================================================================ */
 let route="today", activeSession=null, viewingLogger=false, pendingRec=null, restTimer=null, sheet=null, statsPeriod="all", bodyDetail=null;
+let exChartMetric="top", addSearch="", swapSearch="", mgmtSearch="", repExId=null, repMetric="top", repSearch="";  /* v6 chart/search UI state */
 let loggerOpen={}, loggerClock=null;
 let limDraft={rules:["foot_pressure"],dur:"1week",note:""};
 let readinessDraft={sleep:3,energy:3,soreness:2,motivation:3,time:60,avoid:[]};
@@ -702,6 +867,7 @@ const ICONS={
  today:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3v4M18 3v4M4 9h16M5 21h14a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1z"/></svg>',
  history:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 3-6.7L3 8M3 3v5h5M12 7v5l4 2"/></svg>',
  stats:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19V5M4 19h16M8 16l3-4 3 2 4-6"/></svg>',
+ reports:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4v16h16M8 14l3-4 3 2 4-6"/><circle cx="8" cy="14" r="0.5"/></svg>',
  body:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="4.5" r="2.2"/><path d="M12 7v7M7 10h10M9 21l3-7 3 7"/></svg>',
  settings:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1l2-1.5-2-3.4-2.3 1a7 7 0 0 0-1.7-1l-.3-2.6h-4l-.3 2.6a7 7 0 0 0-1.7 1l-2.3-1-2 3.4 2 1.5a7 7 0 0 0 0 2l-2 1.5 2 3.4 2.3-1a7 7 0 0 0 1.7 1l.3 2.6h4l.3-2.6a7 7 0 0 0 1.7-1l2.3 1 2-3.4-2-1.5a7 7 0 0 0 .1-1z"/></svg>'};
 function go(r){ route=r; bodyDetail=null; window.scrollTo(0,0); render(); }
@@ -713,6 +879,7 @@ function render(){ const app=document.getElementById("app");
   if(route==="today") body = (activeSession&&viewingLogger)?viewLogger():viewToday();
   else if(route==="history") body=viewHistory();
   else if(route==="stats") body=viewStats();
+  else if(route==="reports") body=viewReports();
   else if(route==="body") body=viewBody();
   else if(route==="settings") body=viewSettings();
   app.innerHTML=header()+'<div class="reveal">'+body+'</div>';
@@ -725,7 +892,7 @@ function header(){ const wk=weekSessions().length;
 function weekStrip(){ const s=startOfWeek(); const names=["M","T","W","T","F","S","S"]; const today=dayKey(new Date()); let c="";
   for(let i=0;i<7;i++){ const d=new Date(s); d.setDate(d.getDate()+i); const done=S.sessions.some(x=>x.completedAt&&dayKey(x.completedAt)===dayKey(d)); const isT=dayKey(d)===today;
     c+='<div class="day '+(done?'done':'')+' '+(isT?'today':'')+'"><b>'+names[i]+'</b><span class="pip"></span></div>'; } return '<div class="weekstrip">'+c+'</div>'; }
-function renderTabs(){ const tabs=[["today","Today"],["history","History"],["stats","Stats"],["body","Body"],["settings","Settings"]];
+function renderTabs(){ const tabs=[["today","Today"],["history","History"],["stats","Stats"],["reports","Reports"],["body","Body"],["settings","Settings"]];
   document.getElementById("tabbar").innerHTML=tabs.map(([id,l])=>'<button class="tab '+(route===id?'on':'')+'" data-tab="'+id+'">'+ICONS[id]+'<span>'+l+'</span></button>').join("");
   document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>go(b.dataset.tab)); }
 
@@ -851,18 +1018,36 @@ function viewHistory(){ const list=S.sessions.filter(s=>s.completedAt).sort((a,b
   return '<div class="card"><div class="tiny">Workout history · '+list.length+' sessions</div></div>'+rows; }
 
 /* ---------------- SHEETS ---------------- */
-function openSheet(type,data){ sheet={type,data}; renderSheet(); }
+function openSheet(type,data){ if(type==="add") addSearch=""; if(type==="swap") swapSearch=""; if(type==="exhist") exChartMetric="top"; sheet={type,data}; renderSheet(); }
 function closeSheet(){ sheet=null; renderSheet(); }
 function renderSheet(){ const m=document.getElementById("sheetmount"); if(!sheet){ m.innerHTML=""; return; }
   let inner="";
-  if(sheet.type==="swap"){ const subs=swapSuggestions(activeSession.entries[sheet.data].exId); const cur=exById(activeSession.entries[sheet.data].exId);
-    inner='<div class="tiny">Swap '+cur.name+'</div><p class="muted" style="font-size:12px;margin:6px 0 12px">Same primary muscle ('+S.muscles[primaryMuscle(cur)].label+'), so your volume still counts the same.</p>'
-      +(subs.length?subs.map(e=>'<button class="opt" data-pick="'+e.id+'" style="width:100%;text-align:left"><div><div class="nm">'+e.name+(e.pref==="love"?' <span class="tag love">★</span>':'')+'</div><div class="meta">'+e.pattern.replace(/_/g," ")+' · '+e.equip+'</div></div><span class="sets">pick</span></button>').join(""):'<div class="empty">No alternatives in the library.</div>'); }
-  else if(sheet.type==="add"){ const groups=libraryByMuscle();
-    inner='<div class="tiny">Add exercise</div><div style="margin-top:10px">'+Object.entries(groups).map(([m,exs])=>'<div class="muted tiny" style="margin:12px 0 4px">'+(S.muscles[m]?S.muscles[m].label:m)+'</div>'+exs.map(e=>'<button class="opt" data-add="'+e.id+'" style="width:100%;text-align:left"><div><div class="nm">'+e.name+'</div><div class="meta">'+e.equip+' · '+e.rl+'-'+e.rh+' reps</div></div><span class="sets">+ add</span></button>').join("")).join("")+'</div>'; }
-  else if(sheet.type==="exhist"){ const ex=exById(sheet.data); const b=exerciseBests(sheet.data); const h=exerciseHistory(sheet.data);
-    const _tr=exerciseTrend(sheet.data); inner='<div class="tiny">'+ex.name+'</div><div class="row" style="gap:6px;margin-top:8px;align-items:center"><span class="statuspill" style="background:'+_tr.c+'22;color:'+_tr.c+'">'+_tr.label+'</span>'+(TIPS[sheet.data]?'<button class="btn sm" data-tips="'+sheet.data+'" style="color:var(--gold)">View form tips</button>':'')+'</div><div class="ibody" style="margin-top:6px">'+_tr.note+'</div><div class="kpi" style="margin-top:12px"><div class="k"><b>'+(b.bestW||0)+'</b><span>top kg</span></div><div class="k"><b>'+(b.best1rm||0).toFixed(0)+'</b><span>best e1RM</span></div><div class="k"><b>'+h.length+'</b><span>sessions</span></div></div>'
-      +'<div class="tiny" style="margin-top:14px">History</div><div style="margin-top:6px">'+(h.length?h.map(x=>'<div class="contrib"><div><b>'+fmtDate(x.date)+'</b><div class="muted" style="font-size:12px;margin-top:2px">'+x.sets.map(s=>(s.weight||0)+"\u00d7"+(s.reps||0)).join("  ")+'</div></div><span class="c-ef">'+x.sets.reduce((a,s)=>a+(+s.weight||0)*(+s.reps||0),0)+'kg</span></div>').join(""):'<div class="empty">No logged sessions.</div>')+'</div>'; }
+  if(sheet.type==="swap"){ const idx=sheet.data; const curId=activeSession.entries[idx].exId; const cur=exById(curId); const inWk=new Set(activeSession.entries.map(function(en){return en.exId;})); const q=swapSearch||"";
+    var subs; if(q){ subs=S.exercises.filter(function(e){ return e.id!==curId&&!inWk.has(e.id)&&AVAIL_OK[e.avail]&&!limBlock(e)&&exMatches(e,q); }).sort(function(a,b){ return ((a.rec?0:1)-(b.rec?0:1))||(PREF_SCORE[b.pref]-PREF_SCORE[a.pref]); }).slice(0,24); } else { subs=swapSuggestions(curId); }
+    inner='<div class="tiny">Swap '+cur.name+'</div><p class="muted" style="font-size:12px;margin:6px 0 8px">Same primary muscle ('+S.muscles[primaryMuscle(cur)].label+') keeps your volume counting. Search to find any exercise.</p>'
+      +'<input class="inp srch" id="swapSearch" placeholder="Search name, muscle, equipment..." value="'+escAttr(q)+'">'
+      +'<div style="margin-top:10px">'+(subs.length?subs.map(function(e){ return '<button class="opt" data-pick="'+e.id+'" style="width:100%;text-align:left"><div><div class="nm">'+e.name+(e.pref==="love"?' <span class="tag love">★</span>':'')+(e.rec?'':' <span class="tag">manual</span>')+'</div><div class="meta">'+(e.pattern||"").replace(/_/g," ")+' · '+e.equip+'</div></div><span class="sets">pick</span></button>'; }).join(""):'<div class="empty">No matches in the library.</div>')+'</div>'; }
+  else if(sheet.type==="add"){ const q=addSearch||""; const inWk=new Set((activeSession?activeSession.entries:[]).map(function(en){return en.exId;}));
+    var rank=function(e){ return !AVAIL_OK[e.avail]?2:(e.rec?0:1); };
+    var tg=function(e){ return !AVAIL_OK[e.avail]?' <span class="tag" style="color:var(--faint)">off</span>':(e.rec?'':' <span class="tag">manual</span>'); };
+    var row=function(e){ return '<button class="opt" data-add="'+e.id+'" style="width:100%;text-align:left"><div><div class="nm">'+e.name+tg(e)+(inWk.has(e.id)?' <span class="tag" style="color:var(--amber)">in workout</span>':'')+'</div><div class="meta">'+e.equip+' · '+(e.pattern||"").replace(/_/g," ")+' · '+e.rl+'-'+e.rh+' reps</div></div><span class="sets">+ add</span></button>'; };
+    var listHtml; if(q){ var res=S.exercises.filter(function(e){ return exMatches(e,q); }).sort(function(a,b){ return rank(a)-rank(b)||(PREF_SCORE[b.pref]-PREF_SCORE[a.pref]); }); listHtml=res.length?res.map(row).join(""):'<div class="empty">No matches.</div>'; }
+    else { var groups=libraryByMuscle(); listHtml=Object.entries(groups).map(function(pair){ var m=pair[0],exs=pair[1]; var vis=exs.filter(function(e){ return AVAIL_OK[e.avail]; }).sort(function(a,b){ return rank(a)-rank(b)||(PREF_SCORE[b.pref]-PREF_SCORE[a.pref]); }); if(!vis.length) return ""; return '<div class="muted tiny" style="margin:12px 0 4px">'+(S.muscles[m]?S.muscles[m].label:m)+'</div>'+vis.map(row).join(""); }).join(""); }
+    inner='<div class="tiny">Add exercise</div><input class="inp srch" id="addSearch" placeholder="Search name, muscle, equipment, pattern..." value="'+escAttr(q)+'" style="margin-top:8px"><p class="muted" style="font-size:11px;margin:6px 0 0">Familiar gym options first. Search to add manual-only or older exercises.</p><div style="margin-top:6px">'+listHtml+'</div>'; }
+  else if(sheet.type==="exhist"){ const id=sheet.data; const ex=exById(id); const rec=exerciseRecords(id); const h=exerciseHistory(id); const _tr=exerciseTrend(id); var fd=function(d){ return d?fmtDate(d):""; };
+    var recGrid='<div class="recgrid">'
+      +'<div class="rc"><span>5RM</span><b>'+(rec.rm5.w?rec.rm5.w+'<i>×'+rec.rm5.reps+'</i>':'—')+'</b><small>'+(rec.rm5.w?fd(rec.rm5.date):'not yet')+'</small></div>'
+      +'<div class="rc"><span>10RM</span><b>'+(rec.rm10.w?rec.rm10.w+'<i>×'+rec.rm10.reps+'</i>':'—')+'</b><small>'+(rec.rm10.w?fd(rec.rm10.date):'not yet')+'</small></div>'
+      +'<div class="rc"><span>Top weight</span><b>'+(rec.top.w?rec.top.w+'<i>×'+rec.top.reps+'</i>':'—')+'</b><small>'+(rec.top.w?fd(rec.top.date):'not yet')+'</small></div>'
+      +'<div class="rc"><span>Best volume</span><b>'+(rec.vol.v?rec.vol.v+'<i>kg</i>':'—')+'</b><small>'+(rec.vol.v?fd(rec.vol.date):'not yet')+'</small></div>'
+      +'</div>';
+    var metrics=[["top","Top kg"],["rm5","5RM"],["rm10","10RM"],["vol","Volume"],["sets","Sets"]];
+    var seg='<div class="seg mini" style="margin-top:10px">'+metrics.map(function(mn){ return '<button data-exmetric="'+mn[0]+'" class="'+(exChartMetric===mn[0]?"on":"")+'">'+mn[1]+'</button>'; }).join("")+'</div>';
+    var chart=lineChartSVG(exerciseSeries(id,exChartMetric),{unit:metricUnit(exChartMetric)});
+    inner='<div class="tiny">'+ex.name+'</div><div class="row" style="gap:6px;margin-top:8px;align-items:center"><span class="statuspill" style="background:'+_tr.c+'22;color:'+_tr.c+'">'+_tr.label+'</span>'+(TIPS[id]?'<button class="btn sm" data-tips="'+id+'" style="color:var(--gold)">Form tips</button>':'')+'</div><div class="ibody" style="margin-top:6px">'+_tr.note+'</div>'
+      +recGrid
+      +'<div class="tiny" style="margin-top:14px">Progress · '+metricLabel(exChartMetric)+'</div>'+seg+'<div class="chartwrap">'+chart+'</div>'
+      +'<div class="tiny" style="margin-top:12px">History</div><div style="margin-top:6px">'+(h.length?h.map(function(x){ return '<div class="contrib"><div><b>'+fmtDate(x.date)+'</b><div class="muted" style="font-size:12px;margin-top:2px">'+x.sets.map(function(s){ return (s.weight||0)+"×"+(s.reps||0); }).join("  ")+'</div></div><span class="c-ef">'+x.sets.reduce(function(a,s){ return a+(+s.weight||0)*(+s.reps||0); },0)+'kg</span></div>'; }).join(""):'<div class="empty">No logged sessions.</div>')+'</div>'; }
   else if(sheet.type==="exwk"){ const w=S.sessions.find(s=>s.id===sheet.data);
     inner=w?('<div class="tiny">'+fmtDate(w.completedAt)+'</div><h2 style="font-size:17px;margin:6px 0 12px">'+(w.title||"Workout")+'</h2>'+w.entries.map(en=>{ const ex=exById(en.exId); const ws=workingSets(en);
       return '<div class="card" style="margin:8px 0;padding:12px"><div class="nm" style="font-weight:700">'+(ex?ex.name:en.exId)+'</div><div class="muted" style="font-size:12px;margin-top:4px">'+(en.sets.map(s=>(s.type==="warm"?"W ":"")+(s.weight||0)+"\u00d7"+(s.reps||0)).join("   ")||"\u2014")+'</div><div class="histline">'+ws.length+' working sets · '+musLabels(ex||{m:{}})+'</div></div>'; }).join("")
@@ -901,8 +1086,8 @@ function renderSheet(){ const m=document.getElementById("sheetmount"); if(!sheet
       +'<div class="kpi" style="margin-top:6px"><div class="k"><b>'+(r.dur||"—")+'</b><span>minutes</span></div><div class="k"><b>'+r.setsN+'</b><span>working sets</span></div><div class="k"><b>'+r.exN+'</b><span>exercises</span></div></div>'
       +(r.coach?'<div class="card" style="margin:12px 0 0;border-color:rgba(59,130,246,.32);background:rgba(59,130,246,.07)"><div class="tiny" style="color:var(--accent)">Coach says</div><div class="ibody" style="margin-top:4px;color:#C6D0DC">'+r.coach+'</div></div>':"")
       +(r.muscles.length?'<div class="histline" style="margin-top:10px;text-align:center">Trained: '+r.muscles.join(" · ")+'</div>':"")
-      +(r.prs.length?'<div class="tiny" style="margin-top:14px">Personal records 🏆</div><div style="margin-top:4px">'+r.prs.map(p=>'<div class="contrib"><div><b>'+p+'</b></div><span class="badge pr">PR</span></div>').join("")+'</div>':"")
-      +'<div class="tiny" style="margin-top:14px">Volume added by muscle</div><div style="margin-top:6px">'+(r.parts.length?r.parts.map(p=>'<div class="exline" style="padding:6px 0"><div class="nm" style="font-size:13px">'+p.label+'</div><span class="sets">'+p.v.toFixed(1)+' sets</span></div>').join(""):'<div class="empty" style="padding:10px">No working sets logged.</div>')+'</div>'
+      +((r.ach&&r.ach.length)?'<div class="tiny" style="margin-top:14px">Achievements 🏆</div><div style="margin-top:4px">'+r.ach.map(function(a){ return '<div class="achrow"><div><div class="am">'+a.name+'</div><div class="ad">'+a.weight+'kg × '+a.reps+'</div></div><span class="badge '+achBadgeClass(a.type)+'">'+(a.first?"First ":"")+a.type+'</span></div>'; }).join("")+'</div>':'<div class="histline" style="margin-top:12px;text-align:center;color:var(--muted)">No new 5RM / 10RM / PR this session — keep stacking reps.</div>')
+      +'<div class="tiny" style="margin-top:14px">Volume added by muscle</div><div style="margin-top:6px">'+(r.parts.length?r.parts.map(function(p){ return '<div class="exline" style="padding:6px 0"><div class="nm" style="font-size:13px">'+p.label+'</div><span class="sets">'+p.v.toFixed(1)+' sets</span></div>'; }).join(""):'<div class="empty" style="padding:10px">No working sets logged.</div>')+'</div>'
       +'<div class="row" style="margin-top:16px"><button class="btn accent full" data-recaphist="'+r.id+'">View in History</button><button class="btn full" data-sheetclose2>Done</button></div>'; }
   const noClose=(sheet.type==="confirm"||sheet.type==="recap");
   m.innerHTML='<div class="sheet-wrap" data-sheetbg><div class="sheet" data-sheetbody><div class="grab"></div>'+inner+(noClose?"":'<button class="btn ghost full" data-sheetclose style="margin-top:8px">Close</button>')+'</div></div>';
@@ -923,6 +1108,9 @@ function renderSheet(){ const m=document.getElementById("sheetmount"); if(!sheet
   const _lr=m.querySelector('[data-limremove]'); if(_lr) _lr.onclick=()=>{ clearLimitation(); closeSheet(); render(); };
   m.querySelectorAll('[data-pick]').forEach(b=>b.onclick=()=>{ activeSession.entries[sheet.data].exId=b.dataset.pick; saveActive(); closeSheet(); render(); });
   m.querySelectorAll('[data-add]').forEach(b=>b.onclick=()=>{ const ex=exById(b.dataset.add); activeSession.entries.push({exId:ex.id, sets:Array.from({length:ex.sl||2},()=>({weight:"",reps:"",type:"work",done:false}))}); saveActive(); closeSheet(); render(); });
+  m.querySelectorAll('[data-exmetric]').forEach(b=>b.onclick=()=>{ exChartMetric=b.dataset.exmetric; renderSheet(); });
+  (function(){ var as=m.querySelector('#addSearch'); if(as) as.oninput=function(){ addSearch=as.value; renderSheet(); var n=document.querySelector('#addSearch'); if(n){ n.focus(); try{n.setSelectionRange(n.value.length,n.value.length);}catch(e){} } };
+    var sw=m.querySelector('#swapSearch'); if(sw) sw.oninput=function(){ swapSearch=sw.value; renderSheet(); var n=document.querySelector('#swapSearch'); if(n){ n.focus(); try{n.setSelectionRange(n.value.length,n.value.length);}catch(e){} } }; })();
 }
 /* ============================================================================ ANALYTICS ============================================================================ */
 function completedSessions(){ return S.sessions.filter(s=>s.completedAt); }
@@ -1048,7 +1236,7 @@ function viewStats(){ const total=completedSessions().length; const streak=calcS
     return '<div class="exline" data-exhist="'+p.ex.id+'" style="padding:7px 0;cursor:pointer"><div><div class="nm" style="font-size:13px">'+p.ex.name+'</div><div class="histline">'+p.first.toFixed(0)+' → '+p.latest.toFixed(0)+'kg '+p.metric+' · '+p.n+' sessions</div></div><span class="statuspill" style="background:'+c+'22;color:'+c+'">'+(up?'▲':'▼')+' '+Math.abs(p.pct).toFixed(0)+'%</span></div>'; }).join(""):'<div class="empty" style="padding:16px">Log an exercise twice to see progression.</div>';
   const weekTop=statsPeriod==="week"?weekSummaryCard():"";
   return '<div style="display:flex;align-items:center;gap:8px;margin:14px 2px 2px"><span style="font-size:18px">✨</span><div class="tiny" style="font-size:13px;letter-spacing:.02em;text-transform:none;color:var(--text);font-weight:700">Insights</div></div>'
-    +insightsBlock()
+    +insightsBlock()+recentAchievementsCard(6)
     +'<div style="display:flex;align-items:center;gap:8px;margin:18px 2px 2px"><div class="tiny" style="font-size:13px;letter-spacing:.02em;text-transform:none;color:var(--text);font-weight:700">Charts & history</div></div>'
     +weekTop+'<div class="card"><div class="kpi"><div class="k" data-act="goto-history"><b>'+total+'</b><span>workouts</span></div><div class="k" data-act="goto-history"><b>'+streak+'</b><span>week streak</span></div><div class="k" data-act="goto-history"><b style="font-size:15px;line-height:2">'+(bm?monthLabel(bm.k):'\u2014')+'</b><span>best month'+(bm?' · '+bm.v:'')+'</span></div></div></div>'
     +'<div class="card"><div class="tiny">Workouts · last 10 weeks</div><div style="display:flex;gap:4px;margin-top:10px;align-items:flex-end">'+wbars+'</div></div>'
@@ -1102,8 +1290,10 @@ function muscleDetail(m){ const cfg=S.muscles[m]; const st=recoveryStatus(m); co
 function viewSettings(){ const acct=authProfile?'<div class="card"><div class="tiny">Account</div><div style="margin-top:8px;font-weight:600">'+authProfile.name+'</div><div class="histline">'+authProfile.email+' · role: '+authProfile.role+'</div><button class="btn ghost full danger" data-act="signout" style="margin-top:12px">Sign out</button></div>'
     :'<div class="card"><div class="tiny">Account</div><div class="histline" style="margin-top:6px">Local mode — not signed in.</div></div>';
   const approved=Object.entries(ALLOWED_USERS).map(([e,v])=>'<div class="exline" style="padding:7px 0"><div><div class="nm" style="font-size:13px">'+v.name+'</div><div class="histline">'+e+'</div></div><span class="tag">'+v.role+'</span></div>').join("");
-  const exList=S.exercises.map(e=>{ const pm=primaryMuscle(e); const prefC={love:"var(--gold)",like:"var(--green)",neutral:"var(--muted)",avoid:"var(--red)"}[e.pref];
-    return '<div class="exline" style="padding:9px 0"><div style="flex:1"><div class="nm" style="font-size:13.5px">'+e.name+'</div><div class="histline">'+S.muscles[pm].label+' · '+e.equip+' · '+musLabels(e)+'</div></div><div class="row" style="gap:6px"><button class="btn sm" data-pref="'+e.id+'" style="color:'+prefC+'">'+e.pref+'</button><button class="btn sm" data-avail="'+e.id+'">'+e.avail+'</button></div></div>'; }).join("");
+  const _fam=function(e){ return !AVAIL_OK[e.avail]?{t:"unavailable",c:"var(--faint)"}:(e.rec?{t:"default",c:"var(--green)"}:{t:"manual",c:"var(--muted)"}); };
+  const _exRows=S.exercises.filter(function(e){ return exMatches(e,mgmtSearch||""); }).map(e=>{ const pm=primaryMuscle(e); const prefC={love:"var(--gold)",like:"var(--green)",neutral:"var(--muted)",avoid:"var(--red)"}[e.pref]; const f=_fam(e);
+    return '<div class="exline" style="padding:9px 0"><div style="flex:1"><div class="nm" style="font-size:13.5px">'+e.name+'</div><div class="histline">'+S.muscles[pm].label+' · '+e.equip+' · <span style="color:'+f.c+'">'+f.t+'</span></div></div><div class="row" style="gap:6px"><button class="btn sm" data-rec="'+e.id+'" title="recommendable">'+(e.rec?"rec":"manual")+'</button><button class="btn sm" data-pref="'+e.id+'" style="color:'+prefC+'">'+e.pref+'</button><button class="btn sm" data-avail="'+e.id+'">'+e.avail+'</button></div></div>'; }).join("");
+  const exList='<input class="inp srch" id="mgmtSearch" placeholder="Search exercises..." value="'+escAttr(mgmtSearch||"")+'" style="margin-bottom:8px">'+(_exRows||'<div class="empty">No matches.</div>');
   const bw=(S.bodyweight||[]).slice(-1)[0];
   const TIERS=["primary","secondary","maintenance"]; const tierC={primary:"var(--gold)",secondary:"var(--accent)",maintenance:"var(--muted)"};
   const muscleRows=Object.entries(S.muscles).map(([m,cfg])=>'<div class="exline" style="padding:7px 0"><div class="nm" style="font-size:13px">'+cfg.label+'</div><button class="btn sm" data-tier="'+m+'" style="color:'+tierC[cfg.tier]+';border-color:'+tierC[cfg.tier]+'55;min-width:104px">'+TIER_LABEL[cfg.tier]+'</button></div>').join("");
@@ -1115,7 +1305,7 @@ function viewSettings(){ const acct=authProfile?'<div class="card"><div class="t
     +'<div class="card"><div class="tiny">Injury / limitation</div>'+(activeLimitation()?'<div style="margin-top:8px;font-weight:600">'+activeLimitation().name+'</div><div class="histline">'+(activeLimitation().note||"")+(activeLimitation().until?' · expires '+fmtDate(activeLimitation().until):' · until removed')+'</div><div class="row" style="margin-top:10px"><button class="btn sm" data-act="editlim">Edit</button><button class="btn sm danger" data-act="removelim">Remove</button></div>':'<p class="muted" style="font-size:12.5px;margin:8px 0">Temporarily exclude exercises after an injury or when equipment is unavailable (e.g. broken toe → no foot-pressure exercises).</p><button class="btn full" data-act="addlim">Add limitation</button>')+'</div>'
     +'<div class="card"><div class="tiny">Readiness check-in</div><p class="muted" style="font-size:12.5px;margin:8px 0">Optional. It tunes <b>today\u2019s recommendation only</b> — it does not change muscle recovery colours. Low sleep/energy trims volume; high soreness leans toward isolation and caps sets at 2; muscles you flag to avoid are skipped today.</p><button class="btn full" data-act="readiness">Open readiness check-in</button></div>'
     +'<div class="card"><div class="tiny">Bodyweight</div><div class="row" style="margin-top:8px"><input class="inp" id="bwInput" inputmode="decimal" placeholder="'+(bw?bw.kg+" kg last":"kg")+'" style="flex:1"><button class="btn accent" data-act="logbw">Log</button></div></div>'
-    +'<div class="card"><div class="tiny">Exercise management</div><p class="muted" style="font-size:12px;margin:6px 0">Tap <b>preference</b> to cycle love → like → neutral → avoid (drives recommendations). Tap <b>availability</b> to mark if a machine is usually free at your gym.</p><div style="margin-top:6px">'+exList+'</div></div>'
+    +'<div class="card"><div class="tiny">Exercise management</div><p class="muted" style="font-size:12px;margin:6px 0">Tap <b>rec</b> to include/exclude from auto-recommendations (default vs manual-only). Tap <b>preference</b> to cycle love → like → neutral → avoid. Tap <b>availability</b> to mark if a machine is free / present at your gym.</p><div style="margin-top:6px">'+exList+'</div></div>'
     +'<div class="card"><div class="tiny">Approved users</div><p class="muted" style="font-size:12px;margin:6px 0">Each person has fully private data (row-level security). Sharing/leaderboards are not built yet.</p>'+approved+'</div>'
     +'<div class="card"><div class="tiny">Data</div><div class="row" style="margin-top:8px"><button class="btn full" data-act="export">Export backup</button><button class="btn full" data-act="import">Import</button></div><input type="file" id="importFile" accept="application/json" style="display:none"></div>'
     +'<div class="card"><div class="histline">Iron Arc v2 · '+(sb?(cloudReady()?"cloud synced":"cloud configured"):"local only")+' · '+completedSessions().length+' workouts</div></div>'; }
@@ -1196,16 +1386,13 @@ function doFinish(){ const d=activeSession.dateISO; const base=d?new Date(d+"T12
 function buildRecap(sess){ const setsN=sess.entries.reduce((a,en)=>a+workingSets(en).length,0);
   const dur=sess.startedAt?Math.max(1,Math.round(hoursBetween(sess.startedAt,sess.completedAt)*60)):null;
   const muscles=[...new Set(sess.entries.flatMap(en=>{ const ex=exById(en.exId); const n=workingSets(en).length; return (ex&&n)?Object.entries(ex.m).filter(([m,c])=>c>=0.5).map(([m])=>m):[]; }))].map(m=>S.muscles[m]?S.muscles[m].label:m);
-  const prs=[]; sess.entries.forEach(en=>{ const ws=workingSets(en); if(!ws.length) return; const ex=exById(en.exId); if(!ex) return;
-    const hist=exerciseHistory(en.exId).filter(h=>h.sessionId!==sess.id); let bw=0,b1=0,bv=0; hist.forEach(h=>{ let v=0; h.sets.forEach(s=>{const w=+s.weight||0,r=+s.reps||0; v+=w*r; if(w>bw)bw=w; const e=est1RM(w,r); if(e>b1)b1=e;}); if(v>bv)bv=v; });
-    let mw=0,m1=0,vol=0; ws.forEach(s=>{const w=+s.weight||0,r=+s.reps||0; vol+=w*r; if(w>mw)mw=w; const e=est1RM(w,r); if(e>m1)m1=e;});
-    if(bw>0&&mw>bw) prs.push(ex.name+" — "+mw+"kg top set"); else if(b1>0&&m1>b1) prs.push(ex.name+" — e1RM "+m1.toFixed(0)+"kg"); else if(bv>0&&vol>bv) prs.push(ex.name+" — "+vol+"kg volume"); });
+  const ach=sessionAchievements(sess); const prs=ach.map(achText);
   const vbp=weeklyVolume([sess]); const parts=Object.entries(vbp).filter(([m,v])=>v>0).sort((a,b)=>b[1]-a[1]).slice(0,6).map(([m,v])=>({label:S.muscles[m].label,v}));
   let coach=""; const mom=momentumScore(); const na=needsAttentionPrimary();
-  if(prs.length) coach="🏆 "+prs.length+" personal record"+(prs.length>1?"s":"")+" this session — momentum "+mom.score+"/100.";
+  if(prs.length) coach="🏆 "+prs.length+" new achievement"+(prs.length>1?"s":"")+" this session — momentum "+mom.score+"/100.";
   else if(na.length) coach="Momentum "+mom.score+"/100. Still needs direct work this week: "+na.slice(0,2).map(m=>S.muscles[m].label.toLowerCase()).join(", ")+".";
   else coach="Momentum "+mom.score+"/100 — every primary muscle is on track this week. 🔥";
-  return {id:sess.id, setsN, exN:sess.entries.filter(en=>workingSets(en).length).length, dur, muscles, prs, parts, title:sess.title, coach}; }
+  return {id:sess.id, setsN, exN:sess.entries.filter(en=>workingSets(en).length).length, dur, muscles, prs, ach, parts, title:sess.title, coach}; }
 function editWorkout(id){ const s=S.sessions.find(x=>x.id===id); if(!s) return; loggerOpen={}; activeSession={ id:uid(), editingId:id, startedAt:s.startedAt||s.completedAt, dateISO:new Date(s.completedAt).toISOString().slice(0,10), title:s.title, mode:"edit", entries:JSON.parse(JSON.stringify(s.entries)) }; viewingLogger=true; saveActive(); go("today"); }
 function duplicateWorkout(id){ const s=S.sessions.find(x=>x.id===id); if(!s) return; loggerOpen={}; activeSession={ id:uid(), startedAt:iso(new Date()), dateISO:new Date().toISOString().slice(0,10), title:s.title, mode:"manual", entries:s.entries.map(en=>({exId:en.exId, sets:en.sets.map(()=>({weight:"",reps:"",type:"work",done:false}))})) }; viewingLogger=true; saveActive(); try{ history.pushState({iron:"workout"},""); }catch(e){} go("today"); }
 function deleteWorkout(id){ confirmSheet("Delete this workout permanently? Stats, volume and muscle status will update.","Delete",()=>{ S.sessions=S.sessions.filter(x=>x.id!==id); persistLocal(); deleteWorkoutCloud(id); render(); },{danger:true,title:"Delete workout?"}); }
@@ -1282,6 +1469,11 @@ function wireScreen(){
   document.querySelectorAll("[data-inputorder]").forEach(b=>b.onclick=()=>{ S.settings.inputOrder=b.dataset.inputorder; save(); render(); });
   document.querySelectorAll("[data-pref]").forEach(b=>b.onclick=()=>{ const e=exById(b.dataset.pref); const order=["love","like","neutral","avoid"]; e.pref=order[(order.indexOf(e.pref)+1)%4]; save(); pushExercisePref(e); render(); });
   document.querySelectorAll("[data-avail]").forEach(b=>b.onclick=()=>{ const e=exById(b.dataset.avail); const order=["always","usually","sometimes","rarely","no"]; e.avail=order[(order.indexOf(e.avail)+1)%5]; save(); pushExercisePref(e); render(); });
+  document.querySelectorAll("[data-rec]").forEach(b=>b.onclick=()=>{ const e=exById(b.dataset.rec); e.rec=!e.rec; save(); render(); });
+  document.querySelectorAll("[data-repexid]").forEach(b=>b.onclick=()=>{ repExId=b.dataset.repexid; render(); });
+  document.querySelectorAll("[data-repmetric]").forEach(b=>b.onclick=()=>{ repMetric=b.dataset.repmetric; render(); });
+  (function(){ var ms=document.querySelector('#mgmtSearch'); if(ms) ms.oninput=function(){ mgmtSearch=ms.value; render(); var n=document.querySelector('#mgmtSearch'); if(n){ n.focus(); try{n.setSelectionRange(n.value.length,n.value.length);}catch(e){} } }; })();
+  (function(){ var rs=document.querySelector('#repSearch'); if(rs) rs.oninput=function(){ repSearch=rs.value; render(); var n=document.querySelector('#repSearch'); if(n){ n.focus(); try{n.setSelectionRange(n.value.length,n.value.length);}catch(e){} } }; })();
   act("logbw",()=>{ const v=+document.getElementById("bwInput").value; if(v>0){ const row={id:uid(),date:iso(new Date()),kg:v,synced:false}; S.bodyweight.push(row); save(); pushMeasurementRow(row.id,row.date,"bodyweight",v); render(); } });
   act("export",()=>{ const blob=new Blob([JSON.stringify(S,null,2)],{type:"application/json"}); const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="iron-arc-backup-"+dayKey(new Date())+".json"; a.click(); });
   act("import",()=>document.getElementById("importFile").click());
