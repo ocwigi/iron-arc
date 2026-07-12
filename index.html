@@ -204,6 +204,7 @@ const FORCE_AVAIL = ["assisted_dip","machine_lat_raise","machine_tricep_ext","bi
 const ALLOWED_USERS = {
   "adam.nbsearch@gmail.com": { name:"Adam", role:"admin" },
   "timothywilson0911@gmail.com": { name:"Tim", role:"user" },
+  "andysingh@icloud.com": { name:"Andy", role:"user" },
   // ▼ Add Panda + Christian here once you send their emails (do not invent addresses):
   // "panda.real.email@example.com":     { name:"Panda",     role:"user" },
   // "christian.real.email@example.com": { name:"Christian", role:"user" },
@@ -337,7 +338,15 @@ const PHOTO_POSES = ["Front relaxed","Front flexed","Side relaxed","Side flexed"
 const QUOTES = ["Discipline is choosing what you want most over what you want now.","The work you avoid is the work that grows you.","Win the set in front of you.","Beat last time. That's the whole game.","Hard, brief, frequent, recovered. Repeat.","No zero days.","Consistency beats intensity you can't repeat."];
 
 /* ============================================================================ STORAGE ============================================================================ */
-const KEY="iron_arc_v2", ACTIVE_KEY="iron_arc_active_v2", PREF_SCORE={love:14,like:6,neutral:0,avoid:-40}, AVAIL_OK={always:true,usually:true,sometimes:true,rarely:false,no:false};
+let KEY="iron_arc_v2", ACTIVE_KEY="iron_arc_active_v2";
+const PREF_SCORE={love:14,like:6,neutral:0,avoid:-40}, AVAIL_OK={always:true,usually:true,sometimes:true,rarely:false,no:false};
+/* Per-user local storage. Every signed-in account gets its own local cache so nothing
+   (limitations, preferences, readiness, history, recommendations) leaks between users
+   who share a device — and nothing local gets migrated into the wrong cloud account. */
+function setStorageScope(uid){
+  KEY        = uid ? "iron_arc_v2:"+uid        : "iron_arc_v2";
+  ACTIVE_KEY = uid ? "iron_arc_active_v2:"+uid : "iron_arc_active_v2";
+}
 function seed(){
   const muscles={}; for(const [k,v] of Object.entries(MUSCLES)) muscles[k]={...v};
   return { cfgVersion:CONFIG_VERSION, settings:{sessionsPerWeek:4, units:"kg", inputOrder:"wr"}, muscles,
@@ -382,13 +391,23 @@ async function signInPassword(email,password){ if(!sb) throw new Error("offline"
   const { error }=await sb.auth.signInWithPassword({ email, password }); if(error) throw error; }
 async function signUpPassword(email,password){ if(!sb) throw new Error("offline");
   const { error }=await sb.auth.signUp({ email, password, options:{ emailRedirectTo:redirectURL() } }); if(error) throw error; }
-async function signOut(){ if(sb){ try{ await sb.auth.signOut(); }catch(e){} } authUser=null; authProfile=null; render(); }
+async function signOut(){ if(sb){ try{ await sb.auth.signOut(); }catch(e){} } authUser=null; authProfile=null;
+  /* wipe in-memory state + rescope so the next sign-in on this device sees nothing of this account */
+  setStorageScope(null); S=seed(); activeSession=null; viewingLogger=false; render(); }
 
 async function afterAuth(){
   if(!authUser) return;
   if(!isApproved(authUser.email)){ authMsg="not_approved"; await sb.auth.signOut(); authUser=null; render(); return; }
   const meta=ALLOWED_USERS[authUser.email.toLowerCase()];
   authProfile={ email:authUser.email, name:meta.name, role:meta.role };
+  /* Scope local data to this user id. One-time: the admin (original single-user install)
+     adopts the legacy shared-key data; everyone else starts from their own clean cache. */
+  const legacyRaw=(function(){ try{ return localStorage.getItem("iron_arc_v2"); }catch(e){ return null; } })();
+  setStorageScope(authUser.id);
+  if(legacyRaw && !localStorage.getItem(KEY) && authUser.email.toLowerCase()===ADMIN_EMAIL){
+    try{ localStorage.setItem(KEY, legacyRaw); const la=localStorage.getItem("iron_arc_active_v2"); if(la) localStorage.setItem(ACTIVE_KEY, la); }catch(e){}
+  }
+  S=load(); activeSession=loadActive(); if(activeSession) viewingLogger=false;
   try{ await sb.from("profiles").upsert({ user_id:authUser.id, email:authUser.email, display_name:meta.name, role:meta.role }, { onConflict:"user_id" }); }catch(e){}
   await hydrateFromCloud();
 }
@@ -1487,7 +1506,9 @@ window.addEventListener("beforeunload",(e)=>{ if(activeSession && activeSession.
 window.addEventListener("popstate",()=>{ if(activeSession && viewingLogger){ try{ history.pushState({iron:"workout"},""); }catch(e){}
     confirmSheet("Your workout is saved — you can pick it back up from Today whenever you like.","Leave (it’s saved)",()=>{ viewingLogger=false; saveActive(); render(); },{title:"Leave this workout?"}); } });
 if(sb){ sb.auth.getSession().then(({data})=>{ authUser=data.session?data.session.user:null; if(authUser) afterAuth(); else render(); });
-  sb.auth.onAuthStateChange((_e,session)=>{ const was=authUser&&authUser.id; authUser=session?session.user:null; if(authUser&&authUser.id!==was) afterAuth(); else if(!authUser) render(); }); }
+  sb.auth.onAuthStateChange((_e,session)=>{ const was=authUser&&authUser.id; authUser=session?session.user:null;
+    if(authUser&&authUser.id!==was) afterAuth();
+    else if(!authUser&&was){ setStorageScope(null); S=seed(); activeSession=null; viewingLogger=false; render(); } }); }
 else { render(); }
 </script>
 </body>
