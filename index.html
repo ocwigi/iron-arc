@@ -186,7 +186,7 @@ button{font-family:inherit; cursor:pointer; border:none; color:inherit;}
 /* ============================================================================
    CONFIG — edit freely; first run seeds this, your in-app edits persist.
    ============================================================================ */
-const CONFIG_VERSION = 6; /* v6: gym-specific recommendable library + 5RM/10RM achievements + charts + Reports tab */
+const CONFIG_VERSION = 7; /* v7: Lying Leg Curl added · avoid-pref hard-excluded from recs/swaps · reroll gives a genuinely new proposal · finish time = submit time · prev/last follow your logging order (v6: gym-specific library + achievements + charts + Reports) */
 const SUPABASE_URL = "https://utlhzxbjxvsyluyslfhe.supabase.co";
 const SUPABASE_KEY = "sb_publishable_xNfADG84azbA0wc1_ngVYw_MqxOANCz";
 
@@ -240,6 +240,7 @@ const EXERCISES = [
  {id:"plate_leg_press", name:"Plate-Loaded Leg Press", type:"compound", equip:"machine", pattern:"plate_leg_press", pref:"like", avail:"always", rec:true, src:"confirmed", rest:150, rl:8, rh:12, sl:2, sh:3, fatigue:2.7, m:{quads:1, glutes:.5}, aliases:"plate loaded squat press quads legs"},
  {id:"leg_ext", name:"Leg Extension", type:"isolation", equip:"machine", pattern:"leg_ext", pref:"neutral", avail:"always", rec:true, src:"confirmed", rest:75, rl:10, rh:15, sl:2, sh:3, fatigue:1.5, m:{quads:1}, aliases:"df-100-a sportsart quads extension"},
  {id:"leg_curl", name:"Seated Leg Curl", type:"isolation", equip:"machine", pattern:"leg_curl", pref:"like", avail:"always", rec:true, src:"confirmed", rest:90, rl:8, rh:15, sl:2, sh:3, fatigue:1.5, m:{hamstrings:1, calves:.25}, aliases:"df-100-b sportsart hamstring leg curl"},
+ {id:"lying_leg_curl", name:"Lying Leg Curl", type:"isolation", equip:"machine", pattern:"leg_curl", pref:"like", avail:"always", rec:true, src:"confirmed", rest:90, rl:8, rh:15, sl:2, sh:3, fatigue:1.5, m:{hamstrings:1, calves:.25}, aliases:"lying flat prone leg curl hamstring machine"},   /* v7: confirmed at the gym */
  {id:"calf_raise", name:"Calf Extension", type:"isolation", equip:"machine", pattern:"calf", pref:"like", avail:"always", rec:true, src:"confirmed", rest:75, rl:8, rh:15, sl:2, sh:3, fatigue:1, m:{calves:1}, aliases:"df-101-b leg press calf raise calves"},
  {id:"legpress_calf", name:"Leg-Press Calf Raise", type:"isolation", equip:"machine", pattern:"calf", pref:"like", avail:"always", rec:true, src:"confirmed", rest:75, rl:8, rh:15, sl:2, sh:3, fatigue:1, m:{calves:1}, aliases:"calf raise calves leg press"},
  {id:"seated_calf_raise", name:"Seated Calf Raise", type:"isolation", equip:"machine", pattern:"seated_calf", pref:"like", avail:"always", rec:true, src:"confirmed", rest:75, rl:10, rh:18, sl:2, sh:3, fatigue:1, m:{calves:1}, aliases:"plate loaded seated calf raise calves soleus"},
@@ -307,7 +308,7 @@ const EXERCISES = [
 /* ===== Exercise metadata for temporary limitations (toe/foot, legs, standing) =====
    foot_pressure: 0 none · 1 light · 2 heavy (drives through forefoot/toe).
    standing_loaded: bears load while standing. lower_body: primary leg movement. */
-const FOOT_PRESSURE={ hack_squat:2, leg_press:2, plate_leg_press:2, rdl:2, calf_raise:2, legpress_calf:2, seated_calf_raise:2, leg_ext:0, leg_curl:0 };
+const FOOT_PRESSURE={ hack_squat:2, leg_press:2, plate_leg_press:2, rdl:2, calf_raise:2, legpress_calf:2, seated_calf_raise:2, leg_ext:0, leg_curl:0, lying_leg_curl:0 };
 const STANDING_LOADED={ hack_squat:true, rdl:true, calf_raise:true };
 const LEG_MUSCLES=new Set(["quads","hamstrings","glutes","calves"]);
 function footPressure(ex){ return FOOT_PRESSURE[ex.id]||0; }
@@ -370,6 +371,11 @@ function persistLocal(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }cat
 function save(){ S.updatedAt=iso(new Date()); persistLocal(); scheduleCloudPush(); }
 function exById(id){ return S.exercises.find(e=>e.id===id); }
 function inputOrder(){ return (S.settings&&S.settings.inputOrder)==="rw"?"rw":"wr"; }
+/* v7: every "previous / last" pair is shown in YOUR logging order (Settings → Set logging order).
+   Weight → Reps shows 60×8 (kg×reps); Reps → Weight shows 8×60 (reps×kg). */
+function fmtSet(w,r){ const a=(w==null||w==="")?0:w, b=(r==null||r==="")?0:r; return inputOrder()==="rw"?(b+"×"+a):(a+"×"+b); }
+/* v7: map a set-row index to its working-set ordinal (warm-ups don't shift the prev column) */
+function workIndex(en,si){ let n=0; for(let k=0;k<si&&k<en.sets.length;k++){ if(en.sets[k].type!=="warm") n++; } return n; }
 function uid(){ try{ if(crypto&&crypto.randomUUID) return crypto.randomUUID(); }catch(e){} return "id-"+Date.now()+"-"+Math.random().toString(16).slice(2); }
 
 /* active-workout autosave (P1) — separate key, written on EVERY change */
@@ -591,6 +597,7 @@ const TIPS={
  rdl:{feel:"Hamstring stretch and glutes.",avoid:"Rounding the lower back, turning it into a squat.",cues:["Soft knees, hinge at the hips.","Bar/handles close to the legs.","Lower until you feel a hamstring stretch, back flat.","Drive hips forward to stand."]},
  leg_ext:{feel:"Quads, hard contraction at the top.",avoid:"Knee pain, swinging.",cues:["Back against the pad, controlled tempo.","Squeeze quads at the top 1s.","Slow lower, don’t let the stack slam."]},
  leg_curl:{feel:"Hamstrings.",avoid:"Hips lifting, jerking.",cues:["Hips down, brace.","Curl fully, squeeze at the top.","Slow controlled return."]},
+ lying_leg_curl:{feel:"Hamstrings, especially the squeeze at full curl.",avoid:"Hips popping off the pad, yanking the weight.",cues:["Hips pressed into the pad the whole set.","Curl heels to glutes, pause briefly.","Lower slowly — 2–3s down, full stretch."]},
  calf_raise:{feel:"Calves through a big range.",avoid:"Bouncing, short range.",cues:["Full stretch at the bottom, pause.","Drive all the way up onto the toes.","Controlled — no bouncing the tendon."]},
  machine_ohp:{feel:"Front/side delts and triceps.",avoid:"Lower-back arch, shoulder pinch.",cues:["Brace, ribs down.","Press up smoothly, don’t lock harshly.","Control the lowering to ear height."]},
  plated_ohp:{feel:"Shoulders and triceps.",avoid:"Excessive arching, shrugging.",cues:["Brace core, neutral spine.","Press overhead, control down."]},
@@ -793,12 +800,14 @@ function muscleScores(r){ const vol=weeklyVolume(); const wk=weekSessions().leng
     if(avoided) score-=1000;
     out.push({m,cfg,v,status,score,trainable}); }
   out.sort((a,b)=>b.score-a.score); return out; }
-function recommend(r){ r=r||{}; const time=r.time||60; const maxEx=time<=30?3:time<=45?4:5;
+function recommend(r,opts){ r=r||{}; opts=opts||{}; const time=r.time||60; const maxEx=time<=30?3:time<=45?4:5;
   const lowEnergy=(r.energy&&r.energy<=2)||(r.sleep&&r.sleep<=2); const highSore=(r.soreness&&r.soreness>=4);
   const scored=muscleScores(r); const wk=weekSessions().length; const remaining=S.settings.sessionsPerWeek-wk;
   const belowMin=scored.filter(s=>s.v<s.cfg.min&&s.trainable);
   const lim=activeLimitation();
-  const pool=S.exercises.filter(e=>AVAIL_OK[e.avail]&&e.rec!==false&&!limBlock(e)); const chosen=[]; const covered={}; const now=new Date();  // v6: only recommendable/familiar gym exercises
+  const pool=S.exercises.filter(e=>AVAIL_OK[e.avail]&&e.rec!==false&&e.pref!=="avoid"&&!limBlock(e)); const chosen=[]; const covered={}; const now=new Date();  // v6: only recommendable/familiar gym exercises · v7: pref "avoid" = hard exclusion, never just a penalty
+  /* v7 reroll: memoised per-call jitter (deterministic when opts.reroll is off, so tests/engine stay stable) */
+  const _jmap={}; function jit(id){ if(!opts.reroll) return 0; if(!(id in _jmap)) _jmap[id]=Math.random()*36-18; return _jmap[id]; }
   const lastExMap=lastExerciseMap(), lastPatMap=lastPatternMap(), ltMap=lastTrainedMap();
   /* relaxed=true lets the fallback pass program a caution/recovering muscle when nothing fresher exists */
   function exValue(ex,relaxed){ let val=0,bad=false,cautionLead=false;
@@ -811,6 +820,9 @@ function recommend(r){ r=r||{}; const time=r.time||60; const maxEx=time<=30?3:ti
       const usable=sc.trainable||relaxed; if(!usable) continue; const dim=(covered[m]||0)>0?0.35:1;
       val+=(sc.trainable?sc.score:Math.max(sc.score,-40))*c*dim; }
     val+=PREF_SCORE[ex.pref]*1.2;
+    /* v7 reroll: push away from proposals you've already rejected + shuffle near-ties */
+    const rrN=opts.avoidIds?(opts.avoidIds[ex.id]||0):0; if(rrN) val-=90*Math.min(rrN,2);
+    val+=jit(ex.id);
     /* intra-session variety: avoid two near-identical exercises in one workout */
     const pm=primaryMuscle(ex);
     for(const c of chosen){ const ce=exById(c.exId); if(!ce) continue;
@@ -847,7 +859,7 @@ function recommend(r){ r=r||{}; const time=r.time||60; const maxEx=time<=30?3:ti
   belowMin.filter(b=>isDirect(b.m)).slice(0,3).forEach(b=>why.push({t:"go",x:b.cfg.label+" below minimum ("+b.v.toFixed(1)+"/"+b.cfg.min+") and recovered — included directly."}));
   belowMin.filter(b=>!isDirect(b.m)&&(b.cfg.tier==="primary"||secVia(b.m))).slice(0,3).forEach(b=>{ const via=secVia(b.m);
     if(via){ why.push({t:"warn",x:b.cfg.label+" below minimum — partially covered via "+via+" (secondary only), no direct exercise."}); }
-    else { let reason="no direct option available"; const directOpts=S.exercises.filter(e=>e.m[b.m]>=1&&AVAIL_OK[e.avail]);
+    else { let reason="no direct option available"; const directOpts=S.exercises.filter(e=>e.m[b.m]>=1&&AVAIL_OK[e.avail]&&e.pref!=="avoid");
       if(lim&&directOpts.length&&directOpts.every(e=>limBlock(e))) reason="active limitation blocks all direct options";
       else if(chosen.length>=maxEx) reason="session already at its exercise cap";
       else if(!directOpts.length) reason="no direct exercise available";
@@ -868,7 +880,7 @@ function recommend(r){ r=r||{}; const time=r.time||60; const maxEx=time<=30?3:ti
 function swapSuggestions(exId){ const ex=exById(exId); if(!ex) return []; const pm=primaryMuscle(ex);
   const inWorkout=new Set((activeSession?activeSession.entries:[]).map(en=>en.exId));                 // exercises already in this workout
   const patternsInWorkout=new Set((activeSession?activeSession.entries:[]).filter(en=>en.exId!==exId).map(en=>{ const e=exById(en.exId); return e?e.pattern:null; }));
-  return S.exercises.filter(e=>e.id!==exId && !inWorkout.has(e.id) && primaryMuscle(e)===pm && AVAIL_OK[e.avail] && !limBlock(e))   // never an exercise already in the workout; unavailable excluded
+  return S.exercises.filter(e=>e.id!==exId && !inWorkout.has(e.id) && primaryMuscle(e)===pm && AVAIL_OK[e.avail] && e.pref!=="avoid" && !limBlock(e))   // never an exercise already in the workout; unavailable + avoided excluded (v7 — search still finds them)
     .map(e=>({e, dupPattern:patternsInWorkout.has(e.pattern)?1:0, recRank:(e.rec?0:1), samePatternAsCur:e.pattern===ex.pattern?1:0}))
     .sort((a,b)=>(a.dupPattern-b.dupPattern)                       // patterns not already in the workout first (no same-pattern duplicates)
                 ||(a.recRank-b.recRank)                            // familiar/default gym options before manual-only
@@ -880,6 +892,7 @@ function libraryByMuscle(){ const groups={}; S.exercises.forEach(e=>{ const pm=p
 let route="today", activeSession=null, viewingLogger=false, pendingRec=null, restTimer=null, sheet=null, statsPeriod="all", bodyDetail=null;
 let exChartMetric="top", addSearch="", swapSearch="", mgmtSearch="", repExId=null, repMetric="top", repSearch="";  /* v6 chart/search UI state */
 let loggerOpen={}, loggerClock=null;
+let rerollCounts={};   /* v7: exIds already proposed this cycle — each ↻ tap penalises them so the next proposal is genuinely different */
 let limDraft={rules:["foot_pressure"],dur:"1week",note:""};
 let readinessDraft={sleep:3,energy:3,soreness:2,motivation:3,time:60,avoid:[]};
 const ICONS={
@@ -986,7 +999,7 @@ function loggerCounts(){ let total=0,done=0; activeSession.entries.forEach(en=>e
 function ghostFor(en,si){ const e=exById(en.exId);
   const last=exerciseHistory(en.exId).filter(h=>h.sessionId!==activeSession.editingId)[0]; const prog=progressionFor(en.exId);
   let prevW="",prevR=""; for(let k=si-1;k>=0;k--){ const s=en.sets[k]; if(isLogged(s)){ prevW=+s.weight; prevR=+s.reps; break; } }
-  let lw="",lr=""; if(last&&last.sets){ const ls=last.sets[si]||last.sets[last.sets.length-1]; if(ls){ lw=+ls.weight||""; lr=+ls.reps||""; } }
+  let lw="",lr=""; if(last&&last.sets){ const ls=last.sets[workIndex(en,si)]||last.sets[last.sets.length-1]; if(ls){ lw=+ls.weight||""; lr=+ls.reps||""; } }
   const w = prevW!==""?prevW : (lw!==""?lw : (prog.weight!==""?prog.weight:"")); 
   const r = prevR!==""?prevR : (lr!==""?lr : (prog.reps!==""?prog.reps : (e?e.rl:"")));
   return {w:w===""?"":String(w), r:r===""?"":String(r)}; }
@@ -1000,10 +1013,10 @@ function viewLogger(){ const isEdit=activeSession.mode==="edit"; const c=loggerC
 function loggerEx(en,i){ const e=exById(en.exId); const cur=loggerCurrentIndex(); const done=entryDone(en);
   const override=loggerOpen.hasOwnProperty(i)?loggerOpen[i]:null; const expanded = override!==null ? override : (!done || i===cur);
   const work=en.sets.filter(s=>s.type!=="warm"); const loggedN=work.filter(isLogged).length;
-  if(!expanded){ const summary=en.sets.filter(isLogged).map(s=>(s.weight||0)+"×"+(s.reps||0)).join(", ")||"—";
+  if(!expanded){ const summary=en.sets.filter(isLogged).map(s=>fmtSet(s.weight,s.reps)).join(", ")||"—";
     return '<div class="card logex" data-ex="'+i+'" style="padding:13px 16px"><div class="collapsed" data-expand="'+i+'"><div><div class="nm">'+e.name+' <span class="muted" style="font-weight:500;font-size:12px">'+loggedN+' sets ✓</span></div><div class="smry">'+summary+'</div></div><span class="muted">▸</span></div></div>'; }
   const last=exerciseHistory(en.exId).filter(h=>h.sessionId!==activeSession.editingId)[0]; const bests=exerciseBests(en.exId); const prog=progressionFor(en.exId); const flag=fatigueFlag(en.exId);
-  const lastStr=last?last.sets.map(s=>(s.weight||0)+"×"+(s.reps||0)).join(", "):"—";
+  const lastStr=last?last.sets.map(s=>fmtSet(s.weight,s.reps)).join(", "):"—";
   const rows=en.sets.map((s,si)=>setRow(i,si,s)).join("");
   const wins=evalWins(en,bests); const winhtml=wins.length?'<div class="win">'+wins.map(w=>'<span class="badge '+w.c+'">'+w.t+'</span>').join("")+'</div>':"";
   const flaghtml=flag?'<div class="win"><span class="badge warnb">⚠ '+flag+'</span></div>':"";
@@ -1013,7 +1026,7 @@ function loggerEx(en,i){ const e=exById(en.exId); const cur=loggerCurrentIndex()
     +recwarn
     +'<div class="setgrid"><div class="sethead"><span>#</span><span>prev</span>'+(inputOrder()==="rw"?'<span>reps</span><span>kg</span>':'<span>kg</span><span>reps</span>')+'<span>log</span></div>'+rows+'</div>'
     +'<button class="btn ghost sm" data-addset="'+i+'" style="margin-top:4px">+ set</button>'+flaghtml+winhtml+'</div>'; }
-function prevForSet(en,si){ const last=exerciseHistory(en.exId).filter(h=>h.sessionId!==activeSession.editingId)[0]; if(!last) return ""; const ps=last.sets[si]; return ps?((ps.weight||0)+"×"+(ps.reps||0)):""; }
+function prevForSet(en,si){ const last=exerciseHistory(en.exId).filter(h=>h.sessionId!==activeSession.editingId)[0]; if(!last) return ""; const ps=last.sets[workIndex(en,si)]; return ps?fmtSet(ps.weight,ps.reps):""; }
 function isCurrentSet(en,si){ const s=en.sets[si]; if(s.type==="warm"||isLogged(s)) return false; for(let k=0;k<si;k++){ if(en.sets[k].type!=="warm"&&!isLogged(en.sets[k])) return false; } return true; }
 function setRow(ei,si,s){ const en=activeSession.entries[ei]; const warm=s.type==="warm"; const g=warm?{w:"",r:""}:ghostFor(en,si); const wEmpty=(s.weight===""||s.weight==null), rEmpty=(s.reps===""||s.reps==null);
   const prev=warm?"":prevForSet(en,si); const cur=isCurrentSet(en,si);
@@ -1066,10 +1079,10 @@ function renderSheet(){ const m=document.getElementById("sheetmount"); if(!sheet
     inner='<div class="tiny">'+ex.name+'</div><div class="row" style="gap:6px;margin-top:8px;align-items:center"><span class="statuspill" style="background:'+_tr.c+'22;color:'+_tr.c+'">'+_tr.label+'</span>'+(TIPS[id]?'<button class="btn sm" data-tips="'+id+'" style="color:var(--gold)">Form tips</button>':'')+'</div><div class="ibody" style="margin-top:6px">'+_tr.note+'</div>'
       +recGrid
       +'<div class="tiny" style="margin-top:14px">Progress · '+metricLabel(exChartMetric)+'</div>'+seg+'<div class="chartwrap">'+chart+'</div>'
-      +'<div class="tiny" style="margin-top:12px">History</div><div style="margin-top:6px">'+(h.length?h.map(function(x){ return '<div class="contrib"><div><b>'+fmtDate(x.date)+'</b><div class="muted" style="font-size:12px;margin-top:2px">'+x.sets.map(function(s){ return (s.weight||0)+"×"+(s.reps||0); }).join("  ")+'</div></div><span class="c-ef">'+x.sets.reduce(function(a,s){ return a+(+s.weight||0)*(+s.reps||0); },0)+'kg</span></div>'; }).join(""):'<div class="empty">No logged sessions.</div>')+'</div>'; }
+      +'<div class="tiny" style="margin-top:12px">History</div><div style="margin-top:6px">'+(h.length?h.map(function(x){ return '<div class="contrib"><div><b>'+fmtDate(x.date)+'</b><div class="muted" style="font-size:12px;margin-top:2px">'+x.sets.map(function(s){ return fmtSet(s.weight,s.reps); }).join("  ")+'</div></div><span class="c-ef">'+x.sets.reduce(function(a,s){ return a+(+s.weight||0)*(+s.reps||0); },0)+'kg</span></div>'; }).join(""):'<div class="empty">No logged sessions.</div>')+'</div>'; }
   else if(sheet.type==="exwk"){ const w=S.sessions.find(s=>s.id===sheet.data);
     inner=w?('<div class="tiny">'+fmtDate(w.completedAt)+'</div><h2 style="font-size:17px;margin:6px 0 12px">'+(w.title||"Workout")+'</h2>'+w.entries.map(en=>{ const ex=exById(en.exId); const ws=workingSets(en);
-      return '<div class="card" style="margin:8px 0;padding:12px"><div class="nm" style="font-weight:700">'+(ex?ex.name:en.exId)+'</div><div class="muted" style="font-size:12px;margin-top:4px">'+(en.sets.map(s=>(s.type==="warm"?"W ":"")+(s.weight||0)+"\u00d7"+(s.reps||0)).join("   ")||"\u2014")+'</div><div class="histline">'+ws.length+' working sets · '+musLabels(ex||{m:{}})+'</div></div>'; }).join("")
+      return '<div class="card" style="margin:8px 0;padding:12px"><div class="nm" style="font-weight:700">'+(ex?ex.name:en.exId)+'</div><div class="muted" style="font-size:12px;margin-top:4px">'+(en.sets.map(s=>(s.type==="warm"?"W ":"")+fmtSet(s.weight,s.reps)).join("   ")||"\u2014")+'</div><div class="histline">'+ws.length+' working sets · '+musLabels(ex||{m:{}})+'</div></div>'; }).join("")
       +'<button class="btn full" data-editfromview="'+w.id+'" style="margin-top:6px">Edit this workout</button>'):'<div class="empty">Not found.</div>'; }
   else if(sheet.type==="momentum"){ const m=momentumScore(); const w=weekStatus();
     const rows=[["Sessions this week",w.sess+" / "+w.target],["Primary muscles met",m.primaryMet+" / "+m.primaryAll],["Weekly target streak",m.streak+" wk"],["Trained recently",m.consist>=0?"yes":"no"]];
@@ -1387,19 +1400,21 @@ function renderFinish(){ const m=document.getElementById("finmount"); if(!m) ret
 /* ============================================================================ WIRING ============================================================================ */
 function deriveTitle(entries){ const ms={}; entries.forEach(en=>{ const ex=exById(en.exId); const n=workingSets(en).length; if(!ex||!n) return; const pm=primaryMuscle(ex); if(pm) ms[pm]=(ms[pm]||0)+n; });
   const top=Object.entries(ms).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([m])=>S.muscles[m]?S.muscles[m].label:m); return top.length?top.join(" · "):"Workout"; }
-function startSession(rec){ loggerOpen={}; const entries=(rec?rec.exercises:[]).map(c=>{ const e=exById(c.exId); return { exId:c.exId, sets:Array.from({length:c.sets||e.sl||2},()=>({weight:"",reps:"",type:"work",done:false})) }; });
+function startSession(rec){ loggerOpen={}; rerollCounts={}; const entries=(rec?rec.exercises:[]).map(c=>{ const e=exById(c.exId); return { exId:c.exId, sets:Array.from({length:c.sets||e.sl||2},()=>({weight:"",reps:"",type:"work",done:false})) }; });
   activeSession={ id:uid(), startedAt:iso(new Date()), dateISO:new Date().toISOString().slice(0,10), title:rec?rec.title:"Empty workout", mode:rec?"adaptive":"manual", entries }; viewingLogger=true; pendingRec=null; saveActive();
   try{ history.pushState({iron:"workout"},""); }catch(e){} route="today"; render(); }
 function finishWorkout(){ const logged=activeSession.entries.reduce((n,en)=>n+workingSets(en).length,0);
   if(!logged){ confirmSheet("Nothing’s been logged yet. Finish this workout anyway?","Finish anyway",()=>doFinish(),{danger:true,title:"Finish empty workout?"}); return; }
   doFinish(); }
-function doFinish(){ const d=activeSession.dateISO; const base=d?new Date(d+"T12:00:00"):new Date(); let saved=null;
-  if(activeSession.mode==="edit"){ const idx=S.sessions.findIndex(s=>s.id===activeSession.editingId); const orig=idx>=0?S.sessions[idx]:null;
+function doFinish(){ let saved=null;
+  if(activeSession.mode==="edit"){ const d=activeSession.dateISO; const base=d?new Date(d+"T12:00:00"):new Date();   // edits keep their chosen date (noon if re-dated)
+    const idx=S.sessions.findIndex(s=>s.id===activeSession.editingId); const orig=idx>=0?S.sessions[idx]:null;
     const completedAt=orig&&dayKey(orig.completedAt)===dayKey(base)?orig.completedAt:iso(base);
     const updated={...activeSession, id:activeSession.editingId, completedAt, mode:"edit"}; delete updated.editingId; delete updated.dateISO;
     if(idx>=0) S.sessions[idx]=updated; persistLocal(); pushWorkout(updated); saved=updated; }
   else { if(!activeSession.title||activeSession.title==="Empty workout") activeSession.title=deriveTitle(activeSession.entries);
-    const sess={ id:activeSession.id, startedAt:activeSession.startedAt, completedAt:iso(base), title:activeSession.title, mode:activeSession.mode, entries:activeSession.entries, synced:false };
+    /* v7: a live session finishes at the moment you hit Finish — never the noon placeholder */
+    const sess={ id:activeSession.id, startedAt:activeSession.startedAt, completedAt:iso(new Date()), title:activeSession.title, mode:activeSession.mode, entries:activeSession.entries, synced:false };
     S.sessions.push(sess); persistLocal(); pushWorkout(sess); if(readinessDraft&&route!=="settings") pushCheckin(readinessDraft,sess.id); saved=sess; }
   const recap=buildRecap(saved); activeSession=null; viewingLogger=false; loggerOpen={}; saveActive(); stopClock(); go("today"); openSheet("recap",recap); }
 function buildRecap(sess){ const setsN=sess.entries.reduce((a,en)=>a+workingSets(en).length,0);
@@ -1421,13 +1436,16 @@ function openLimSheet(){ const al=activeLimitation(); limDraft=al?{rules:(al.rul
 
 function wireScreen(){
   const act=(name,fn)=>document.querySelectorAll('[data-act="'+name+'"]').forEach(b=>b.onclick=fn);
-  act("recommend",()=>{ pendingRec=recommend(readinessDraft); render(); });
+  act("recommend",()=>{ let opts=null;
+    if(pendingRec){ pendingRec.exercises.forEach(c=>{ rerollCounts[c.exId]=(rerollCounts[c.exId]||0)+1; }); opts={reroll:true, avoidIds:{...rerollCounts}}; }
+    else rerollCounts={};
+    pendingRec=recommend(readinessDraft,opts); render(); });
   act("resync",resyncAll);
   act("addlim",openLimSheet); act("editlim",openLimSheet);
   act("removelim",()=>confirmSheet("Remove the active limitation? Recommendations will include all exercises again.","Remove",()=>{ clearLimitation(); render(); },{danger:true,title:"Remove limitation?"}));
   act("readiness",()=>{ document.getElementById("app").innerHTML=header()+'<div class="reveal">'+viewReadiness()+'</div>'; wireScreen(); });
   act("back-today",()=>go("today"));
-  act("rec-from-readiness",()=>{ readinessDraft.time=+(document.querySelector("[data-rtime]")||{value:60}).value; pendingRec=recommend(readinessDraft); go("today"); });
+  act("rec-from-readiness",()=>{ readinessDraft.time=+(document.querySelector("[data-rtime]")||{value:60}).value; rerollCounts={}; pendingRec=recommend(readinessDraft); go("today"); });
   act("blank",()=>startSession(null));
   act("start-rec",()=>startSession(pendingRec));
   act("resume",()=>{ viewingLogger=true; render(); });
