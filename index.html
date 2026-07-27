@@ -160,6 +160,25 @@ button{font-family:inherit; cursor:pointer; border:none; color:inherit;}
 .scorechips .sc{flex:1; background:var(--panel2); border:1px solid var(--line); border-radius:10px; padding:9px 6px; text-align:center;}
 .scorechips .sc b{display:block; font-family:'JetBrains Mono',monospace; font-size:18px;}
 .scorechips .sc span{font-size:9px; text-transform:uppercase; letter-spacing:.05em; color:var(--muted);}
+/* v8 library filter chips (Add / Swap / Exercise management) */
+.fchips{display:flex; gap:6px; overflow-x:auto; -webkit-overflow-scrolling:touch; padding:7px 0 2px; margin:0 -2px; scrollbar-width:none;}
+.fchips::-webkit-scrollbar{display:none;}
+.fchip{flex:none; white-space:nowrap; font-size:11.5px; font-weight:600; padding:5px 11px; border-radius:999px;
+  background:var(--panel); border:1px solid var(--line); color:var(--muted);}
+.fchip.on{border-color:var(--accent); color:var(--accent); background:rgba(59,130,246,.12);}
+@media (min-width:560px){ .fchips{flex-wrap:wrap; overflow:visible;} }
+/* v8 exercise setup / machine settings strip */
+.setupline{display:flex; align-items:flex-start; gap:8px; width:100%; text-align:left; margin:8px 0 2px; padding:8px 10px; border-radius:10px;
+  background:rgba(212,175,55,.07); border:1px solid rgba(212,175,55,.28); color:var(--gold); cursor:pointer;}
+.setupline .ic{font-size:13px; line-height:1.35;}
+.setupline .bd{flex:1; min-width:0;}
+.setupline .lb{font-size:10.5px; letter-spacing:.09em; text-transform:uppercase; color:var(--gold); font-weight:700;}
+.setupline .vl{font-size:12.5px; color:#D8D2C0; margin-top:2px; word-break:break-word; line-height:1.4;}
+.setupline .ed{font-size:11px; color:var(--muted); flex:none; align-self:center;}
+.setupline.empty2{background:transparent; border-style:dashed; border-color:var(--line);}
+.setupline.empty2 .lb, .setupline.empty2 .ic{color:var(--muted);}
+.setupchips{display:flex; flex-wrap:wrap; gap:4px; margin-top:3px;}
+.setupchips span{font-size:11px; padding:2px 7px; border-radius:999px; background:rgba(212,175,55,.13); color:#E2D9BE;}
 /* prominent rest timer (item 2) */
 .restcard{pointer-events:auto; width:100%; max-width:488px; margin:0 16px; background:var(--panel2); border:1px solid var(--accent); border-radius:14px; padding:12px 14px; box-shadow:0 14px 40px rgba(0,0,0,.6);}
 .rest.done .restcard{border-color:var(--green); background:linear-gradient(135deg,rgba(47,210,122,.24),rgba(47,210,122,.06)); animation:restpulse .6s ease-in-out 3;}
@@ -186,7 +205,7 @@ button{font-family:inherit; cursor:pointer; border:none; color:inherit;}
 /* ============================================================================
    CONFIG — edit freely; first run seeds this, your in-app edits persist.
    ============================================================================ */
-const CONFIG_VERSION = 7; /* v7: Lying Leg Curl added · avoid-pref hard-excluded from recs/swaps · reroll gives a genuinely new proposal · finish time = submit time · prev/last follow your logging order (v6: gym-specific library + achievements + charts + Reports) */
+const CONFIG_VERSION = 8; /* v8: wall-clock rest timer (endsAt timestamp, survives backgrounding) \u00b7 per-exercise setup & machine settings \u00b7 Smith Machine Bent-Over Row \u00b7 44 new library variations \u00b7 alias-tolerant search + muscle/equipment filters (v7: Lying Leg Curl added · avoid-pref hard-excluded from recs/swaps · reroll gives a genuinely new proposal · finish time = submit time · prev/last follow your logging order (v6: gym-specific library + achievements + charts + Reports)) */
 const SUPABASE_URL = "https://utlhzxbjxvsyluyslfhe.supabase.co";
 const SUPABASE_KEY = "sb_publishable_xNfADG84azbA0wc1_ngVYw_MqxOANCz";
 
@@ -232,6 +251,31 @@ const MUSCLES = {
   forearms:   {label:"Forearms",    tier:"maintenance", size:"small", min:0, gl:2,  gh:6,  cap:12, rec:[20,36]},
 };
 const TIER_LABEL={primary:"Primary focus", secondary:"Secondary", maintenance:"Maintenance"};
+
+/* ============================================================================================
+   v8 — BROAD MUSCLE GROUPS for library browsing and filtering. The engine keeps working on the
+   fine-grained muscles above (recovery, volume caps, recommendations are unchanged); these are a
+   presentation layer only, so "Shoulders" collects front/side/rear delts and "Core" collects
+   abs + lower back. Order here is the order the filter chips and library sections appear in.
+   ============================================================================================ */
+const MUSCLE_GROUPS = [
+  { key:"chest",     label:"Chest",      muscles:["chest","upper_chest"] },
+  { key:"back",      label:"Back",       muscles:["back_lats","upper_back"] },
+  { key:"shoulders", label:"Shoulders",  muscles:["front_delts","side_delts","rear_delts"] },
+  { key:"biceps",    label:"Biceps",     muscles:["biceps","forearms"] },
+  { key:"triceps",   label:"Triceps",    muscles:["triceps"] },
+  { key:"quads",     label:"Quads",      muscles:["quads"] },
+  { key:"hamstrings",label:"Hamstrings", muscles:["hamstrings"] },
+  { key:"glutes",    label:"Glutes",     muscles:["glutes"] },
+  { key:"calves",    label:"Calves",     muscles:["calves"] },
+  { key:"core",      label:"Core",       muscles:["abs","lower_back"] },
+];
+const MUSCLE_TO_GROUP=(function(){ const m={}; MUSCLE_GROUPS.forEach(g=>g.muscles.forEach(x=>{ m[x]=g.key; })); return m; })();
+function exGroup(ex){ if(!ex) return null; const pm=primaryMuscle(ex); return MUSCLE_TO_GROUP[pm]||null; }
+function groupLabel(key){ const g=MUSCLE_GROUPS.find(x=>x.key===key); return g?g.label:(key||""); }
+/* equipment filter values, in display order */
+const EQUIP_FILTERS = [["machine","Machine"],["cable","Cable"],["dumbbell","Dumbbell"],["barbell","Barbell"],["smith","Smith"],["bodyweight","Bodyweight"]];
+function equipLabel(eq){ const p=EQUIP_FILTERS.find(x=>x[0]===eq); return p?p[1]:(eq||""); }
 
 /* pattern drives swap suggestions. credit: 1.0 primary, .5 secondary, .25 minor. */
 const EXERCISES = [
@@ -304,12 +348,96 @@ const EXERCISES = [
  {id:"back_extension", name:"Back Extension", type:"isolation", equip:"machine", pattern:"back_extension", pref:"neutral", avail:"always", rec:true, src:"confirmed", rest:90, rl:10, rh:15, sl:2, sh:3, fatigue:1.4, m:{lower_back:1, glutes:.5, hamstrings:.5}, aliases:"df-106-a hyperextension 45 degree lower back core"},
  {id:"cable_crunch", name:"Cable Crunch", type:"isolation", equip:"cable", pattern:"cable_crunch", pref:"like", avail:"always", rec:false, src:"manual", rest:60, rl:10, rh:20, sl:2, sh:3, fatigue:1, m:{abs:1}, aliases:"cable crunch kneeling abs core manual"},
  {id:"hanging_leg_raise", name:"Hanging Leg Raise", type:"isolation", equip:"bodyweight", pattern:"ab_raise", pref:"neutral", avail:"usually", rec:false, src:"manual", rest:75, rl:8, rh:15, sl:2, sh:3, fatigue:1.2, m:{abs:1, lower_back:.25}, aliases:"hanging leg knee raise abs core manual"},
+
+ /* ============================================================================================
+    v8 LIBRARY EXPANSION — commercial-gym staples added so every muscle group has 3-4 genuinely
+    different substitution options. All are added as src:"manual" / rec:false, meaning they are
+    fully searchable, addable and swappable but are NOT auto-programmed by "Tell me what to train
+    today" (which stays a confirmed-machine pool). Flip any of them to "rec" in one tap via
+    Settings -> Exercise management once you have used it at your gym.
+    Equipment is spelled out in the display name so machine / cable / dumbbell / barbell / Smith
+    versions can never be confused with each other.
+    ============================================================================================ */
+
+ /* ---- BACK (item 3 + expansion) ---- */
+ {id:"smith_bent_row", name:"Smith Machine Bent-Over Row", type:"compound", equip:"smith", pattern:"bent_row", pref:"neutral", avail:"always", rec:false, src:"manual", rest:120, rl:6, rh:12, sl:3, sh:4, fatigue:2.8, m:{back_lats:1, upper_back:1, rear_delts:.5, biceps:.5, lower_back:.5, abs:.25}, aliases:"smith machine bent over row bent-over row bentover row smith row back row lats rhomboids middle traps hinge row barbell fixed bar row"},
+ {id:"bb_bent_row", name:"Barbell Bent-Over Row", type:"compound", equip:"barbell", pattern:"bent_row", pref:"neutral", avail:"usually", rec:false, src:"manual", rest:120, rl:6, rh:12, sl:3, sh:4, fatigue:3, m:{back_lats:1, upper_back:1, rear_delts:.5, biceps:.5, lower_back:.5, abs:.25}, aliases:"barbell bent over row bent-over row bentover row pendlay row back row lats rhomboids traps"},
+ {id:"t_bar_row", name:"T-Bar Row (Machine)", type:"compound", equip:"machine", pattern:"tbar_row", pref:"neutral", avail:"usually", rec:false, src:"manual", rest:120, rl:8, rh:12, sl:2, sh:3, fatigue:2.4, m:{upper_back:1, back_lats:.5, rear_delts:.5, biceps:.25}, aliases:"t-bar tbar t bar row landmine row upper back thickness"},
+ {id:"pull_up", name:"Pull-Up (Bodyweight)", type:"compound", equip:"bodyweight", pattern:"vertical_pull", pref:"neutral", avail:"always", rec:false, src:"manual", rest:150, rl:4, rh:12, sl:2, sh:4, fatigue:2.8, m:{back_lats:1, biceps:.5, upper_back:.5, rear_delts:.25, abs:.25}, aliases:"pull up pullup chin up wide grip bodyweight lats vertical pull"},
+ {id:"single_arm_pulldown", name:"Single-Arm Cable Pulldown", type:"compound", equip:"cable", pattern:"single_arm_pulldown", pref:"neutral", avail:"always", rec:false, src:"manual", rest:90, rl:8, rh:14, sl:2, sh:3, fatigue:1.8, m:{back_lats:1, biceps:.25, upper_back:.25}, aliases:"one arm single arm cable lat pulldown unilateral lats"},
+ {id:"db_pullover", name:"Dumbbell Pullover", type:"isolation", equip:"dumbbell", pattern:"pullover", pref:"neutral", avail:"usually", rec:false, src:"manual", rest:75, rl:10, rh:15, sl:2, sh:3, fatigue:1.6, m:{back_lats:1, chest:.5, triceps:.25}, aliases:"dumbbell pullover lats serratus chest stretch"},
+ {id:"inverted_row", name:"Inverted Row (Bodyweight)", type:"compound", equip:"bodyweight", pattern:"horizontal_pull", pref:"neutral", avail:"always", rec:false, src:"manual", rest:90, rl:8, rh:15, sl:2, sh:3, fatigue:1.8, m:{upper_back:1, back_lats:.5, rear_delts:.5, biceps:.25}, aliases:"inverted row bodyweight row smith bar row horizontal pull upper back"},
+
+ /* ---- CHEST ---- */
+ {id:"bench_press", name:"Barbell Bench Press", type:"compound", equip:"barbell", pattern:"chest_press", pref:"neutral", avail:"usually", rec:false, src:"manual", rest:150, rl:5, rh:10, sl:3, sh:4, fatigue:3, m:{chest:1, upper_chest:.5, front_delts:.5, triceps:.5}, aliases:"barbell bench press flat bench bb bench chest press"},
+ {id:"db_bench_press", name:"Dumbbell Bench Press", type:"compound", equip:"dumbbell", pattern:"chest_press", pref:"neutral", avail:"usually", rec:false, src:"manual", rest:120, rl:6, rh:12, sl:2, sh:4, fatigue:2.6, m:{chest:1, upper_chest:.5, front_delts:.5, triceps:.5}, aliases:"dumbbell bench press flat db press chest press"},
+ {id:"smith_bench", name:"Smith Machine Bench Press", type:"compound", equip:"smith", pattern:"chest_press", pref:"neutral", avail:"always", rec:false, src:"manual", rest:120, rl:6, rh:12, sl:2, sh:3, fatigue:2.5, m:{chest:1, upper_chest:.5, front_delts:.5, triceps:.5}, aliases:"smith machine bench press flat smith press chest"},
+ {id:"incline_db_press", name:"Incline Dumbbell Press", type:"compound", equip:"dumbbell", pattern:"incline_press", pref:"neutral", avail:"usually", rec:false, src:"manual", rest:120, rl:6, rh:12, sl:2, sh:4, fatigue:2.6, m:{upper_chest:1, chest:.5, front_delts:.5, triceps:.5}, aliases:"incline dumbbell press db incline bench upper chest"},
+ {id:"incline_bb_press", name:"Incline Barbell Bench Press", type:"compound", equip:"barbell", pattern:"incline_press", pref:"neutral", avail:"usually", rec:false, src:"manual", rest:150, rl:5, rh:10, sl:2, sh:4, fatigue:2.9, m:{upper_chest:1, chest:.5, front_delts:.5, triceps:.5}, aliases:"incline barbell bench press bb incline upper chest"},
+ {id:"push_up", name:"Push-Up (Bodyweight)", type:"compound", equip:"bodyweight", pattern:"push_up", pref:"neutral", avail:"always", rec:false, src:"manual", rest:75, rl:10, rh:25, sl:2, sh:3, fatigue:1.6, m:{chest:1, front_delts:.5, triceps:.5, abs:.25}, aliases:"push up pushup press up bodyweight chest"},
+
+ /* ---- SHOULDERS ---- */
+ {id:"bb_ohp", name:"Barbell Overhead Press", type:"compound", equip:"barbell", pattern:"overhead_press", pref:"neutral", avail:"usually", rec:false, src:"manual", rest:150, rl:5, rh:10, sl:2, sh:4, fatigue:2.9, m:{front_delts:1, side_delts:.5, triceps:.5, abs:.25}, aliases:"barbell overhead press ohp military press standing press shoulders delts"},
+ {id:"db_ohp", name:"Dumbbell Shoulder Press", type:"compound", equip:"dumbbell", pattern:"overhead_press", pref:"neutral", avail:"usually", rec:false, src:"manual", rest:120, rl:6, rh:12, sl:2, sh:4, fatigue:2.5, m:{front_delts:1, side_delts:.5, triceps:.5}, aliases:"dumbbell shoulder press db overhead press seated delts shoulders"},
+ {id:"arnold_press", name:"Dumbbell Arnold Press", type:"compound", equip:"dumbbell", pattern:"arnold_press", pref:"neutral", avail:"usually", rec:false, src:"manual", rest:120, rl:8, rh:12, sl:2, sh:3, fatigue:2.3, m:{front_delts:1, side_delts:.5, triceps:.25}, aliases:"arnold press dumbbell rotating shoulder press delts"},
+ {id:"leaning_lat_raise", name:"Leaning Single-Arm Cable Lateral Raise", type:"isolation", equip:"cable", pattern:"lateral_raise", pref:"neutral", avail:"always", rec:false, src:"manual", rest:60, rl:12, rh:20, sl:2, sh:3, fatigue:1, m:{side_delts:1}, aliases:"leaning single arm cable lateral raise side raise side delts lean away"},
+ {id:"cable_upright_row", name:"Cable Upright Row", type:"compound", equip:"cable", pattern:"upright_row", pref:"neutral", avail:"always", rec:false, src:"manual", rest:75, rl:10, rh:15, sl:2, sh:3, fatigue:1.4, m:{side_delts:1, upper_back:.5, biceps:.25}, aliases:"cable upright row high pull side delts traps"},
+ {id:"bentover_db_rear_fly", name:"Bent-Over Dumbbell Rear Delt Fly", type:"isolation", equip:"dumbbell", pattern:"rear_delt", pref:"neutral", avail:"usually", rec:false, src:"manual", rest:60, rl:12, rh:20, sl:2, sh:3, fatigue:1.1, m:{rear_delts:1, upper_back:.5}, aliases:"bent over dumbbell rear delt fly reverse fly db rear delts"},
+ {id:"prone_rear_delt_row", name:"Prone Incline Dumbbell Rear Delt Row", type:"isolation", equip:"dumbbell", pattern:"rear_delt_row", pref:"neutral", avail:"usually", rec:false, src:"manual", rest:60, rl:10, rh:15, sl:2, sh:3, fatigue:1.3, m:{rear_delts:1, upper_back:.5, biceps:.25}, aliases:"prone incline dumbbell rear delt row chest supported rear delts high row"},
+
+ /* ---- BICEPS / FOREARMS ---- */
+ {id:"bb_curl", name:"Barbell Curl", type:"isolation", equip:"barbell", pattern:"curl", pref:"neutral", avail:"usually", rec:false, src:"manual", rest:90, rl:6, rh:12, sl:2, sh:3, fatigue:1.5, m:{biceps:1, forearms:.5}, aliases:"barbell curl straight bar bicep curl bb curl biceps"},
+ {id:"concentration_curl", name:"Dumbbell Concentration Curl", type:"isolation", equip:"dumbbell", pattern:"concentration_curl", pref:"neutral", avail:"usually", rec:false, src:"manual", rest:60, rl:8, rh:14, sl:2, sh:3, fatigue:1.1, m:{biceps:1, forearms:.25}, aliases:"concentration curl seated single arm dumbbell curl biceps peak"},
+ {id:"reverse_curl", name:"Reverse EZ-Bar Curl", type:"isolation", equip:"barbell", pattern:"reverse_curl", pref:"neutral", avail:"usually", rec:false, src:"manual", rest:60, rl:10, rh:15, sl:2, sh:3, fatigue:1.1, m:{forearms:1, biceps:.5}, aliases:"reverse curl ez bar pronated curl brachioradialis forearms grip"},
+
+ /* ---- TRICEPS ---- */
+ {id:"close_grip_bench", name:"Close-Grip Barbell Bench Press", type:"compound", equip:"barbell", pattern:"close_grip_press", pref:"neutral", avail:"usually", rec:false, src:"manual", rest:120, rl:6, rh:10, sl:2, sh:3, fatigue:2.4, m:{triceps:1, chest:.5, front_delts:.25}, aliases:"close grip barbell bench press narrow grip triceps press"},
+ {id:"skull_crusher", name:"EZ-Bar Skull Crusher", type:"isolation", equip:"barbell", pattern:"skull_crusher", pref:"neutral", avail:"usually", rec:false, src:"manual", rest:75, rl:8, rh:12, sl:2, sh:3, fatigue:1.5, m:{triceps:1}, aliases:"skull crusher skullcrusher lying ez bar tricep extension french press triceps"},
+ {id:"db_kickback", name:"Dumbbell Tricep Kickback", type:"isolation", equip:"dumbbell", pattern:"kickback_tri", pref:"neutral", avail:"usually", rec:false, src:"manual", rest:60, rl:10, rh:15, sl:2, sh:3, fatigue:1, m:{triceps:1}, aliases:"dumbbell tricep kickback db kickback triceps"},
+
+ /* ---- QUADS ---- */
+ {id:"bb_squat", name:"Barbell Back Squat", type:"compound", equip:"barbell", pattern:"squat", pref:"neutral", avail:"usually", rec:false, src:"manual", rest:180, rl:5, rh:10, sl:3, sh:4, fatigue:3.6, m:{quads:1, glutes:.5, hamstrings:.25, lower_back:.5, abs:.25}, aliases:"barbell back squat bb squat free weight squat rack quads legs"},
+ {id:"smith_squat", name:"Smith Machine Squat", type:"compound", equip:"smith", pattern:"squat", pref:"neutral", avail:"always", rec:false, src:"manual", rest:150, rl:8, rh:12, sl:2, sh:3, fatigue:3, m:{quads:1, glutes:.5, hamstrings:.25}, aliases:"smith machine squat guided squat quads legs"},
+ {id:"bulgarian_split_squat", name:"Dumbbell Bulgarian Split Squat", type:"compound", equip:"dumbbell", pattern:"split_squat", pref:"neutral", avail:"usually", rec:false, src:"manual", rest:120, rl:8, rh:12, sl:2, sh:3, fatigue:2.8, m:{quads:1, glutes:1, hamstrings:.25}, aliases:"bulgarian split squat rear foot elevated dumbbell single leg quads glutes"},
+ {id:"walking_lunge", name:"Dumbbell Walking Lunge", type:"compound", equip:"dumbbell", pattern:"lunge", pref:"neutral", avail:"usually", rec:false, src:"manual", rest:120, rl:8, rh:14, sl:2, sh:3, fatigue:2.7, m:{quads:1, glutes:1, hamstrings:.25}, aliases:"walking lunge dumbbell lunges reverse lunge quads glutes"},
+
+ /* ---- HAMSTRINGS ---- */
+ {id:"db_rdl", name:"Dumbbell Romanian Deadlift", type:"compound", equip:"dumbbell", pattern:"hinge", pref:"neutral", avail:"usually", rec:false, src:"manual", rest:120, rl:8, rh:12, sl:2, sh:3, fatigue:2.8, m:{hamstrings:1, glutes:.5, lower_back:.5}, aliases:"dumbbell romanian deadlift db rdl stiff leg hinge hamstrings"},
+ {id:"smith_rdl", name:"Smith Machine Romanian Deadlift", type:"compound", equip:"smith", pattern:"hinge", pref:"neutral", avail:"always", rec:false, src:"manual", rest:120, rl:8, rh:12, sl:2, sh:3, fatigue:2.8, m:{hamstrings:1, glutes:.5, lower_back:.5}, aliases:"smith machine romanian deadlift smith rdl stiff leg hinge hamstrings"},
+ {id:"good_morning", name:"Barbell Good Morning", type:"compound", equip:"barbell", pattern:"good_morning", pref:"neutral", avail:"usually", rec:false, src:"manual", rest:120, rl:8, rh:12, sl:2, sh:3, fatigue:2.6, m:{hamstrings:1, glutes:.5, lower_back:1}, aliases:"good morning barbell hinge hamstrings lower back"},
+
+ /* ---- GLUTES ---- */
+ {id:"hip_abduction", name:"Machine Hip Abduction", type:"isolation", equip:"machine", pattern:"abduction", pref:"neutral", avail:"always", rec:false, src:"manual", rest:60, rl:12, rh:20, sl:2, sh:3, fatigue:1, m:{glutes:1}, aliases:"machine hip abduction abductor glute med outer thigh seated abduction"},
+ {id:"smith_hip_thrust", name:"Smith Machine Hip Thrust", type:"compound", equip:"smith", pattern:"hip_thrust", pref:"neutral", avail:"always", rec:false, src:"manual", rest:120, rl:8, rh:15, sl:2, sh:3, fatigue:2.3, m:{glutes:1, hamstrings:.5}, aliases:"smith machine hip thrust glute bridge glutes"},
+ {id:"cable_pull_through", name:"Cable Pull-Through", type:"compound", equip:"cable", pattern:"pull_through", pref:"neutral", avail:"always", rec:false, src:"manual", rest:75, rl:10, rh:15, sl:2, sh:3, fatigue:1.6, m:{glutes:1, hamstrings:.5, lower_back:.25}, aliases:"cable pull through rope hinge glutes hamstrings"},
+ {id:"step_up", name:"Dumbbell Step-Up", type:"compound", equip:"dumbbell", pattern:"step_up", pref:"neutral", avail:"usually", rec:false, src:"manual", rest:90, rl:8, rh:15, sl:2, sh:3, fatigue:2.2, m:{glutes:1, quads:1, hamstrings:.25}, aliases:"step up dumbbell box step ups glutes quads single leg"},
+
+ /* ---- CALVES ---- */
+ {id:"standing_calf_machine", name:"Standing Calf Raise Machine", type:"isolation", equip:"machine", pattern:"standing_calf", pref:"neutral", avail:"usually", rec:false, src:"manual", rest:60, rl:8, rh:15, sl:2, sh:4, fatigue:1, m:{calves:1}, aliases:"standing calf raise machine shoulder pad calves gastrocnemius"},
+ {id:"smith_calf_raise", name:"Smith Machine Calf Raise", type:"isolation", equip:"smith", pattern:"standing_calf", pref:"neutral", avail:"always", rec:false, src:"manual", rest:60, rl:10, rh:18, sl:2, sh:4, fatigue:1, m:{calves:1}, aliases:"smith machine calf raise standing calves gastrocnemius"},
+ {id:"db_single_calf_raise", name:"Single-Leg Dumbbell Calf Raise", type:"isolation", equip:"dumbbell", pattern:"single_calf", pref:"neutral", avail:"always", rec:false, src:"manual", rest:60, rl:10, rh:20, sl:2, sh:3, fatigue:1, m:{calves:1}, aliases:"single leg dumbbell calf raise one legged calves step"},
+
+ /* ---- CORE ---- */
+ {id:"captains_chair", name:"Captain's Chair Leg Raise", type:"isolation", equip:"machine", pattern:"ab_raise", pref:"neutral", avail:"usually", rec:false, src:"manual", rest:60, rl:8, rh:20, sl:2, sh:3, fatigue:1.1, m:{abs:1}, aliases:"captains chair leg raise knee raise vertical bench abs core"},
+ {id:"decline_situp", name:"Decline Sit-Up", type:"isolation", equip:"bodyweight", pattern:"situp", pref:"neutral", avail:"usually", rec:false, src:"manual", rest:60, rl:10, rh:20, sl:2, sh:3, fatigue:1.1, m:{abs:1}, aliases:"decline sit up situp crunch bench abs core"},
+ {id:"ab_wheel", name:"Ab Wheel Rollout", type:"isolation", equip:"bodyweight", pattern:"rollout", pref:"neutral", avail:"usually", rec:false, src:"manual", rest:60, rl:8, rh:15, sl:2, sh:3, fatigue:1.4, m:{abs:1, lower_back:.25}, aliases:"ab wheel rollout roller abs core anti extension"},
+ {id:"cable_woodchop", name:"Cable Woodchopper", type:"isolation", equip:"cable", pattern:"rotation", pref:"neutral", avail:"always", rec:false, src:"manual", rest:60, rl:10, rh:15, sl:2, sh:3, fatigue:1.1, m:{abs:1, lower_back:.25}, aliases:"cable woodchop woodchopper rotation oblique twist abs core"},
 ];
 /* ===== Exercise metadata for temporary limitations (toe/foot, legs, standing) =====
    foot_pressure: 0 none · 1 light · 2 heavy (drives through forefoot/toe).
    standing_loaded: bears load while standing. lower_body: primary leg movement. */
-const FOOT_PRESSURE={ hack_squat:2, leg_press:2, plate_leg_press:2, rdl:2, calf_raise:2, legpress_calf:2, seated_calf_raise:2, leg_ext:0, leg_curl:0, lying_leg_curl:0 };
-const STANDING_LOADED={ hack_squat:true, rdl:true, calf_raise:true };
+const FOOT_PRESSURE={ hack_squat:2, leg_press:2, plate_leg_press:2, rdl:2, calf_raise:2, legpress_calf:2, seated_calf_raise:2, leg_ext:0, leg_curl:0, lying_leg_curl:0,
+  /* v8 additions — keeps the "avoid foot pressure" limitation accurate for the new movements */
+  bb_squat:2, smith_squat:2, bulgarian_split_squat:2, walking_lunge:2, step_up:2, goblet_squat:2,
+  standing_calf_machine:2, smith_calf_raise:2, db_single_calf_raise:2,
+  db_rdl:2, smith_rdl:2, good_morning:2, smith_hip_thrust:1, hip_thrust:1, cable_pull_through:1,
+  smith_bent_row:1, bb_bent_row:1, bb_ohp:1, push_up:1, hip_abduction:0, captains_chair:0 };
+const STANDING_LOADED={ hack_squat:true, rdl:true, calf_raise:true,
+  /* v8 additions — axially or unilaterally loaded while standing */
+  bb_squat:true, smith_squat:true, bulgarian_split_squat:true, walking_lunge:true, step_up:true, goblet_squat:true,
+  standing_calf_machine:true, smith_calf_raise:true, db_single_calf_raise:true,
+  db_rdl:true, smith_rdl:true, good_morning:true, bb_ohp:true, cable_pull_through:true,
+  smith_bent_row:true, bb_bent_row:true, cable_upright_row:true, bb_curl:true, reverse_curl:true };
 const LEG_MUSCLES=new Set(["quads","hamstrings","glutes","calves"]);
 function footPressure(ex){ return FOOT_PRESSURE[ex.id]||0; }
 function isStanding(ex){ return !!STANDING_LOADED[ex.id]; }
@@ -334,6 +462,113 @@ function setLimitation(rules,name,note,dur){ const ms=durationMs(dur);
 function clearLimitation(){ if(S.settings) delete S.settings.limitation; persistLocal(); pushSettings(); }
 function limitationBlockedNames(){ const l=activeLimitation(); if(!l) return []; return S.exercises.filter(e=>AVAIL_OK[e.avail]&&limBlock(e)).map(e=>e.name); }
 
+/* ============================================================================
+   v8 — EXERCISE SETUP / MACHINE SETTINGS
+   Stored in S.settings.exSetup, keyed by exercise id — i.e. against the EXERCISE, not the
+   workout — so a saved seat height reappears automatically every time you perform it.
+   Living in `settings` means it rides the existing app_settings JSON sync (no SQL migration)
+   and is carried through load()'s `{...fresh.settings, ...old.settings}` merge on every upgrade.
+   ============================================================================ */
+const SETUP_FIELDS = {
+  seat:   { label:"Seat height",         hint:"visible notches / pin number",  ph:"e.g. 5 notches" },
+  arm:    { label:"Arm / handle position", hint:"arm or handle setting",        ph:"e.g. Position 4" },
+  back:   { label:"Backrest",            hint:"backrest angle / depth",         ph:"e.g. 2nd notch" },
+  pad:    { label:"Pad / roller",        hint:"thigh, ankle or chest pad",      ph:"e.g. ankle pad 3" },
+  rom:    { label:"Range of motion",     hint:"start position / ROM limiter",   ph:"e.g. start hole 3" },
+  safety: { label:"Safety stops",        hint:"safety catch / pin height",      ph:"e.g. pins at 4" },
+  handle: { label:"Handle / attachment", hint:"bar, rope or grip used",         ph:"e.g. rope" },
+  pulley: { label:"Pulley height",       hint:"cable origin height",            ph:"e.g. shoulder height" },
+  bench:  { label:"Bench / incline",     hint:"bench angle or position",        ph:"e.g. 30° incline" },
+  foot:   { label:"Foot / platform",     hint:"foot plate or stance",           ph:"e.g. feet high, shoulder width" },
+};
+const SETUP_FIELD_ORDER = ["seat","back","arm","pad","rom","safety","handle","pulley","bench","foot"];
+/* Per-exercise field sets. Only list what actually matters on that machine — irrelevant fields are
+   never rendered. Anything not listed here falls back to equipFallbackSetup() below. */
+const SETUP_SPEC = {
+  /* --- chest --- */
+  pec_deck:["seat","arm","rom"], machine_chest_press:["seat","back","arm","rom"], seated_chest_press:["seat","back","arm","rom"],
+  incline_press:["seat","back","arm","rom"], chest_fly:["pulley","handle"], incline_cable_fly:["pulley","handle"], db_fly:["bench"],
+  smith_bench:["safety","bench","foot"], push_up:[],
+  bench_press:["safety","bench","foot"], incline_bb_press:["safety","bench","foot"], db_bench_press:["bench"], incline_db_press:["bench"],
+  /* --- back --- */
+  lat_pulldown:["seat","pad","handle"], neutral_pulldown:["seat","pad","handle"], single_arm_pulldown:["seat","pad","handle"],
+  assisted_chin:["seat","handle"], machine_row:["seat","back","pad","handle"], cs_row:["seat","back","pad"],
+  seated_cable_row:["seat","handle","foot"], plate_row:["seat","back","handle"],
+  straight_arm_pulldown:["pulley","handle"], t_bar_row:["handle","foot"], smith_bent_row:["safety","handle","foot"],
+  bb_bent_row:["handle","foot"], single_db_row:["bench"], db_pullover:["bench"], pull_up:["handle"], inverted_row:["handle","rom"],
+  /* --- shoulders --- */
+  machine_ohp:["seat","back","arm","handle"], plated_ohp:["seat","back","handle"], machine_lat_raise:["seat","arm","rom"],
+  reverse_pec_deck:["seat","arm","rom"], cable_lat_raise:["pulley","handle"], rear_delt_fly:["pulley","handle"],
+  face_pull:["pulley","handle"], cable_upright_row:["pulley","handle"],
+  bb_ohp:["safety","handle"], db_ohp:["bench"], arnold_press:["bench"], db_lat_raise:[],
+  leaning_lat_raise:["pulley","handle"], bentover_db_rear_fly:["bench"], prone_rear_delt_row:["bench"],
+  /* --- arms --- */
+  machine_tricep_ext:["seat","arm","rom"], machine_curl:["seat","arm","pad","rom"], preacher_curl:["seat","pad"],
+  assisted_dip:["seat","handle"], tricep_pushdown:["pulley","handle"], rope_pushdown:["pulley","handle"],
+  straightbar_pushdown:["pulley","handle"], overhead_rope_ext:["pulley","handle"], single_overhead_ext:["pulley","handle"],
+  crossbody_ext:["pulley","handle"], cable_curl:["pulley","handle"], single_arm_cable_curl:["pulley","handle"],
+  rope_hammer_curl:["pulley","handle"], bayesian_curl:["pulley","handle"], incline_db_curl:["bench"],
+  skull_crusher:["bench","handle"], close_grip_bench:["safety","bench","handle"], db_kickback:["bench"],
+  concentration_curl:["bench"], bb_curl:["handle"], ezbar_curl:["handle"], reverse_curl:["handle"],
+  db_curl:[], hammer_curl:[], db_overhead_ext:[], bench_dip:["bench"],
+  bitri_machine_ext:["seat","arm"], bitri_machine_curl:["seat","arm"],
+  /* --- legs --- */
+  leg_press:["seat","back","foot","rom","safety"], plate_leg_press:["back","foot","rom","safety"],
+  leg_ext:["seat","back","pad","rom"], leg_curl:["seat","back","pad","rom"], lying_leg_curl:["pad","rom"],
+  calf_raise:["seat","foot","rom"], legpress_calf:["back","foot","rom"], seated_calf_raise:["seat","pad","foot"],
+  standing_calf_machine:["pad","foot","rom"], smith_calf_raise:["safety","foot"], db_single_calf_raise:["foot"],
+  hack_squat:["safety","foot","pad"],
+  hip_thrust:["pad","bench","foot"], smith_hip_thrust:["safety","pad","bench"], cable_kickback:["pulley","handle"],
+  hip_abduction:["seat","pad","rom"], cable_pull_through:["pulley","handle"], back_extension:["pad","foot"],
+  smith_squat:["safety","foot"], bb_squat:["safety","foot"], bulgarian_split_squat:["bench","foot"],
+  db_rdl:[], rdl:["handle"], smith_rdl:["safety","handle"], good_morning:["safety","handle"], step_up:["bench"], walking_lunge:[],
+  /* --- core --- */
+  ab_movement:["seat","pad","rom"], cable_crunch:["pulley","handle"], hanging_leg_raise:["handle"],
+  captains_chair:["pad"], decline_situp:["bench","foot"], ab_wheel:[], cable_woodchop:["pulley","handle"],
+};
+/* Defaults established in the session with Tim (2026) — seeded once, then fully user-editable. */
+const SETUP_DEFAULTS = {
+  pec_deck:          { seat:"5 notches", arm:"Position 4", notes:"Set with Tim — 5 visible seat notches, arms on position 4." },
+  machine_tricep_ext:{ seat:"2 notches",                   notes:"Set with Tim — 2 visible seat notches." },
+};
+const SETUP_SEED_VERSION = 1;   /* bump only to push a NEW batch of defaults; never overwrites user edits */
+function equipFallbackSetup(ex){
+  const eq=(ex&&ex.equip)||"";
+  if(eq==="machine") return ["seat","back","rom"];
+  if(eq==="cable")   return ["pulley","handle"];
+  if(eq==="smith")   return ["safety","bench","foot"];
+  if(eq==="barbell") return ["safety","handle"];
+  if(eq==="dumbbell")return ["bench"];
+  return [];                    /* bodyweight etc. — free-text notes only */
+}
+/* the field keys that should be shown for this exercise (never "every field for every exercise") */
+function setupFieldsFor(ex){ if(!ex) return [];
+  const spec=SETUP_SPEC[ex.id]; const keys=spec!==undefined?spec:equipFallbackSetup(ex);
+  return SETUP_FIELD_ORDER.filter(k=>keys.indexOf(k)>=0); }
+function setupStore(){ if(!S.settings) S.settings={}; if(!S.settings.exSetup) S.settings.exSetup={}; return S.settings.exSetup; }
+function exSetup(exId){ return (S.settings&&S.settings.exSetup&&S.settings.exSetup[exId])||null; }
+/* true if there is anything worth showing */
+function hasSetup(exId){ const s=exSetup(exId); if(!s) return false;
+  return SETUP_FIELD_ORDER.some(k=>s[k]&&String(s[k]).trim()) || !!(s.notes&&String(s.notes).trim()); }
+/* short one-line summary for the logger card / exercise list */
+function setupSummary(exId,max){ const s=exSetup(exId); if(!s) return "";
+  const parts=SETUP_FIELD_ORDER.filter(k=>s[k]&&String(s[k]).trim()).map(k=>SETUP_FIELDS[k].label+": "+String(s[k]).trim());
+  if(!parts.length && s.notes) return String(s.notes).trim();
+  return parts.slice(0,max||3).join(" · "); }
+function saveSetup(exId,vals){ const store=setupStore(); const clean={};
+  SETUP_FIELD_ORDER.forEach(k=>{ const v=vals&&vals[k]!=null?String(vals[k]).trim():""; if(v) clean[k]=v; });
+  const n=vals&&vals.notes!=null?String(vals.notes).trim():""; if(n) clean.notes=n;
+  if(Object.keys(clean).length){ clean.updatedAt=iso(new Date()); store[exId]=clean; } else { delete store[exId]; }
+  save(); }
+function clearSetup(exId){ const store=setupStore(); delete store[exId]; save(); }
+/* Seeds the known machine settings on first run / upgrade. Only fills a slot that has never been
+   set, and records the seed version so a value you deliberately cleared never comes back. */
+function ensureSetupDefaults(){ if(!S.settings) S.settings={};
+  const store=setupStore(); const seen=S.settings.setupSeeded||0;
+  if(seen>=SETUP_SEED_VERSION) return;
+  Object.keys(SETUP_DEFAULTS).forEach(id=>{ if(!store[id]) store[id]={...SETUP_DEFAULTS[id], updatedAt:iso(new Date()), seeded:true}; });
+  S.settings.setupSeeded=SETUP_SEED_VERSION; persistLocal(); }
+
 const MEASURE_FIELDS = ["Waist","Chest","Arms","Thigh","Hips","Shoulders","Neck"];
 const PHOTO_POSES = ["Front relaxed","Front flexed","Side relaxed","Side flexed","Back relaxed","Back flexed"];
 const QUOTES = ["Discipline is choosing what you want most over what you want now.","The work you avoid is the work that grows you.","Win the set in front of you.","Beat last time. That's the whole game.","Hard, brief, frequent, recovered. Repeat.","No zero days.","Consistency beats intensity you can't repeat."];
@@ -353,7 +588,7 @@ function seed(){
   return { cfgVersion:CONFIG_VERSION, settings:{sessionsPerWeek:4, units:"kg", inputOrder:"wr"}, muscles,
     exercises:EXERCISES.map(e=>({...e, m:{...e.m}})), sessions:[], bodyweight:[], measurements:[], photos:[], readiness:null, updatedAt:null };
 }
-let S=load();
+let S=load(); try{ ensureSetupDefaults(); }catch(e){}
 function load(){
   try{ const raw=localStorage.getItem(KEY); if(!raw) return seed(); const d=JSON.parse(raw);
     if(d.cfgVersion!==CONFIG_VERSION){ const fresh=seed();
@@ -399,6 +634,7 @@ async function signUpPassword(email,password){ if(!sb) throw new Error("offline"
   const { error }=await sb.auth.signUp({ email, password, options:{ emailRedirectTo:redirectURL() } }); if(error) throw error; }
 async function signOut(){ if(sb){ try{ await sb.auth.signOut(); }catch(e){} } authUser=null; authProfile=null;
   /* wipe in-memory state + rescope so the next sign-in on this device sees nothing of this account */
+  try{ clearRest(); }catch(e){}
   setStorageScope(null); S=seed(); activeSession=null; viewingLogger=false; render(); }
 
 async function afterAuth(){
@@ -413,7 +649,8 @@ async function afterAuth(){
   if(legacyRaw && !localStorage.getItem(KEY) && authUser.email.toLowerCase()===ADMIN_EMAIL){
     try{ localStorage.setItem(KEY, legacyRaw); const la=localStorage.getItem("iron_arc_active_v2"); if(la) localStorage.setItem(ACTIVE_KEY, la); }catch(e){}
   }
-  S=load(); activeSession=loadActive(); if(activeSession) viewingLogger=false;
+  S=load(); try{ ensureSetupDefaults(); }catch(e){} activeSession=loadActive(); if(activeSession) viewingLogger=false;
+  try{ restState=null; resumeRest(); }catch(e){}      /* v8: rest timer is per-user scoped; re-read under the new key */
   try{ await sb.from("profiles").upsert({ user_id:authUser.id, email:authUser.email, display_name:meta.name, role:meta.role }, { onConflict:"user_id" }); }catch(e){}
   await hydrateFromCloud();
 }
@@ -447,7 +684,8 @@ async function hydrateFromCloud(){
     const cloudIds=new Set(rb.sessions.map(s=>s.id));
     const localUnsynced=(S.sessions||[]).filter(s=>s.completedAt&&s.synced===false&&!cloudIds.has(s.id));
     rb.sessions=rb.sessions.concat(localUnsynced);
-    S=rb; persistLocal();
+    S=rb; try{ ensureSetupDefaults(); }catch(e){}   /* v8: keeps cloud-hydrated accounts' machine settings intact */
+    persistLocal();
     for(const s of localUnsynced){ await pushWorkout(s); }
   }catch(e){}
   syncing=false; render();
@@ -720,11 +958,53 @@ function lineChartSVG(series,opts){ opts=opts||{}; var unit=opts.unit||"";
   var d1=n>1?'<text x="'+(W-padR)+'" y="'+(H-6)+'" text-anchor="end" font-size="9" fill="var(--muted)">'+fmtDate(series[n-1].date)+'</text>':'';
   var last=series[n-1].val; var lastLab='<text x="'+(W-padR)+'" y="'+Math.max(10,Y(last)-6).toFixed(1)+'" text-anchor="end" font-size="10" font-weight="700" fill="var(--accent)">'+fmtNum(last)+(unit?(" "+unit):"")+'</text>';
   return '<svg viewBox="0 0 '+W+' '+H+'" width="100%" style="display:block">'+gl+line+dots+labMax+labMin+d0+d1+lastLab+'</svg>'; }
-/* search matching across name / muscles / equipment / pattern / source / aliases */
-function exMatches(e,q){ if(!q) return true; q=String(q).toLowerCase().trim(); if(!q) return true;
-  var pm=primaryMuscle(e); var sec=Object.keys(e.m||{}).map(function(k){ return S.muscles[k]?S.muscles[k].label:k; }).join(" ");
-  var hay=[e.name,(S.muscles[pm]?S.muscles[pm].label:pm||""),sec,e.equip||"",(e.pattern||"").replace(/_/g," "),e.src||"",e.aliases||""].join(" ").toLowerCase();
-  return q.split(/\s+/).every(function(tok){ return hay.indexOf(tok)>=0; }); }
+/* ============================================================================================
+   v8 SEARCH — alias- and spelling-tolerant matching across name / muscles / equipment / pattern /
+   source / aliases / group. Both the haystack and the query are pushed through the same
+   normaliser + synonym table, so "bent over row", "bent-over row", "Bentover Row", "smith row",
+   "tricep", "triceps", "db press" and "dumbell press" all land on the same exercises.
+   ============================================================================================ */
+const SEARCH_SYN = {
+  /* equipment shorthand */
+  db:"dumbbell", dbs:"dumbbell", dumbell:"dumbbell", dumbbells:"dumbbell", bb:"barbell", barbel:"barbell",
+  ez:"ezbar", ezbar:"ezbar", bw:"bodyweight", mach:"machine", machines:"machine", cables:"cable", smithmachine:"smith",
+  /* muscle shorthand + plurals */
+  tri:"triceps", tricep:"triceps", triceps:"triceps", bi:"biceps", bicep:"biceps", biceps:"biceps",
+  delt:"delts", deltoid:"delts", deltoids:"delts", shoulder:"delts", shoulders:"delts",
+  lat:"lats", latissimus:"lats", pec:"chest", pecs:"chest", pectoral:"chest",
+  quad:"quads", quadricep:"quads", quadriceps:"quads", ham:"hamstrings", hams:"hamstrings", hammy:"hamstrings",
+  hamstring:"hamstrings", glute:"glutes", butt:"glutes", calf:"calves", ab:"abs", core:"abs", abdominal:"abs",
+  abdominals:"abs", oblique:"abs", obliques:"abs", trap:"traps", trapezius:"traps", rhomboid:"traps",
+  rhomboids:"traps", forearm:"forearms", grip:"forearms", spinal:"lower back", erector:"lower back", erectors:"lower back",
+  /* movement shorthand */
+  ohp:"overhead press", rdl:"romanian deadlift", bench:"bench press", pushdown:"pushdown", pressdown:"pushdown",
+  rows:"row", curls:"curl", raises:"raise", presses:"press", extensions:"extension", flye:"fly", flyes:"fly", flys:"fly",
+  pullup:"pull up", pullups:"pull up", chinup:"chin up", chinups:"chin up", pushup:"push up", pushups:"push up",
+  situp:"sit up", situps:"sit up", bentover:"bent over", overs:"over", legpress:"leg press", crunches:"crunch",
+  lunges:"lunge", squats:"squat", deadlift:"deadlift", deadlifts:"deadlift", thrusts:"thrust", dips:"dip",
+};
+function normSearch(s){ return String(s==null?"":s).toLowerCase()
+  .replace(/[‐-―]/g,"-")                     /* unicode dashes -> hyphen */
+  .replace(/[^a-z0-9]+/g," ").replace(/\s+/g," ").trim(); }
+function canonTokens(s){ return normSearch(s).split(" ").filter(Boolean)
+  .map(function(t){ return SEARCH_SYN[t]||t; }).join(" ").split(" ").filter(Boolean); }
+/* muscle-group labels are searchable too ("back row", "core", "shoulders") */
+function exHayRaw(e){ var pm=primaryMuscle(e);
+  var sec=Object.keys(e.m||{}).map(function(k){ return S.muscles[k]?S.muscles[k].label:k; }).join(" ");
+  return [e.name,(S.muscles[pm]?S.muscles[pm].label:pm||""),sec,e.equip||"",(e.pattern||"").replace(/_/g," "),
+          e.src||"",e.aliases||"",groupLabel(exGroup(e))||"",e.type||""].join(" "); }
+var _hayCache={};
+function exHay(e){ var k=e.id+"|"+e.name+"|"+(e.aliases||"").length;
+  if(_hayCache[k]) return _hayCache[k];
+  var h=" "+canonTokens(exHayRaw(e)).join(" ")+" "; _hayCache[k]=h; return h; }
+function exMatches(e,q){ if(q==null||q==="") return true;
+  var toks=canonTokens(q); if(!toks.length) return true;
+  var hay=exHay(e); var words=hay.trim().split(" ");
+  return toks.every(function(t){
+    if(hay.indexOf(" "+t+" ")>=0) return true;                                   /* whole word */
+    if(hay.indexOf(t)>=0) return true;                                           /* substring: "curl" finds "curls" */
+    return words.some(function(w){ return t.length>=4 && w.length>=4 && t.indexOf(w)===0; }); /* "dumbbells" finds "dumbbell" */
+  }); }
 function escAttr(s){ return String(s==null?"":s).replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
 /* ---- Reports tab cards ---- */
 function recentAchievementsCard(limit){ var evs=achievementTimeline(limit||8);
@@ -888,9 +1168,25 @@ function swapSuggestions(exId){ const ex=exById(exId); if(!ex) return []; const 
                 ||(PREF_SCORE[b.e.pref]-PREF_SCORE[a.e.pref]))     // then by your preference
     .slice(0,8).map(x=>x.e); }
 function libraryByMuscle(){ const groups={}; S.exercises.forEach(e=>{ const pm=primaryMuscle(e); (groups[pm]=groups[pm]||[]).push(e); }); return groups; }
+/* v8 — the library grouped by BROAD muscle group, in MUSCLE_GROUPS order, so browsing reads
+   Chest / Back / Shoulders / Biceps / Triceps / Quads / Hamstrings / Glutes / Calves / Core. */
+function libraryByGroup(){ const out={}; MUSCLE_GROUPS.forEach(g=>{ out[g.key]=[]; }); out._other=[];
+  S.exercises.forEach(e=>{ const g=exGroup(e); (out[g]||out._other).push(e); });
+  if(!out._other.length) delete out._other; return out; }
+/* v8 — shared filter predicate for the Add and Swap sheets */
+function exPassesFilters(e,groupKey,equipKey){
+  if(groupKey && exGroup(e)!==groupKey) return false;
+  if(equipKey && (e.equip||"")!==equipKey) return false;
+  return true; }
+function filterChips(kind,curGroup,curEquip){
+  const gb=(k,l)=>'<button class="fchip'+(curGroup===k?" on":"")+'" data-f'+kind+'g="'+(k||"")+'">'+l+'</button>';
+  const eb=(k,l)=>'<button class="fchip'+(curEquip===k?" on":"")+'" data-f'+kind+'e="'+(k||"")+'">'+l+'</button>';
+  return '<div class="fchips">'+gb("","All muscles")+MUSCLE_GROUPS.map(g=>gb(g.key,g.label)).join("")+'</div>'
+        +'<div class="fchips">'+eb("","All kit")+EQUIP_FILTERS.map(p=>eb(p[0],p[1])).join("")+'</div>'; }
 /* ============================================================================ UI STATE + ROUTER ============================================================================ */
 let route="today", activeSession=null, viewingLogger=false, pendingRec=null, restTimer=null, sheet=null, statsPeriod="all", bodyDetail=null;
 let exChartMetric="top", addSearch="", swapSearch="", mgmtSearch="", repExId=null, repMetric="top", repSearch="";  /* v6 chart/search UI state */
+let addGroup="", addEquip="", swapGroup="", swapEquip="", mgmtGroup="", mgmtEquip="";  /* v8 library filter state */
 let loggerOpen={}, loggerClock=null;
 let rerollCounts={};   /* v7: exIds already proposed this cycle — each ↻ tap penalises them so the next proposal is genuinely different */
 let limDraft={rules:["foot_pressure"],dur:"1week",note:""};
@@ -1014,7 +1310,8 @@ function loggerEx(en,i){ const e=exById(en.exId); const cur=loggerCurrentIndex()
   const override=loggerOpen.hasOwnProperty(i)?loggerOpen[i]:null; const expanded = override!==null ? override : (!done || i===cur);
   const work=en.sets.filter(s=>s.type!=="warm"); const loggedN=work.filter(isLogged).length;
   if(!expanded){ const summary=en.sets.filter(isLogged).map(s=>fmtSet(s.weight,s.reps)).join(", ")||"—";
-    return '<div class="card logex" data-ex="'+i+'" style="padding:13px 16px"><div class="collapsed" data-expand="'+i+'"><div><div class="nm">'+e.name+' <span class="muted" style="font-weight:500;font-size:12px">'+loggedN+' sets ✓</span></div><div class="smry">'+summary+'</div></div><span class="muted">▸</span></div></div>'; }
+    const setupTag=hasSetup(en.exId)?' <span class="tag" style="color:var(--gold);border:1px solid rgba(212,175,55,.35)">⚙ setup</span>':'';
+    return '<div class="card logex" data-ex="'+i+'" style="padding:13px 16px"><div class="collapsed" data-expand="'+i+'"><div><div class="nm">'+e.name+setupTag+' <span class="muted" style="font-weight:500;font-size:12px">'+loggedN+' sets ✓</span></div><div class="smry">'+summary+'</div></div><span class="muted">▸</span></div></div>'; }
   const last=exerciseHistory(en.exId).filter(h=>h.sessionId!==activeSession.editingId)[0]; const bests=exerciseBests(en.exId); const prog=progressionFor(en.exId); const flag=fatigueFlag(en.exId);
   const lastStr=last?last.sets.map(s=>fmtSet(s.weight,s.reps)).join(", "):"—";
   const rows=en.sets.map((s,si)=>setRow(i,si,s)).join("");
@@ -1024,8 +1321,21 @@ function loggerEx(en,i){ const e=exById(en.exId); const cur=loggerCurrentIndex()
   const tr=exerciseTrend(en.exId); const trendChip='<span class="tag" style="color:'+tr.c+';border:1px solid '+tr.c+'44">'+tr.label+'</span>';
   return '<div class="card logex" data-ex="'+i+'"><div class="hd"><div style="flex:1" data-expand="'+i+'"><div class="nm">'+e.name+' '+trendChip+'</div><div class="histline">Last: <b>'+lastStr+'</b></div><div class="histline target">'+(prog.add?'↑ ':'')+'Next: '+prog.note+'</div><div class="histline" style="color:'+tr.c+'">'+tr.note+'</div></div><div class="exmenu"><button class="swap" data-tips="'+en.exId+'" style="color:var(--gold)">Form</button><button class="swap" data-swap="'+i+'">⇄ Swap</button><button class="more" data-more="'+i+'">⋯</button></div></div>'
     +recwarn
+    +setupStrip(en.exId)
     +'<div class="setgrid"><div class="sethead"><span>#</span><span>prev</span>'+(inputOrder()==="rw"?'<span>reps</span><span>kg</span>':'<span>kg</span><span>reps</span>')+'<span>log</span></div>'+rows+'</div>'
     +'<button class="btn ghost sm" data-addset="'+i+'" style="margin-top:4px">+ set</button>'+flaghtml+winhtml+'</div>'; }
+/* v8 — the tappable setup / machine-settings strip shown on every expanded logger card.
+   Populated cards show the saved values as chips; empty ones show a dashed "add" prompt so the
+   field set is always one tap away. Both open the same editable sheet. */
+function setupStrip(exId){ const ex=exById(exId); if(!ex) return "";
+  const s=exSetup(exId); const keys=setupFieldsFor(ex);
+  if(!hasSetup(exId)){
+    if(!keys.length && ex.equip!=="machine") return '<button class="setupline empty2" data-setup="'+exId+'"><span class="ic">⚙</span><span class="bd"><span class="lb">Setup notes</span></span><span class="ed">add</span></button>';
+    return '<button class="setupline empty2" data-setup="'+exId+'"><span class="ic">⚙</span><span class="bd"><span class="lb">Setup / machine settings</span><span class="vl" style="color:var(--muted)">'+(keys.length?keys.map(k=>SETUP_FIELDS[k].label).slice(0,3).join(" · "):"Add a note")+'</span></span><span class="ed">add</span></button>'; }
+  const chips=SETUP_FIELD_ORDER.filter(k=>s[k]&&String(s[k]).trim()).map(k=>'<span>'+SETUP_FIELDS[k].label+': '+escAttr(String(s[k]).trim())+'</span>').join("");
+  const note=(s.notes&&String(s.notes).trim())?'<span class="vl">'+escAttr(String(s.notes).trim())+'</span>':"";
+  return '<button class="setupline" data-setup="'+exId+'"><span class="ic">⚙</span><span class="bd"><span class="lb">Setup</span>'
+    +(chips?'<span class="setupchips">'+chips+'</span>':"")+note+'</span><span class="ed">edit</span></button>'; }
 function prevForSet(en,si){ const last=exerciseHistory(en.exId).filter(h=>h.sessionId!==activeSession.editingId)[0]; if(!last) return ""; const ps=last.sets[workIndex(en,si)]; return ps?fmtSet(ps.weight,ps.reps):""; }
 function isCurrentSet(en,si){ const s=en.sets[si]; if(s.type==="warm"||isLogged(s)) return false; for(let k=0;k<si;k++){ if(en.sets[k].type!=="warm"&&!isLogged(en.sets[k])) return false; } return true; }
 function setRow(ei,si,s){ const en=activeSession.entries[ei]; const warm=s.type==="warm"; const g=warm?{w:"",r:""}:ghostFor(en,si); const wEmpty=(s.weight===""||s.weight==null), rEmpty=(s.reps===""||s.reps==null);
@@ -1050,22 +1360,43 @@ function viewHistory(){ const list=S.sessions.filter(s=>s.completedAt).sort((a,b
   return '<div class="card"><div class="tiny">Workout history · '+list.length+' sessions</div></div>'+rows; }
 
 /* ---------------- SHEETS ---------------- */
-function openSheet(type,data){ if(type==="add") addSearch=""; if(type==="swap") swapSearch=""; if(type==="exhist") exChartMetric="top"; sheet={type,data}; renderSheet(); }
+function openSheet(type,data){ if(type==="add"){ addSearch=""; addGroup=""; addEquip=""; }
+  if(type==="swap"){ swapSearch=""; swapEquip="";                              /* v8: swap defaults to the muscle you are already training */
+    const _cur=(activeSession&&activeSession.entries[data])?exById(activeSession.entries[data].exId):null; swapGroup=""; void _cur; }
+  if(type==="exhist") exChartMetric="top"; sheet={type,data}; renderSheet(); }
 function closeSheet(){ sheet=null; renderSheet(); }
 function renderSheet(){ const m=document.getElementById("sheetmount"); if(!sheet){ m.innerHTML=""; return; }
   let inner="";
   if(sheet.type==="swap"){ const idx=sheet.data; const curId=activeSession.entries[idx].exId; const cur=exById(curId); const inWk=new Set(activeSession.entries.map(function(en){return en.exId;})); const q=swapSearch||"";
-    var subs; if(q){ subs=S.exercises.filter(function(e){ return e.id!==curId&&!inWk.has(e.id)&&AVAIL_OK[e.avail]&&!limBlock(e)&&exMatches(e,q); }).sort(function(a,b){ return ((a.rec?0:1)-(b.rec?0:1))||(PREF_SCORE[b.pref]-PREF_SCORE[a.pref]); }).slice(0,24); } else { subs=swapSuggestions(curId); }
-    inner='<div class="tiny">Swap '+cur.name+'</div><p class="muted" style="font-size:12px;margin:6px 0 8px">Same primary muscle ('+S.muscles[primaryMuscle(cur)].label+') keeps your volume counting. Search to find any exercise.</p>'
+    /* v8: default list is still the smart same-muscle suggestion; a search term OR a filter chip
+       widens it to the whole available library, ranked familiar-first. */
+    var subs, wide=(!!q||!!swapGroup||!!swapEquip);
+    if(wide){ subs=S.exercises.filter(function(e){ return e.id!==curId&&!inWk.has(e.id)&&AVAIL_OK[e.avail]&&!limBlock(e)&&exPassesFilters(e,swapGroup,swapEquip)&&exMatches(e,q); })
+        .sort(function(a,b){ return ((a.rec?0:1)-(b.rec?0:1))||(PREF_SCORE[b.pref]-PREF_SCORE[a.pref])||a.name.localeCompare(b.name); }).slice(0,40); }
+    else { subs=swapSuggestions(curId); }
+    inner='<div class="tiny">Swap '+cur.name+'</div><p class="muted" style="font-size:12px;margin:6px 0 8px">Same primary muscle ('+S.muscles[primaryMuscle(cur)].label+') keeps your volume counting. Search or filter to reach any exercise.</p>'
       +'<input class="inp srch" id="swapSearch" placeholder="Search name, muscle, equipment..." value="'+escAttr(q)+'">'
-      +'<div style="margin-top:10px">'+(subs.length?subs.map(function(e){ return '<button class="opt" data-pick="'+e.id+'" style="width:100%;text-align:left"><div><div class="nm">'+e.name+(e.pref==="love"?' <span class="tag love">★</span>':'')+(e.rec?'':' <span class="tag">manual</span>')+'</div><div class="meta">'+(e.pattern||"").replace(/_/g," ")+' · '+e.equip+'</div></div><span class="sets">pick</span></button>'; }).join(""):'<div class="empty">No matches in the library.</div>')+'</div>'; }
+      +filterChips("swap",swapGroup,swapEquip)
+      +'<div style="margin-top:10px">'+(subs.length?subs.map(function(e){ return '<button class="opt" data-pick="'+e.id+'" style="width:100%;text-align:left"><div><div class="nm">'+e.name+(e.pref==="love"?' <span class="tag love">\u2605</span>':'')+(e.rec?'':' <span class="tag">manual</span>')+(hasSetup(e.id)?' <span class="tag" style="color:var(--gold)">\u2699</span>':'')+'</div><div class="meta">'+equipLabel(e.equip)+' \u00b7 '+groupLabel(exGroup(e))+' \u00b7 '+(e.pattern||"").replace(/_/g," ")+'</div></div><span class="sets">pick</span></button>'; }).join(""):'<div class="empty">No matches in the library.</div>')+'</div>'; }
   else if(sheet.type==="add"){ const q=addSearch||""; const inWk=new Set((activeSession?activeSession.entries:[]).map(function(en){return en.exId;}));
     var rank=function(e){ return !AVAIL_OK[e.avail]?2:(e.rec?0:1); };
     var tg=function(e){ return !AVAIL_OK[e.avail]?' <span class="tag" style="color:var(--faint)">off</span>':(e.rec?'':' <span class="tag">manual</span>'); };
-    var row=function(e){ return '<button class="opt" data-add="'+e.id+'" style="width:100%;text-align:left"><div><div class="nm">'+e.name+tg(e)+(inWk.has(e.id)?' <span class="tag" style="color:var(--amber)">in workout</span>':'')+'</div><div class="meta">'+e.equip+' · '+(e.pattern||"").replace(/_/g," ")+' · '+e.rl+'-'+e.rh+' reps</div></div><span class="sets">+ add</span></button>'; };
-    var listHtml; if(q){ var res=S.exercises.filter(function(e){ return exMatches(e,q); }).sort(function(a,b){ return rank(a)-rank(b)||(PREF_SCORE[b.pref]-PREF_SCORE[a.pref]); }); listHtml=res.length?res.map(row).join(""):'<div class="empty">No matches.</div>'; }
-    else { var groups=libraryByMuscle(); listHtml=Object.entries(groups).map(function(pair){ var m=pair[0],exs=pair[1]; var vis=exs.filter(function(e){ return AVAIL_OK[e.avail]; }).sort(function(a,b){ return rank(a)-rank(b)||(PREF_SCORE[b.pref]-PREF_SCORE[a.pref]); }); if(!vis.length) return ""; return '<div class="muted tiny" style="margin:12px 0 4px">'+(S.muscles[m]?S.muscles[m].label:m)+'</div>'+vis.map(row).join(""); }).join(""); }
-    inner='<div class="tiny">Add exercise</div><input class="inp srch" id="addSearch" placeholder="Search name, muscle, equipment, pattern..." value="'+escAttr(q)+'" style="margin-top:8px"><p class="muted" style="font-size:11px;margin:6px 0 0">Familiar gym options first. Search to add manual-only or older exercises.</p><div style="margin-top:6px">'+listHtml+'</div>'; }
+    var row=function(e){ return '<button class="opt" data-add="'+e.id+'" style="width:100%;text-align:left"><div><div class="nm">'+e.name+tg(e)+(hasSetup(e.id)?' <span class="tag" style="color:var(--gold)">\u2699</span>':'')+(inWk.has(e.id)?' <span class="tag" style="color:var(--amber)">in workout</span>':'')+'</div><div class="meta">'+equipLabel(e.equip)+' \u00b7 '+groupLabel(exGroup(e))+' \u00b7 '+(e.pattern||"").replace(/_/g," ")+' \u00b7 '+e.rl+'-'+e.rh+' reps</div></div><span class="sets">+ add</span></button>'; };
+    var listHtml;
+    if(q){ var res=S.exercises.filter(function(e){ return exPassesFilters(e,addGroup,addEquip)&&exMatches(e,q); }).sort(function(a,b){ return rank(a)-rank(b)||(PREF_SCORE[b.pref]-PREF_SCORE[a.pref])||a.name.localeCompare(b.name); });
+      listHtml=res.length?res.map(row).join(""):'<div class="empty">No matches. Try a broader term or clear the filters.</div>'; }
+    else { /* v8: browse by BROAD muscle group in a fixed order, honouring the filter chips */
+      var groups=libraryByGroup();
+      listHtml=Object.keys(groups).map(function(gk){ var exs=groups[gk];
+        if(addGroup && gk!==addGroup) return "";
+        var vis=exs.filter(function(e){ return AVAIL_OK[e.avail]&&exPassesFilters(e,addGroup,addEquip); })
+                   .sort(function(a,b){ return rank(a)-rank(b)||(PREF_SCORE[b.pref]-PREF_SCORE[a.pref])||a.name.localeCompare(b.name); });
+        if(!vis.length) return "";
+        return '<div class="muted tiny" style="margin:12px 0 4px">'+(gk==="_other"?"Other":groupLabel(gk))+' \u00b7 '+vis.length+'</div>'+vis.map(row).join(""); }).join("");
+      if(!listHtml) listHtml='<div class="empty">Nothing matches those filters.</div>'; }
+    inner='<div class="tiny">Add exercise \u00b7 '+S.exercises.length+' in library</div><input class="inp srch" id="addSearch" placeholder="Search name, muscle, equipment, pattern..." value="'+escAttr(q)+'" style="margin-top:8px">'
+      +filterChips("add",addGroup,addEquip)
+      +'<p class="muted" style="font-size:11px;margin:6px 0 0">Familiar gym options first, then manual-only variations. Filter by muscle group or kit to narrow it down.</p><div style="margin-top:6px">'+listHtml+'</div>'; }
   else if(sheet.type==="exhist"){ const id=sheet.data; const ex=exById(id); const rec=exerciseRecords(id); const h=exerciseHistory(id); const _tr=exerciseTrend(id); var fd=function(d){ return d?fmtDate(d):""; };
     var recGrid='<div class="recgrid">'
       +'<div class="rc"><span>5RM</span><b>'+(rec.rm5.w?rec.rm5.w+'<i>×'+rec.rm5.reps+'</i>':'—')+'</b><small>'+(rec.rm5.w?fd(rec.rm5.date):'not yet')+'</small></div>'
@@ -1076,7 +1407,7 @@ function renderSheet(){ const m=document.getElementById("sheetmount"); if(!sheet
     var metrics=[["top","Top kg"],["rm5","5RM"],["rm10","10RM"],["vol","Volume"],["sets","Sets"]];
     var seg='<div class="seg mini" style="margin-top:10px">'+metrics.map(function(mn){ return '<button data-exmetric="'+mn[0]+'" class="'+(exChartMetric===mn[0]?"on":"")+'">'+mn[1]+'</button>'; }).join("")+'</div>';
     var chart=lineChartSVG(exerciseSeries(id,exChartMetric),{unit:metricUnit(exChartMetric)});
-    inner='<div class="tiny">'+ex.name+'</div><div class="row" style="gap:6px;margin-top:8px;align-items:center"><span class="statuspill" style="background:'+_tr.c+'22;color:'+_tr.c+'">'+_tr.label+'</span>'+(TIPS[id]?'<button class="btn sm" data-tips="'+id+'" style="color:var(--gold)">Form tips</button>':'')+'</div><div class="ibody" style="margin-top:6px">'+_tr.note+'</div>'
+    inner='<div class="tiny">'+ex.name+'</div><div class="row" style="gap:6px;margin-top:8px;align-items:center"><span class="statuspill" style="background:'+_tr.c+'22;color:'+_tr.c+'">'+_tr.label+'</span>'+(TIPS[id]?'<button class="btn sm" data-tips="'+id+'" style="color:var(--gold)">Form tips</button>':'')+'<button class="btn sm" data-setup="'+id+'" style="color:var(--gold)">⚙ Setup</button></div><div class="ibody" style="margin-top:6px">'+_tr.note+'</div>'+setupStrip(id)
       +recGrid
       +'<div class="tiny" style="margin-top:14px">Progress · '+metricLabel(exChartMetric)+'</div>'+seg+'<div class="chartwrap">'+chart+'</div>'
       +'<div class="tiny" style="margin-top:12px">History</div><div style="margin-top:6px">'+(h.length?h.map(function(x){ return '<div class="contrib"><div><b>'+fmtDate(x.date)+'</b><div class="muted" style="font-size:12px;margin-top:2px">'+x.sets.map(function(s){ return fmtSet(s.weight,s.reps); }).join("  ")+'</div></div><span class="c-ef">'+x.sets.reduce(function(a,s){ return a+(+s.weight||0)*(+s.reps||0); },0)+'kg</span></div>'; }).join(""):'<div class="empty">No logged sessions.</div>')+'</div>'; }
@@ -1097,6 +1428,17 @@ function renderSheet(){ const m=document.getElementById("sheetmount"); if(!sheet
       +'<div class="field"><label style="color:var(--red)">⛔ Should NOT mainly feel</label><div class="ibody">'+t.avoid+'</div></div>'
       +'<div class="field"><label>Cues</label><ul style="margin:4px 0 0;padding-left:18px">'+t.cues.map(c=>'<li class="ibody" style="margin:3px 0">'+c+'</li>').join("")+'</ul></div>'
       :'<div class="empty" style="padding:14px">No form notes for this exercise yet.</div>'); }
+  else if(sheet.type==="setup"){ const id=sheet.data; const ex=exById(id); const cur=exSetup(id)||{}; const keys=setupFieldsFor(ex);
+    inner='<div class="tiny">'+(ex?ex.name:id)+' · setup & machine settings</div>'
+      +'<p class="muted" style="font-size:12px;margin:6px 0 10px">Saved against the exercise, so it loads automatically every time you perform it.</p>'
+      +(keys.length?keys.map(function(k){ var f=SETUP_FIELDS[k];
+          return '<div class="field"><label>'+f.label+' <span class="muted" style="font-weight:400">· '+f.hint+'</span></label>'
+            +'<input class="inp" data-setupf="'+k+'" value="'+escAttr(cur[k]||"")+'" placeholder="'+escAttr(f.ph)+'" style="text-align:left;padding:9px"></div>'; }).join("")
+        :'<p class="muted" style="font-size:12px;margin:0 0 6px">No machine adjustments for this one — use the notes below.</p>')
+      +'<div class="field"><label>Setup notes</label><textarea class="note" data-setupf="notes" rows="3" placeholder="Anything unusual — grip, tempo, plate loading, cable position...">'+escAttr(cur.notes||"")+'</textarea></div>'
+      +(cur.updatedAt?'<div class="histline">Last updated '+fmtDate(cur.updatedAt)+'</div>':'')
+      +'<div class="row" style="margin-top:10px"><button class="btn accent full" data-setupsave="'+id+'">Save setup</button>'
+      +(hasSetup(id)?'<button class="btn danger" data-setupclear="'+id+'">Clear</button>':'')+'</div>'; }
   else if(sheet.type==="lim"){ const d=limDraft;
     const presetBtn=(k)=>'<button class="btn sm" data-limrule="'+k+'" style="'+(d.rules.indexOf(k)>=0?"border-color:var(--accent);color:var(--accent)":"")+'">'+LIMIT_PRESETS[k].name+'</button>';
     const durBtn=(v,l)=>'<button class="btn sm" data-limdur="'+v+'" style="'+(d.dur===v?"border-color:var(--accent);color:var(--accent)":"")+'">'+l+'</button>';
@@ -1110,6 +1452,7 @@ function renderSheet(){ const m=document.getElementById("sheetmount"); if(!sheet
       +'<button class="opt" data-mv="up-'+i+'" style="width:100%;text-align:left"><div class="nm">Move up</div><span class="sets">↑</span></button>'
       +'<button class="opt" data-mv="dn-'+i+'" style="width:100%;text-align:left"><div class="nm">Move down</div><span class="sets">↓</span></button>'
       +'<button class="opt" data-extimer="'+ex.rest+'-'+i+'" style="width:100%;text-align:left"><div class="nm">Start rest timer</div><span class="sets">⏱ '+ex.rest+'s</span></button>'
+      +'<button class="opt" data-setup="'+ex.id+'" style="width:100%;text-align:left"><div class="nm" style="color:var(--gold)">Setup &amp; machine settings</div><span class="sets" style="color:var(--gold)">⚙ '+(hasSetup(ex.id)?"edit":"add")+'</span></button>'
       +'<button class="opt" data-rmex2="'+i+'" style="width:100%;text-align:left"><div class="nm" style="color:var(--red)">Remove exercise</div><span class="sets" style="color:var(--red)">✕</span></button></div>'):'<div class="empty">Not found.</div>'; }
   else if(sheet.type==="confirm"){ const d=sheet.data;
     inner='<h2 style="font-size:18px;margin:2px 0 8px">'+(d.title||"Are you sure?")+'</h2><p class="muted" style="font-size:13.5px;margin:0 0 16px">'+d.msg+'</p><div class="row"><button class="btn '+(d.danger?"danger":"accent")+' full" data-confirmyes>'+(d.yesLabel||"Confirm")+'</button><button class="btn full" data-sheetclose2>Cancel</button></div>'; }
@@ -1130,6 +1473,15 @@ function renderSheet(){ const m=document.getElementById("sheetmount"); if(!sheet
   const cy=m.querySelector('[data-confirmyes]'); if(cy) cy.onclick=()=>{ const fn=sheet.data&&sheet.data.onYes; closeSheet(); if(fn) fn(); };
   const rh=m.querySelector('[data-recaphist]'); if(rh) rh.onclick=()=>{ closeSheet(); go("history"); };
   m.querySelectorAll('[data-tips]').forEach(b=>b.onclick=()=>openSheet("tips",b.dataset.tips));
+  m.querySelectorAll('[data-setup]').forEach(b=>b.onclick=()=>openSheet("setup",b.dataset.setup));
+  m.querySelectorAll('[data-faddg]').forEach(b=>b.onclick=()=>{ addGroup=b.dataset.faddg||""; renderSheet(); });
+  m.querySelectorAll('[data-fadde]').forEach(b=>b.onclick=()=>{ addEquip=b.dataset.fadde||""; renderSheet(); });
+  m.querySelectorAll('[data-fswapg]').forEach(b=>b.onclick=()=>{ swapGroup=b.dataset.fswapg||""; renderSheet(); });
+  m.querySelectorAll('[data-fswape]').forEach(b=>b.onclick=()=>{ swapEquip=b.dataset.fswape||""; renderSheet(); });
+  (function(){ const sv=m.querySelector('[data-setupsave]'); if(sv) sv.onclick=()=>{ const id=sv.dataset.setupsave; const vals={};
+      m.querySelectorAll('[data-setupf]').forEach(function(inp){ vals[inp.dataset.setupf]=inp.value; });
+      saveSetup(id,vals); closeSheet(); render(); };
+    const cl=m.querySelector('[data-setupclear]'); if(cl) cl.onclick=()=>{ clearSetup(cl.dataset.setupclear); closeSheet(); render(); }; })();
   m.querySelectorAll('[data-mv]').forEach(b=>b.onclick=()=>{ const p=b.dataset.mv.split("-"); const dir=p[0], idx=+p[1]; const e=activeSession.entries; if(dir==="up"&&idx>0){ [e[idx-1],e[idx]]=[e[idx],e[idx-1]]; } if(dir==="dn"&&idx<e.length-1){ [e[idx+1],e[idx]]=[e[idx],e[idx+1]]; } saveActive(); closeSheet(); render(); });
   m.querySelectorAll('[data-extimer]').forEach(b=>b.onclick=()=>{ const p=b.dataset.extimer.split("-"); const sec=+p[0], i=+p[1]; const ex=exById(activeSession.entries[i].exId); closeSheet(); if(ex) startRest(sec,ex.name); });
   m.querySelectorAll('[data-rmex2]').forEach(b=>b.onclick=()=>{ const i=+b.dataset.rmex2; const ex=exById(activeSession.entries[i].exId); closeSheet(); confirmSheet("Remove "+(ex?ex.name:"this exercise")+"?","Remove",()=>{ activeSession.entries.splice(i,1); saveActive(); render(); },{danger:true,title:"Remove exercise?"}); });
@@ -1323,9 +1675,9 @@ function viewSettings(){ const acct=authProfile?'<div class="card"><div class="t
     :'<div class="card"><div class="tiny">Account</div><div class="histline" style="margin-top:6px">Local mode — not signed in.</div></div>';
   const approved=Object.entries(ALLOWED_USERS).map(([e,v])=>'<div class="exline" style="padding:7px 0"><div><div class="nm" style="font-size:13px">'+v.name+'</div><div class="histline">'+e+'</div></div><span class="tag">'+v.role+'</span></div>').join("");
   const _fam=function(e){ return !AVAIL_OK[e.avail]?{t:"unavailable",c:"var(--faint)"}:(e.rec?{t:"default",c:"var(--green)"}:{t:"manual",c:"var(--muted)"}); };
-  const _exRows=S.exercises.filter(function(e){ return exMatches(e,mgmtSearch||""); }).map(e=>{ const pm=primaryMuscle(e); const prefC={love:"var(--gold)",like:"var(--green)",neutral:"var(--muted)",avoid:"var(--red)"}[e.pref]; const f=_fam(e);
-    return '<div class="exline" style="padding:9px 0"><div style="flex:1"><div class="nm" style="font-size:13.5px">'+e.name+'</div><div class="histline">'+S.muscles[pm].label+' · '+e.equip+' · <span style="color:'+f.c+'">'+f.t+'</span></div></div><div class="row" style="gap:6px"><button class="btn sm" data-rec="'+e.id+'" title="recommendable">'+(e.rec?"rec":"manual")+'</button><button class="btn sm" data-pref="'+e.id+'" style="color:'+prefC+'">'+e.pref+'</button><button class="btn sm" data-avail="'+e.id+'">'+e.avail+'</button></div></div>'; }).join("");
-  const exList='<input class="inp srch" id="mgmtSearch" placeholder="Search exercises..." value="'+escAttr(mgmtSearch||"")+'" style="margin-bottom:8px">'+(_exRows||'<div class="empty">No matches.</div>');
+  const _exRows=S.exercises.filter(function(e){ return exPassesFilters(e,mgmtGroup,mgmtEquip)&&exMatches(e,mgmtSearch||""); }).map(e=>{ const pm=primaryMuscle(e); const prefC={love:"var(--gold)",like:"var(--green)",neutral:"var(--muted)",avoid:"var(--red)"}[e.pref]; const f=_fam(e);
+    return '<div class="exline" style="padding:9px 0"><div style="flex:1"><div class="nm" style="font-size:13.5px">'+e.name+'</div><div class="histline">'+S.muscles[pm].label+' · '+e.equip+' · <span style="color:'+f.c+'">'+f.t+'</span></div>'+(hasSetup(e.id)?'<div class="histline" style="color:var(--gold)">⚙ '+escAttr(setupSummary(e.id,3))+'</div>':'')+'</div><div class="row" style="gap:6px"><button class="btn sm" data-setup="'+e.id+'" style="color:var(--gold)" title="setup / machine settings">⚙</button><button class="btn sm" data-rec="'+e.id+'" title="recommendable">'+(e.rec?"rec":"manual")+'</button><button class="btn sm" data-pref="'+e.id+'" style="color:'+prefC+'">'+e.pref+'</button><button class="btn sm" data-avail="'+e.id+'">'+e.avail+'</button></div></div>'; }).join("");
+  const exList='<input class="inp srch" id="mgmtSearch" placeholder="Search exercises..." value="'+escAttr(mgmtSearch||"")+'">'+filterChips("mgmt",mgmtGroup,mgmtEquip)+'<div style="margin-top:6px">'+(_exRows||'<div class="empty">No matches.</div>')+'</div>';
   const bw=(S.bodyweight||[]).slice(-1)[0];
   const TIERS=["primary","secondary","maintenance"]; const tierC={primary:"var(--gold)",secondary:"var(--accent)",maintenance:"var(--muted)"};
   const muscleRows=Object.entries(S.muscles).map(([m,cfg])=>'<div class="exline" style="padding:7px 0"><div class="nm" style="font-size:13px">'+cfg.label+'</div><button class="btn sm" data-tier="'+m+'" style="color:'+tierC[cfg.tier]+';border-color:'+tierC[cfg.tier]+'55;min-width:104px">'+TIER_LABEL[cfg.tier]+'</button></div>').join("");
@@ -1376,19 +1728,83 @@ function wireAuth(){
 /* ---------------- REST TIMER ---------------- */
 function restBeep(){ try{ const Ctx=window.AudioContext||window.webkitAudioContext; if(!Ctx) return; const ctx=new Ctx(); const o=ctx.createOscillator(), g=ctx.createGain(); o.connect(g); g.connect(ctx.destination); o.type="sine"; o.frequency.value=880;
   g.gain.setValueAtTime(0.0001,ctx.currentTime); g.gain.exponentialRampToValueAtTime(0.3,ctx.currentTime+0.02); g.gain.exponentialRampToValueAtTime(0.0001,ctx.currentTime+0.5); o.start(); o.stop(ctx.currentTime+0.52); setTimeout(()=>{try{ctx.close();}catch(e){}},800); }catch(e){} }
-function startRest(sec,name,next){ clearInterval(restTimer); const total=Math.max(1,sec); let left=sec; const mount=document.getElementById("restmount");
-  function paint(done){ const mm=Math.floor(Math.max(0,left)/60), ss=String(Math.max(0,left)%60).padStart(2,"0"); const pct=Math.max(0,Math.min(100,Math.round((1-left/total)*100)));
-    mount.innerHTML='<div class="rest'+(done?' done':'')+'"><div class="restcard">'
-      +'<div class="restbar"><i style="width:'+(done?100:pct)+'%"></i></div>'
-      +'<div class="restrow"><div style="flex:1"><div class="resttitle">'+(done?"✅ Rest done — next set ready":"Resting")+'</div><div class="restmeta">'+(name||"")+(next?" · "+next:"")+'</div></div>'
-      +(done?'<button data-restgo class="btn accent sm">Go</button>':'<div class="restt">'+mm+":"+ss+'</div>')+'</div>'
-      +(done?'':'<div class="restctl"><button data-restsub>−15s</button><button data-restadd>+30s</button><button data-restskip>Skip rest</button></div>')
-      +'</div></div>';
-    if(done){ const g=mount.querySelector("[data-restgo]"); if(g) g.onclick=()=>{ clearInterval(restTimer); mount.innerHTML=""; }; }
-    else { mount.querySelector("[data-restadd]").onclick=()=>{ left+=30; paint(); }; const sb=mount.querySelector("[data-restsub]"); if(sb) sb.onclick=()=>{ left=Math.max(1,left-15); paint(); }; mount.querySelector("[data-restskip]").onclick=()=>{ clearInterval(restTimer); mount.innerHTML=""; }; } }
-  paint(false); restTimer=setInterval(()=>{ left--; if(left<=0){ clearInterval(restTimer); paint(true); try{ navigator.vibrate&&navigator.vibrate([200,100,200,100,300]); }catch(e){} restBeep();
-      setTimeout(()=>{ if(mount.querySelector(".rest.done")) mount.innerHTML=""; },9000); return; } paint(false); },1000); }
-function renderRest(){ /* timer self-manages its mount */ }
+/* v8 — WALL-CLOCK REST TIMER.
+   The old implementation counted down an in-memory `left` variable inside a 1s setInterval.
+   Mobile browsers throttle (and iOS/Android fully suspend) timers in a backgrounded tab, so the
+   countdown froze while you were away and resumed where it left off — losing all elapsed time.
+   Now the *only* source of truth is `restState.endsAt`, an absolute epoch-ms completion timestamp.
+   Every paint derives the remaining seconds from Date.now(), the interval is a repaint trigger only,
+   and the state is mirrored into localStorage so a reload / relaunch restores the same deadline.
+   DONE_GRACE_MS: how long after expiry the "Rest done" card still shows when you come back. */
+const REST_DONE_GRACE_MS = 120000;
+let restState=null;               /* {endsAt, total, name, next, notified} — endsAt is epoch ms */
+let restAnnounced=false;          /* buzz/beep fires once per timer, even across backgrounding */
+function restKey(){ return (authUser&&authUser.id) ? "iron_arc_rest_v1:"+authUser.id : "iron_arc_rest_v1"; }
+function saveRest(){ try{ if(restState) localStorage.setItem(restKey(), JSON.stringify(restState)); else localStorage.removeItem(restKey()); }catch(e){} }
+/* pure + testable: seconds left on a state at a given instant (never negative) */
+function restRemaining(st,now){ if(!st||!st.endsAt) return 0; return Math.max(0,Math.ceil((st.endsAt-(now==null?Date.now():now))/1000)); }
+function restExpired(st,now){ if(!st||!st.endsAt) return true; return (now==null?Date.now():now)>=st.endsAt; }
+/* how far past expiry we are, in ms (0 while still running) */
+function restOverdue(st,now){ if(!st||!st.endsAt) return 0; return Math.max(0,(now==null?Date.now():now)-st.endsAt); }
+function restMount(){ return document.getElementById("restmount"); }
+/* We tick at 500ms (so a resync lands fast) but only touch the DOM when the displayed second
+   actually changes — half the churn of the old build, and taps on the controls never get eaten. */
+let restPaintKey="";
+function restPaintKeyFor(st,now){ if(!st) return ""; return (restExpired(st,now)?"done":restRemaining(st,now))+"|"+st.endsAt; }
+function clearRest(){ if(restTimer){ clearInterval(restTimer); restTimer=null; } restState=null; restAnnounced=false; restPaintKey=""; saveRest(); const m=restMount(); if(m) m.innerHTML=""; }
+function restBar(st,now){ const left=restRemaining(st,now); const total=Math.max(1,st.total||1); return Math.max(0,Math.min(100,Math.round((1-left/total)*100))); }
+/* single render pass — reads the clock, never mutates it */
+function paintRest(force){ const m=restMount(); if(!m) return; const st=restState;
+  if(!st){ restPaintKey=""; m.innerHTML=""; return; }
+  const now=Date.now(); const done=restExpired(st,now);
+  if(done && restOverdue(st,now)>REST_DONE_GRACE_MS){ clearRest(); return; }   /* long gone — don't nag on return */
+  const key=restPaintKeyFor(st,now);
+  if(!force && key===restPaintKey && m.innerHTML) return;                      /* nothing visibly changed */
+  restPaintKey=key;
+  const left=restRemaining(st,now); const mm=Math.floor(left/60), ss=String(left%60).padStart(2,"0");
+  m.innerHTML='<div class="rest'+(done?' done':'')+'"><div class="restcard">'
+    +'<div class="restbar"><i style="width:'+(done?100:restBar(st,now))+'%"></i></div>'
+    +'<div class="restrow"><div style="flex:1"><div class="resttitle">'+(done?"✅ Rest done — next set ready":"Resting")+'</div><div class="restmeta">'+(st.name||"")+(st.next?" · "+st.next:"")+'</div></div>'
+    +(done?'<button data-restgo class="btn accent sm">Go</button>':'<div class="restt">'+mm+":"+ss+'</div>')+'</div>'
+    +(done?'':'<div class="restctl"><button data-restsub>−15s</button><button data-restadd>+30s</button><button data-restskip>Skip rest</button></div>')
+    +'</div></div>';
+  if(done){ const g=m.querySelector("[data-restgo]"); if(g) g.onclick=clearRest; }
+  else { const ad=m.querySelector("[data-restadd]"); if(ad) ad.onclick=()=>restAdjust(30);
+         const sb=m.querySelector("[data-restsub]"); if(sb) sb.onclick=()=>restAdjust(-15);
+         const sk=m.querySelector("[data-restskip]"); if(sk) sk.onclick=clearRest; } }
+/* ±seconds shifts the DEADLINE, so accuracy is preserved across backgrounding */
+function restAdjust(delta){ if(!restState) return; const now=Date.now();
+  const left=Math.max(0,restState.endsAt-now); const nl=Math.max(1000,left+delta*1000);
+  restState.endsAt=now+nl; restState.total=Math.max(1,Math.round(restState.total+delta));
+  if(restRemaining(restState,now)>0) restAnnounced=false;                     /* re-armed, so it can chime again */
+  saveRest(); ensureRestTicking(); paintRest(true); }
+/* one interval, idempotent — rapid background/foreground cycles can't stack or drop it */
+function ensureRestTicking(){ if(restTimer) return; if(!restState) return;
+  restTimer=setInterval(restTick,500); }
+function restTick(){ if(!restState){ if(restTimer){ clearInterval(restTimer); restTimer=null; } return; }
+  const now=Date.now();
+  if(restExpired(restState,now)){
+    if(!restAnnounced){ restAnnounced=true; restState.notified=true; saveRest();
+      /* only alert if we're actually looking at it — a silent expiry while away is expected */
+      if(restOverdue(restState,now)<3000){ try{ navigator.vibrate&&navigator.vibrate([200,100,200,100,300]); }catch(e){} restBeep(); } }
+    paintRest();
+    if(restState && restOverdue(restState,now)>REST_DONE_GRACE_MS) clearRest();
+    return; }
+  paintRest(); }
+function startRest(sec,name,next){ const total=Math.max(1,Math.round(sec||0));
+  if(restTimer){ clearInterval(restTimer); restTimer=null; }
+  restAnnounced=false;
+  restState={ endsAt:Date.now()+total*1000, total:total, name:name||"", next:next||"", notified:false };
+  restPaintKey=""; saveRest(); paintRest(true); ensureRestTicking(); }
+/* Called on load and whenever the app becomes visible/focused again. Re-derives everything from
+   the stored deadline, so time that passed while suspended is fully accounted for. */
+function resumeRest(){
+  if(!restState){ try{ const raw=localStorage.getItem(restKey()); if(raw) restState=JSON.parse(raw); }catch(e){ restState=null; } }
+  if(!restState||!restState.endsAt){ restState=null; return; }
+  if(restExpired(restState)){ restAnnounced=true;                              /* expired while away: no retro-buzz */
+    if(restOverdue(restState)>REST_DONE_GRACE_MS){ clearRest(); return; } }
+  paintRest(true); ensureRestTicking(); }
+function renderRest(){ /* the timer owns #restmount; re-assert it after any full re-render */ if(restState) paintRest(true); }
 function tickClock(){ const el=document.getElementById("elapsed"); if(!el||!activeSession){ stopClock(); return; } const sec=Math.max(0,Math.floor((Date.now()-new Date(activeSession.startedAt))/1000)); el.textContent=Math.floor(sec/60)+":"+String(sec%60).padStart(2,"0"); const sp=document.getElementById("setprog"); if(sp){ const c=loggerCounts(); sp.textContent=c.done+"/"+c.total; } }
 function startClock(){ stopClock(); tickClock(); loggerClock=setInterval(tickClock,1000); }
 function stopClock(){ if(loggerClock){ clearInterval(loggerClock); loggerClock=null; } }
@@ -1483,6 +1899,9 @@ function wireScreen(){
   document.querySelectorAll("[data-expand]").forEach(b=>b.onclick=()=>{ const i=+b.dataset.expand; const en=activeSession.entries[i]; const cur=loggerCurrentIndex(); const def=(!entryDone(en)||i===cur); loggerOpen[i]=!(loggerOpen.hasOwnProperty(i)?loggerOpen[i]:def); render(); });
   document.querySelectorAll("[data-more]").forEach(b=>b.onclick=()=>openSheet("exmenu",+b.dataset.more));
   document.querySelectorAll("[data-tips]").forEach(b=>b.onclick=()=>openSheet("tips",b.dataset.tips));
+  document.querySelectorAll("[data-setup]").forEach(b=>b.onclick=()=>openSheet("setup",b.dataset.setup));
+  document.querySelectorAll("[data-fmgmtg]").forEach(b=>b.onclick=()=>{ mgmtGroup=b.dataset.fmgmtg||""; render(); });
+  document.querySelectorAll("[data-fmgmte]").forEach(b=>b.onclick=()=>{ mgmtEquip=b.dataset.fmgmte||""; render(); });
   document.querySelectorAll("[data-addset]").forEach(b=>b.onclick=()=>{ const ei=+b.dataset.addset; activeSession.entries[ei].sets.push({weight:"",reps:"",type:"work",done:false}); saveActive(); render(); });
   document.querySelectorAll("[data-rest]").forEach(b=>b.onclick=()=>startRest(+b.dataset.rest,b.dataset.exname));
   document.querySelectorAll("[data-swap]").forEach(b=>b.onclick=()=>openSheet("swap",+b.dataset.swap));
@@ -1523,10 +1942,21 @@ activeSession=loadActive(); if(activeSession) viewingLogger=false;   // P1: reco
 window.addEventListener("beforeunload",(e)=>{ if(activeSession && activeSession.entries.reduce((n,en)=>n+workingSets(en).length,0)>0){ e.preventDefault(); e.returnValue=""; } });
 window.addEventListener("popstate",()=>{ if(activeSession && viewingLogger){ try{ history.pushState({iron:"workout"},""); }catch(e){}
     confirmSheet("Your workout is saved — you can pick it back up from Today whenever you like.","Leave (it’s saved)",()=>{ viewingLogger=false; saveActive(); render(); },{title:"Leave this workout?"}); } });
+/* v8 rest-timer resync. Any of these can fire when the app comes back from the background, a screen
+   lock or a tab switch; resumeRest() recomputes the remaining time from the stored deadline, so
+   throttled/suspended intervals can never cause drift. All paths are idempotent. */
+try{
+  document.addEventListener("visibilitychange",()=>{ if(!document.hidden) resumeRest(); });
+  window.addEventListener("focus",resumeRest);
+  window.addEventListener("pageshow",resumeRest);
+  window.addEventListener("online",resumeRest);
+  document.addEventListener("resume",resumeRest);            /* Cordova / PWA wrappers */
+}catch(e){}
+try{ resumeRest(); }catch(e){}                                /* restore a timer left running before a reload */
 if(sb){ sb.auth.getSession().then(({data})=>{ authUser=data.session?data.session.user:null; if(authUser) afterAuth(); else render(); });
   sb.auth.onAuthStateChange((_e,session)=>{ const was=authUser&&authUser.id; authUser=session?session.user:null;
     if(authUser&&authUser.id!==was) afterAuth();
-    else if(!authUser&&was){ setStorageScope(null); S=seed(); activeSession=null; viewingLogger=false; render(); } }); }
+    else if(!authUser&&was){ try{ clearRest(); }catch(e){} setStorageScope(null); S=seed(); activeSession=null; viewingLogger=false; render(); } }); }
 else { render(); }
 </script>
 </body>
