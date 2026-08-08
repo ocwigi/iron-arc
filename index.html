@@ -5,6 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1" />
 <title>Iron Arc — Training Command</title>
 <meta name="theme-color" content="#06080B" />
+<!-- v10: this document must never be served from a stale cache. A previous build of the
+     persistence layer could destroy completed workouts, so running an old index.html is a
+     data-safety issue, not just a cosmetic one. Meta tags are advisory (GitHub Pages sets
+     its own headers) — the authoritative check is the deployed-build comparison in JS. -->
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+<meta http-equiv="Pragma" content="no-cache" />
+<meta http-equiv="Expires" content="0" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Sora:wght@600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet" />
@@ -254,6 +261,18 @@ const SUPABASE_KEY = "sb_publishable_xNfADG84azbA0wc1_ngVYw_MqxOANCz";
    NOT derived from it, so renaming never breaks existing local or Supabase data. */
 const APP_NAME = "Iron Arc";
 const APP_TAGLINE = "Training Command";
+/* ---------------------------------------------------------------- BUILD IDENTITY (v10)
+   BUILD is the app/build version and is INDEPENDENT of CONFIG_VERSION below.
+     · CONFIG_VERSION = the shape of your stored data. Bumping it triggers a migration.
+     · BUILD          = which code is running. Bumping it is free and never touches data.
+   v10 changed only the persistence and sync CODE — no stored field changed shape — so
+   CONFIG_VERSION correctly stays at 9 and no migration runs. Seeing "cfgVersion 9" in
+   recover.html on a v10 build is expected and correct.
+   BUILD is shown in Settings and is what the deployed-version check compares against, so
+   it must be bumped on every deploy. */
+const BUILD = "v10";
+const BUILD_DATE = "2026-08-08";
+const BUILD_NOTE = "workout durability";
 
 /* Approved users (client-side UX gate; the real gate is Supabase signup settings — see DEPLOY).
    To add a person: add one line below with their real email (lowercase), display name and role.
@@ -692,6 +711,19 @@ function tombAdd(id){ if(!id) return; if(!S.settings) S.settings={};
   const keys=Object.keys(t); if(keys.length>500){ keys.sort((a,b)=>new Date(t[a])-new Date(t[b])).slice(0,keys.length-500).forEach(k=>delete t[k]); } }
 function isTombstoned(id){ return !!tombRead()[id]; }
 function journalForget(id){ tombAdd(id); journalWrite(journalRead().filter(x=>x&&x.id!==id)); persistLocal(); }
+/* One-time backfill. The journal only protects workouts that were finished under v10, which
+   would leave every pre-v10 session (i.e. your whole existing history) outside the safety net
+   — including against the scenario where a stale cached build of the old code runs again and
+   deletes them. This seeds the journal from whatever history is already on the device.
+   Idempotent: journalPut() is keyed by session id, so repeat runs cannot duplicate. */
+function journalBackfill(){
+  const done=(S.settings&&S.settings.journalSeeded)||0;
+  const completed=(S.sessions||[]).filter(s=>s&&s.id&&s.completedAt);
+  if(done>=1 && journalRead().length>=completed.length) return 0;
+  let n=0; completed.forEach(s=>{ journalPut(s); n++; });
+  if(!S.settings) S.settings={}; S.settings.journalSeeded=1; persistLocal();
+  return n;
+}
 /* Put back anything the journal has that S has lost. Returns how many were rescued. */
 function recoverFromJournal(){
   if(!S.sessions) S.sessions=[];
@@ -760,7 +792,7 @@ async function afterAuth(){
   if(legacyRaw && !localStorage.getItem(KEY) && authUser.email.toLowerCase()===ADMIN_EMAIL){
     try{ localStorage.setItem(KEY, legacyRaw); const la=localStorage.getItem("iron_arc_active_v2"); if(la) localStorage.setItem(ACTIVE_KEY, la); }catch(e){}
   }
-  S=load(); try{ ensureSetupDefaults(); }catch(e){} try{ recoverFromJournal(); }catch(e){}
+  S=load(); try{ ensureSetupDefaults(); }catch(e){} try{ recoverFromJournal(); journalBackfill(); }catch(e){}
   /* v10: auth resolves asynchronously at boot. A workout already open under the pre-auth
      (unscoped) key must be carried into the user's scope, not silently replaced by null. */
   const preAuthActive=activeSession;
@@ -837,7 +869,7 @@ async function hydrateFromCloud(){
     S=rb; try{ ensureSetupDefaults(); }catch(e){}   /* v8: keeps cloud-hydrated accounts' machine settings intact */
     try{ rebuildCustomExercises(); }catch(e){}     /* v9: custom exercises ride app_settings, so re-apply them after a rehydrate */
     /* last line of defence: anything the journal has and S does not comes back here */
-    try{ const n=recoverFromJournal(); if(n) (S.sessions||[]).forEach(s=>{ if(s.recovered&&needPush.indexOf(s)<0) needPush.push(s); }); }catch(e){}
+    try{ const n=recoverFromJournal(); if(n) (S.sessions||[]).forEach(s=>{ if(s.recovered&&needPush.indexOf(s)<0) needPush.push(s); }); journalBackfill(); }catch(e){}
     persistLocal();
     for(const s of needPush){ await pushWorkout(s); }
     if(needPush.length) pushSettings();             // tombstones + settings back up
@@ -1992,6 +2024,7 @@ function viewToday(){
     resume='<div class="card resume"><div class="tiny" style="color:var(--hot)">Unfinished workout</div><h2 style="font-size:17px;margin:6px 0">'+(activeSession.title||"Workout")+'</h2><div class="histline">'+activeSession.entries.length+' exercises · '+n+' sets logged · started '+fmtAgo(activeSession.startedAt)+'</div><div class="row" style="margin-top:12px"><button class="btn accent full" data-act="resume">Resume workout</button><button class="btn danger" data-act="discard">Discard</button></div></div>'; }
   let banner="";
   if(cloudReady()&&unsyncedCount()>0) banner='<div class="card" style="border-color:rgba(255,194,61,.4);background:rgba(255,194,61,.06)"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><div class="histline" style="color:var(--amber)">'+unsyncedCount()+' workout'+(unsyncedCount()===1?"":"s")+' not yet synced to the cloud.</div><button class="btn sm" data-act="resync">Retry</button></div></div>';
+  banner += buildBanner();   /* v10: stale-build notice, suppressed while a workout is open */
   const _al=activeLimitation();
   banner += _al
     ? '<div class="card" style="border-color:rgba(168,123,255,.55);background:rgba(168,123,255,.08)"><div class="tiny" style="color:var(--violet)">Active limitation</div><div style="font-weight:600;margin-top:3px">'+_al.name+(_al.note?' — '+_al.note:'')+'</div><div class="histline">'+(_al.until?'expires '+fmtDate(_al.until):'until you remove it')+' · affected exercises excluded from recommendations</div><div class="row" style="margin-top:10px"><button class="btn sm" data-act="editlim">Edit</button><button class="btn sm danger" data-act="removelim">Remove</button></div></div>'
@@ -2586,7 +2619,18 @@ function viewSettings(){ const acct=authProfile?'<div class="card"><div class="t
     +'<div class="card"><div class="tiny">Exercise management</div><p class="muted" style="font-size:12px;margin:6px 0">Tap <b>rec</b> to include/exclude from auto-recommendations (default vs manual-only). Tap <b>preference</b> to cycle love → like → neutral → avoid. Tap <b>availability</b> to mark if a machine is free / present at your gym.</p><div style="margin-top:6px">'+exList+'</div></div>'
     +'<div class="card"><div class="tiny">Approved users</div><p class="muted" style="font-size:12px;margin:6px 0">Each person has fully private data (row-level security). Sharing/leaderboards are not built yet.</p>'+approved+'</div>'
     +'<div class="card"><div class="tiny">Data</div><div class="row" style="margin-top:8px"><button class="btn full" data-act="export">Export backup</button><button class="btn full" data-act="import">Import</button></div><input type="file" id="importFile" accept="application/json" style="display:none"></div>'
-    +'<div class="card"><div class="histline">Iron Arc v2 · '+(sb?(cloudReady()?"cloud synced":"cloud configured"):"local only")+' · '+completedSessions().length+' workouts</div></div>'; }
+    +buildCard(); }
+/* v10 — the build actually running on this device. BUILD is the code version and is
+   deliberately separate from CONFIG_VERSION (the stored-data shape), which stays at 9
+   because v10 changed no stored field. Journal count is shown so the durability net is
+   verifiable at a glance rather than taken on trust. */
+function buildCard(){
+  const jn=journalRead().length, un=unsyncedCount();
+  const cloud=sb?(cloudReady()?"cloud synced":"cloud configured"):"local only";
+  return '<div class="card"><div class="histline">'+APP_NAME+' <b style="color:var(--accent)">'+BUILD+'</b> · '+BUILD_DATE+' · '+BUILD_NOTE+'</div>'
+    +'<div class="histline" style="margin-top:4px">'+cloud+' · '+completedSessions().length+' workouts · '+jn+' journalled'
+    +(un?' · <span style="color:var(--amber)">'+un+' unsynced</span>':'')+'</div>'
+    +'<div class="histline" style="margin-top:4px;opacity:.65">data format cfgVersion '+CONFIG_VERSION+(deployedBuild?' · <span style="color:var(--blue)">'+deployedBuild+' available</span>':'')+'</div></div>'; }
 
 /* v9 \u2014 the lightweight reconciliation queue. Everything you have ever typed in yourself, grouped
    by whether it still needs a decision. Deliberately lives in Settings, not in the workout flow. */
@@ -2795,6 +2839,7 @@ function wireScreen(){
     else rerollCounts={};
     pendingRec=recommend(readinessDraft,opts); render(); });
   act("resync",resyncAll);
+  act("loadupdate",loadUpdate);
   act("addlim",openLimSheet); act("editlim",openLimSheet);
   act("removelim",()=>confirmSheet("Remove the active limitation? Recommendations will include all exercises again.","Remove",()=>{ clearLimitation(); render(); },{danger:true,title:"Remove limitation?"}));
   act("readiness",()=>{ document.getElementById("app").innerHTML=header()+'<div class="reveal">'+viewReadiness()+'</div>'; wireScreen(); });
@@ -2885,7 +2930,7 @@ function wireScreen(){
 
 /* ============================================================================ BOOT — autosave recovery + back-guard + session ============================================================================ */
 try{ document.title=APP_NAME+" — "+APP_TAGLINE; }catch(e){}
-try{ recoverFromJournal(); }catch(e){}                              // v10: rescue anything S lost before we render
+try{ recoverFromJournal(); journalBackfill(); }catch(e){}           // v10: rescue anything S lost, then make sure all of it is journalled
 activeSession=loadActive(); if(activeSession) viewingLogger=false;   // P1: recover unfinished workout, show resume banner
 window.addEventListener("beforeunload",(e)=>{ if(activeSession && activeSession.entries.reduce((n,en)=>n+workingSets(en).length,0)>0){ e.preventDefault(); e.returnValue=""; } });
 window.addEventListener("popstate",()=>{ if(activeSession && viewingLogger){ try{ history.pushState({iron:"workout"},""); }catch(e){}
@@ -2900,6 +2945,53 @@ try{
   window.addEventListener("online",resumeRest);
   document.addEventListener("resume",resumeRest);            /* Cordova / PWA wrappers */
 }catch(e){}
+/* ============================================================ STALE-BUILD GUARD (v10)
+   There is no service worker, so there is no SW cache to invalidate — but GitHub Pages
+   still serves index.html with its own Cache-Control, and an iOS home-screen web app can
+   hold a document for a long time. Running an OLD build is a data-safety problem here,
+   because the pre-v10 sync layer deleted completed workouts. So the app asks the server
+   which build is deployed and offers a cache-bypassing reload if it is behind.
+
+   Rules, in priority order:
+     · NEVER interrupt an active workout. The check is deferred until the logger is closed.
+     · Never block on the network; offline is a silent no-op.
+     · The reload is offered, not forced — a forced reload mid-session would itself be a
+       way to lose work.
+   Safety net either way: an old build does not know about iron_arc_journal_v1, so it can
+   neither read nor delete it. If a stale build ever did wipe S again, the next v10 load
+   restores everything from the journal. */
+let deployedBuild=null, buildCheckedAt=0;
+async function checkDeployedBuild(){
+  if(Date.now()-buildCheckedAt < 15*60*1000) return;      // at most every 15 minutes
+  buildCheckedAt=Date.now();
+  try{
+    const url=window.location.pathname+"?cachebust="+Date.now();
+    const res=await fetch(url,{cache:"no-store"});
+    if(!res.ok) return;
+    const txt=await res.text();
+    const m=txt.match(/const\s+BUILD\s*=\s*"([^"]+)"/);
+    if(!m) return;
+    if(m[1]!==BUILD){ deployedBuild=m[1]; render(); }
+  }catch(e){ /* offline or blocked — silent */ }
+}
+function buildBanner(){
+  if(!deployedBuild||activeSession) return "";
+  return '<div class="card" style="border-color:rgba(90,169,255,.4);background:rgba(90,169,255,.06)">'
+    +'<div style="display:flex;justify-content:space-between;align-items:center;gap:10px">'
+    +'<div class="histline" style="color:var(--blue)">Update available — this device is running '+BUILD+', '+deployedBuild+' is deployed.</div>'
+    +'<button class="btn sm" data-act="loadupdate">Update</button></div></div>';
+}
+function loadUpdate(){
+  /* only ever reached with no workout open; bypass every cache layer on the way out */
+  try{ persistLocal(); saveActive(); }catch(e){}
+  window.location.replace(window.location.pathname+"?v="+Date.now());
+}
+try{
+  setTimeout(checkDeployedBuild,4000);
+  window.addEventListener("online",()=>{ buildCheckedAt=0; checkDeployedBuild(); });
+  document.addEventListener("visibilitychange",()=>{ if(!document.hidden&&!activeSession) checkDeployedBuild(); });
+}catch(e){}
+
 /* v10 DURABILITY HOOKS. beforeunload alone is not enough — iOS Safari and Android Chrome
    discard backgrounded tabs without ever firing it, which is exactly what "I closed the app
    and my workout was gone" looks like. pagehide/visibilitychange are the reliable pair, and

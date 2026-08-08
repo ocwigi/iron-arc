@@ -40,6 +40,8 @@ pre{background:#0a0c0f;border:1px solid var(--line);border-radius:8px;padding:10
   <button class="btn accent" id="scan">1 · Scan this device</button>
   <button class="btn" id="cloud">2 · Query the cloud</button>
   <button class="btn" id="backup">3 · Download a full backup</button>
+  <button class="btn good" id="selftest">4 · Production write self-test</button>
+  <button class="btn" id="buildchk">5 · Which build is deployed?</button>
   <div class="tiny" id="status" style="margin-top:8px">Ready.</div>
 </div>
 
@@ -279,6 +281,102 @@ function backup(){
   say("Backup downloaded. Keep this file before doing anything else.");
 }
 
+/* ------------------------------------------------------------------ 5. PRODUCTION SELF-TEST
+   Proves the real Supabase path works end to end, against production, with your real
+   sign-in — the one thing a local test suite cannot prove. It only ever touches a row it
+   creates itself, under a throwaway UUID, and deletes it again. Your 27 workouts are never
+   read for write purposes, never updated and never deleted by this. */
+async function selfTest(){
+  if(!sb){ say("Supabase library did not load."); return; }
+  const { data:sdata } = await sb.auth.getSession();
+  const user=sdata&&sdata.session?sdata.session.user:null;
+  if(!user){ say("Not signed in on this origin. Open the app, sign in, then reload."); return; }
+
+  const rid=(crypto.randomUUID?crypto.randomUUID():("st-"+Date.now()+"-"+Math.random().toString(16).slice(2)));
+  const weId=(crypto.randomUUID?crypto.randomUUID():("we-"+Date.now()));
+  const steps=[]; let fatal=false;
+  const step=async(label,fn)=>{
+    if(fatal){ steps.push({label,state:"skip",msg:"skipped"}); return null; }
+    try{ const r=await fn();
+      if(r&&r.error){ steps.push({label,state:"fail",msg:r.error.message||JSON.stringify(r.error)}); fatal=true; return null; }
+      steps.push({label,state:"ok",msg:"ok"}); return r;
+    }catch(e){ steps.push({label,state:"fail",msg:String(e&&e.message||e)}); fatal=true; return null; }
+  };
+
+  say("Running production write self-test…");
+  await step("INSERT workouts (RLS write check)",()=>sb.from("workouts").upsert({
+    id:rid, user_id:user.id, performed_at:new Date().toISOString(),
+    title:"__iron_arc_self_test__", mode:"selftest" },{onConflict:"id"}));
+  await step("INSERT workout_exercises (FK check)",()=>sb.from("workout_exercises").insert([{
+    id:weId, user_id:user.id, workout_id:rid, exercise_slug:"leg_press", order_index:0,
+    target_sets:1, rep_low:8, rep_high:12 }]));
+  await step("INSERT sets",()=>sb.from("sets").insert([{
+    id:(crypto.randomUUID?crypto.randomUUID():("s-"+Date.now())), user_id:user.id, workout_id:rid,
+    workout_exercise_id:weId, set_index:0, weight:60, reps:8, rpe:null, is_warmup:false, completed:true }]));
+
+  let readBack=null;
+  await step("SELECT it back (RLS read check)",async()=>{
+    const r=await sb.from("workouts").select("*").eq("id",rid);
+    if(!r.error) readBack=(r.data||[]).length;
+    return r; });
+  if(readBack!==null) steps.push({label:"Round-trip verified",state:readBack===1?"ok":"fail",msg:readBack===1?"row read back":"row not found after write"});
+
+  let setsBack=null;
+  await step("SELECT the sets back",async()=>{
+    const r=await sb.from("sets").select("*").eq("workout_id",rid);
+    if(!r.error) setsBack=(r.data||[]).length; return r; });
+  if(setsBack!==null) steps.push({label:"Set data intact",state:setsBack===1?"ok":"fail",msg:setsBack+" set row(s)"});
+
+  /* cleanup always runs, even if an earlier step failed */
+  fatal=false;
+  await step("DELETE sets (cleanup)",()=>sb.from("sets").delete().eq("workout_id",rid));
+  fatal=false;
+  await step("DELETE workout_exercises (cleanup)",()=>sb.from("workout_exercises").delete().eq("workout_id",rid));
+  fatal=false;
+  await step("DELETE workout (cleanup)",()=>sb.from("workouts").delete().eq("id",rid));
+  fatal=false;
+  let left=null;
+  await step("Confirm cleanup",async()=>{ const r=await sb.from("workouts").select("id").eq("id",rid);
+    if(!r.error) left=(r.data||[]).length; return r; });
+  if(left!==null) steps.push({label:"No test data left behind",state:left===0?"ok":"fail",msg:left===0?"clean":"row "+rid+" still present — delete it manually"});
+
+  const bad=steps.filter(s=>s.state==="fail");
+  let html='<h2>Production self-test</h2><div class="card">';
+  html+='<div class="tiny">Against '+esc(SUPABASE_URL)+' as <b>'+esc(user.email)+'</b> · throwaway id <code>'+esc(rid.slice(0,8))+'</code></div>';
+  html+='<table><tr><th>Step</th><th>Result</th><th>Detail</th></tr>';
+  steps.forEach(s=>{ const c=s.state==="ok"?"ok":(s.state==="skip"?"warn":"bad"); const g=s.state==="ok"?"✓":(s.state==="skip"?"–":"✗");
+    html+='<tr><td>'+esc(s.label)+'</td><td class="'+c+'">'+g+'</td><td class="tiny">'+esc(s.msg)+'</td></tr>'; });
+  html+='</table>';
+  html+= bad.length
+    ? '<div class="bad" style="margin-top:10px"><b>'+bad.length+' step(s) failed.</b> This is the exact error your app would hit when saving a workout. With the v10 build the workout is kept on the device and flagged unsynced rather than lost — but fix the cause before training: <br>'+bad.map(b=>'<code>'+esc(b.msg)+'</code>').join("<br>")+'</div>'
+    : '<div class="ok" style="margin-top:10px"><b>All steps passed.</b> Production writes, reads and deletes are working for your account. A completed workout will reach Supabase.</div>';
+  html+='</div>';
+  out.innerHTML+=html;
+  say(bad.length?("Self-test FAILED at: "+bad[0].label):"Self-test passed — production writes are working.");
+}
+
+/* ------------------------------------------------------------------ 6. DEPLOYED BUILD */
+async function buildCheck(){
+  let html='<h2>Build</h2><div class="card">';
+  try{
+    const res=await fetch("index.html?cachebust="+Date.now(),{cache:"no-store"});
+    const txt=await res.text();
+    const b=(txt.match(/const\s+BUILD\s*=\s*"([^"]+)"/)||[])[1];
+    const d=(txt.match(/const\s+BUILD_DATE\s*=\s*"([^"]+)"/)||[])[1];
+    const cv=(txt.match(/const\s+CONFIG_VERSION\s*=\s*(\d+)/)||[])[1];
+    const hasFix=/async function sbq/.test(txt) && /recoverFromJournal/.test(txt) && !/synced===false&&!cloudIds/.test(txt);
+    html+='<div>Deployed build: <b class="ok">'+esc(b||"unknown")+'</b>'+(d?' · '+esc(d):'')+'</div>';
+    html+='<div class="tiny" style="margin-top:4px">Stored-data format: cfgVersion '+esc(cv||"?")+' — expected to stay at 9 on v10, because v10 changed code, not data shape.</div>';
+    html+='<div style="margin-top:8px" class="'+(hasFix?"ok":"bad")+'">'+(hasFix
+      ? '✓ The deployed file contains the v10 durability fix (error-checked writes, journal, non-destructive rehydrate).'
+      : '✗ The deployed file does NOT contain the v10 fix. Do not train on this build — re-deploy index.html.')+'</div>';
+    html+='<div class="tiny" style="margin-top:8px">Now open the app and check Settings — it shows the build actually running on this phone. If it says something older than <b>'+esc(b||"?")+'</b>, your device is on a cached copy: use the Update button on the Today screen, or close the app fully and reopen it.</div>';
+  }catch(e){ html+='<div class="bad">Could not fetch index.html from this origin: '+esc(e.message)+'</div>'; }
+  html+='</div>';
+  out.innerHTML+=html;
+  say("Build check complete.");
+}
+
 function wire(){
   const r=document.getElementById("repair"); if(r) r.onclick=repair;
   document.querySelectorAll("[data-promote]").forEach(b=>b.onclick=()=>promoteActive(+b.dataset.promote));
@@ -286,6 +384,8 @@ function wire(){
 document.getElementById("scan").onclick=scan;
 document.getElementById("cloud").onclick=()=>queryCloud().catch(e=>say("Cloud query failed: "+e.message));
 document.getElementById("backup").onclick=backup;
+document.getElementById("selftest").onclick=()=>selfTest().catch(e=>say("Self-test error: "+e.message));
+document.getElementById("buildchk").onclick=()=>buildCheck().catch(e=>say("Build check error: "+e.message));
 scan();
 </script>
 </body>
