@@ -280,9 +280,9 @@ const APP_TAGLINE = "Training Command";
    recover.html on a v10 build is expected and correct.
    BUILD is shown in Settings and is what the deployed-version check compares against, so
    it must be bumped on every deploy. */
-const BUILD = "v12";
+const BUILD = "v13";
 const BUILD_DATE = "2026-08-08";
-const BUILD_NOTE = "decision-first Today, Body V2, Stats consolidated";
+const BUILD_NOTE = "assisted workout builder, one-tap add, canonical volume labels";
 
 /* Approved users (client-side UX gate; the real gate is Supabase signup settings — see DEPLOY).
    To add a person: add one line below with their real email (lowercase), display name and role.
@@ -643,7 +643,180 @@ function ensureSetupDefaults(){ if(!S.settings) S.settings={};
 
 const MEASURE_FIELDS = ["Waist","Chest","Arms","Thigh","Hips","Shoulders","Neck"];
 const PHOTO_POSES = ["Front relaxed","Front flexed","Side relaxed","Side flexed","Back relaxed","Back flexed"];
-const QUOTES = ["Discipline is choosing what you want most over what you want now.","The work you avoid is the work that grows you.","Win the set in front of you.","Beat last time. That's the whole game.","Hard, brief, frequent, recovered. Repeat.","No zero days.","Consistency beats intensity you can't repeat."];
+/* ---------------------------------------------------------------- v13 DAILY QUOTE
+   ATTRIBUTION NOTE — read before editing.
+   The brief asked for "Dr Mike quotes" and explicitly said: do not invent or misattribute.
+   There is no public, verifiable corpus of transcribed Dr Mike Israetel one-liners large enough
+   to fill a rotating bank, and writing 250 in his voice and putting his name on them would be
+   fabrication. So this file ships TWO banks:
+
+     DR_MIKE_QUOTES  — empty by design. Paste VERIFIED, sourced quotes here. When it has
+                       entries they take precedence and the card is labelled with his name.
+     QUOTES          — house lines. Written for this app, in a dry gym-science register.
+                       Attributed to nobody, labelled just "Daily". Nothing here claims to be
+                       a quotation of any real person.
+
+   Rotation is deterministic on the calendar day (see dailyQuote()), so it changes at midnight
+   and is stable for the rest of the day. No network calls. */
+const DR_MIKE_QUOTES = [];   /* verified + sourced only — see note above */
+const QUOTES = [
+"Discipline is choosing what you want most over what you want now.",
+"The work you avoid is the work that grows you.",
+"Win the set in front of you.",
+"Beat last time. That's the whole game.",
+"Hard, brief, frequent, recovered. Repeat.",
+"No zero days.",
+"Consistency beats intensity you can't repeat.",
+"Junk volume is just cardio with extra steps.",
+"If you can talk through the set, it wasn't a set.",
+"Nobody ever got big arguing about which split is optimal.",
+"The best programme is the one still being run in week nine.",
+"Two reps from failure is close enough. Ten reps from failure is a warm-up.",
+"Your ego doesn't grow. Your muscles might.",
+"Adding weight is progress. Adding momentum is not.",
+"Half a rep is half a stimulus. Do the maths.",
+"Fatigue is the price of stimulus, not the point of it.",
+"If everything is a priority, nothing is.",
+"Sleep is the cheapest performance enhancer you will ever refuse to take.",
+"Recovery is not a rest day. It's the actual growing.",
+"You cannot out-train a schedule you don't keep.",
+"The muscle doesn't know what the plate says.",
+"Slow down the negative. Your joints already asked nicely.",
+"Range of motion is free hypertrophy. Take it.",
+"A programme you dread is a programme you'll abandon.",
+"Train the muscle, not the exercise.",
+"More sets stops working long before you stop adding them.",
+"Deloads are not weakness. Grinding into a hole is.",
+"You are not overtrained. You are under-slept and over-caffeinated.",
+"Progressive overload is boring, which is why it works.",
+"Nobody's last set was ruined by good technique.",
+"Chasing a pump is fine. Confusing it with progress is not.",
+"The mirror lies daily. The logbook lies never.",
+"You don't need motivation. You need a start time.",
+"If the weight moved and the muscle didn't, you moved the weight.",
+"Small, boring, repeated. That's the whole method.",
+"Stretch under load beats stretch on the floor.",
+"Failure is a tool, not a personality.",
+"An extra exercise rarely fixes what an extra session would.",
+"Volume is a dose, not a virtue.",
+"If soreness were growth, everyone's first week would be their best.",
+"Train close enough to failure that the last rep is honest.",
+"You cannot bulk your way out of a technique problem.",
+"The best time to deload is one week before you desperately need one.",
+"Warm-ups are cheap. Rehab is not.",
+"Do the exercise you'll actually do.",
+"Consistency compounds. Enthusiasm doesn't.",
+"Nobody has ever regretted logging the set.",
+"Your genetics set the ceiling. Your attendance sets the floor.",
+"A good session you finish beats a perfect session you skip.",
+"Rest longer. Lift heavier. Stop rushing the wrong thing.",
+"Machines are not cheating. They're just honest.",
+"Free weights are not magic. They're just free.",
+"If your programme changes weekly, you have no programme.",
+"Track it or it didn't happen.",
+"Effort is a skill. Practise it.",
+"Nothing on this app grows muscle. The sets do.",
+"You can have hard sets or lots of sets. Rarely both.",
+"Consistency is what talent looks like from the outside.",
+"The set you didn't want to do is usually the one that counted.",
+"Train for the physique you want in three years, not three weeks.",
+"Momentum is not intensity.",
+"If you're not sure it was close to failure, it wasn't.",
+"Hypertrophy is a slow argument you win by showing up.",
+"Every session is a deposit. None of them are the whole account.",
+"Perfect form at a light weight beats bad form at any weight.",
+"There is no advanced technique that replaces four hard sets.",
+"Stop programme-hopping. Start rep-adding.",
+"You grow between sessions, not during them.",
+"A muscle trained twice a week beats a muscle annihilated once.",
+"Frequency is just volume with better recovery.",
+"Soreness measures novelty, not effectiveness.",
+"The lift doesn't care how you feel about it.",
+"Half the gains are just not getting injured.",
+"Load the muscle in the stretch and let biology do the rest.",
+"Nobody's physique was built on a single perfect workout.",
+"Add a rep. That's it. That's the session.",
+"Discipline is just remembering what you said you wanted.",
+"Boring consistency outperforms interesting chaos.",
+"Train hard enough to need recovery, not so hard you never get it.",
+"Progress is measured in months and logged in minutes.",
+"Two hard sets beat five sloppy ones.",
+"Skipping the warm-up is borrowing from next month.",
+"If you can't control the weight, it isn't your weight yet.",
+"Rest is part of the programme, not a gap in it.",
+"You don't have to enjoy it. You have to do it.",
+"The bar doesn't negotiate.",
+"Effort you can repeat is the only effort that counts.",
+"Novelty feels like progress. It usually isn't.",
+"Volume without recovery is just damage.",
+"A rep in the stretch is worth two at the top.",
+"Show up tired. Train anyway. Adjust the load.",
+"Your best set today beats your best set last year only if you logged both.",
+"The plan is not the point. The execution is.",
+"Anyone can train hard once.",
+"You cannot supplement your way past a missing session.",
+"Protein, sleep, sets. Everything else is decoration.",
+"Being sore is not being productive.",
+"Muscle responds to tension, not to your opinion of the exercise.",
+"Long muscle lengths, controlled reps, honest proximity to failure. Done.",
+"You get stronger by finishing sessions, not by planning them.",
+"Do less, better, more often.",
+"Chase reps before you chase plates.",
+"There is no secret. There's just Tuesday.",
+"The best exercise is the one you can progress for six months.",
+"Nobody cares what you lifted. Your muscles included.",
+"Under-recovered is the most common form of under-trained.",
+"Fatigue masks fitness. Rest reveals it.",
+"You can't feel your way to progress. Read the numbers.",
+"Comfort and hypertrophy rarely share a set.",
+"The last two reps do most of the work.",
+"Consistency is not a personality trait. It's a calendar.",
+"Add weight when the reps are easy, not when your ego is loud.",
+"Don't confuse being busy in the gym with being effective in it.",
+"Recovery capacity is the real limit on volume.",
+"Train the movement you can load, not the one that looks impressive.",
+"Every skipped session is a rep you'll never get back.",
+"You are one honest set away from a decent workout.",
+"A programme is a hypothesis. The logbook is the result.",
+"If it's not measurable, it's not manageable.",
+"You'll never regret the sets you actually did.",
+"Beginner gains are a loan. Consistency is how you keep them.",
+"Strength is a skill. Size is a side effect of doing it often.",
+"Bad days still count. Log them.",
+"The stimulus is in the effort, not the exhaustion.",
+"Nobody built a back thinking about their arms.",
+"Control the eccentric or the eccentric controls your week.",
+"Train legs. Yes, still.",
+"Calves grow the same way everything else does. You just skip them.",
+"An exercise you avoid is usually one you need.",
+"You don't need a new split. You need a new week of the old one.",
+"Deload before your joints file the paperwork for you.",
+"Effort is free. Recovery is not.",
+"Doing the minimum consistently beats the maximum occasionally.",
+"There is no substitute for having done it.",
+"Rushing rest periods is just making the set harder for no benefit.",
+"Your warm-up sets are practice, not competition.",
+"Volume you can't recover from is volume you didn't do.",
+"Growth is the residue of repeated honest effort.",
+"Pick the exercise. Do the sets. Go home.",
+"You already know what to do. Go do that.",
+"Ambition sets the plan. Attendance sets the result.",
+"Your future physique is built out of ordinary Tuesdays.",
+"Stop optimising. Start accumulating.",
+"You cannot cram hypertrophy.",
+"One more good rep, one more good session, one more good month.",
+"The programme works when you do.",
+"Hard sets, adequate rest, enough food, repeat until unrecognisable."
+];
+/* Deterministic on the calendar day: same quote all day, new one at midnight, no RNG, no
+   network. Day number is derived from the local date so a timezone change can't reshuffle it
+   mid-session. Verified quotes, if any exist, always win. */
+function quoteBank(){ return (DR_MIKE_QUOTES&&DR_MIKE_QUOTES.length)?DR_MIKE_QUOTES:QUOTES; }
+function quoteLabel(){ return (DR_MIKE_QUOTES&&DR_MIKE_QUOTES.length)?"Dr Mike":"Daily"; }
+function dayNumber(d){ const x=d||new Date();
+  return Math.floor(Date.UTC(x.getFullYear(),x.getMonth(),x.getDate())/864e5); }
+function dailyQuote(d){ const bank=quoteBank(); if(!bank.length) return "";
+  return bank[((dayNumber(d)%bank.length)+bank.length)%bank.length]; }
 
 /* ============================================================================ STORAGE ============================================================================ */
 let KEY="iron_arc_v2", ACTIVE_KEY="iron_arc_active_v2";
@@ -983,9 +1156,32 @@ function isLogged(s){ return s.type!=="warm" && s.weight!=="" && s.weight!=null 
 function workingSets(entry){ return (entry.sets||[]).filter(isLogged); }
 function primaryMuscle(ex){ let best=null; for(const [m,c] of Object.entries(ex.m)){ if(!best||c>best.c) best={m,c}; } return best?best.m:null; }
 
-function weeklyVolume(sessions){ const list=sessions||weekSessions(); const vol={}; Object.keys(S.muscles).forEach(m=>vol[m]=0);
+/* ------------------------------------------------------------------ v13 CANONICAL EFFECTIVE SETS
+   ONE definition of "effective sets", used by every screen that shows the number:
+
+       effective sets for a muscle = SUM over logged working sets of that muscle's credit
+       coefficient for the exercise (1.0 direct, 0.5 secondary, etc.)
+
+   It is NOT a raw set count, and there is no separate weighting anywhere else in the app.
+   The v12 audit finding (see UPDATE_NOTES) was that two Stats cards both said "effective sets"
+   while showing DIFFERENT WINDOWS and DIFFERENT GRANULARITY, which is why totals and rankings
+   disagreed. The maths was never the problem, so the numbers are unchanged — the labels now
+   state the window and the granularity, and both cards route through this one helper.
+
+   effectiveSetsByMuscle(sessions) -> { muscleKey: number }   individual muscles
+   effectiveSetsByGroup(sessions)  -> { groupKey:  number }   MUSCLE_GROUPS roll-up of the above
+
+   weeklyVolume() is kept as the historical alias so the recommender, snapshot, Body and every
+   existing test keep working against the same function. */
+function effectiveSetsByMuscle(sessions){ const list=sessions||weekSessions(); const vol={}; Object.keys(S.muscles).forEach(m=>vol[m]=0);
   list.forEach(sess=>{ (sess.entries||[]).forEach(en=>{ const ex=exById(en.exId); if(!ex) return; const n=workingSets(en).length;
     for(const [m,c] of Object.entries(ex.m)){ if(vol[m]!==undefined) vol[m]+=n*c; } }); }); return vol; }
+function effectiveSetsByGroup(sessions){ const out={}; MUSCLE_GROUPS.forEach(function(g){ out[g.key]=0; });
+  const vol=effectiveSetsByMuscle(sessions);
+  Object.keys(vol).forEach(function(mus){ const g=MUSCLE_TO_GROUP[mus]; if(g!=null&&out[g]!=null) out[g]+=vol[mus]; });
+  return out; }
+/* historical name — same function, same numbers */
+function weeklyVolume(sessions){ return effectiveSetsByMuscle(sessions); }
 
 /* P5/P8 — explainable attribution: who contributed to a muscle's number */
 function muscleContrib(muscle, sessions){ const list=sessions||weekSessions(); const map={};
@@ -1264,17 +1460,29 @@ function trendEvidence(exId){
   const kind=ex?loadKind(ex):"ext";
   const unit=kind==="assist"?(hasBodyweight()?"kg effective load":"strength score")
            :kind==="bw"?(hasBodyweight()?"kg effective load":"kg added"):"kg";
+  /* v13 — the compact board repeated "effective load" on every row of every assisted movement:
+     four words of noise per row on a phone, restating a fact that never changes. The board now
+     uses the SHORT unit ("84.6 kg"); the exercise detail sheet, the chart axis label and the
+     assistance note still spell out that the underlying metric is effective load, which is where
+     that explanation actually belongs. With no bodyweight on record we cannot honestly call it
+     kg, so the short unit keeps the qualifier in that case only. */
+  const shortUnit=(kind==="assist"&&!hasBodyweight())?"strength score"
+                 :(kind==="bw"&&!hasBodyweight())?"kg added":"kg";
   const shown=function(v){ return Math.round(Math.abs(v)*10)/10; };
-  if(!ex) return {ok:false, text:"", lineA:"", lineB:""};
+  if(!ex) return {ok:false, text:"", lineA:"", lineB:"", lineACompact:"", lineBCompact:""};
   if(d.state==="insufficient")
-    return {ok:false, n:d.n, need:d.need||0, unit:unit,
+    return {ok:false, n:d.n, need:d.need||0, unit:unit, shortUnit:shortUnit,
       lineA:"Not enough data", lineB:d.n+" of "+TREND_MIN_N+" exposures logged",
+      lineACompact:"Not enough data", lineBCompact:d.n+" of "+TREND_MIN_N+" exposures logged",
       text:"Not enough data \u00b7 "+d.n+" of "+TREND_MIN_N+" exposures"};
   /* v12 — always two lines so rows line up instead of wrapping unpredictably on a phone */
   const lineA="Last "+d.recentN+": "+shown(d.recentMean)+" "+unit;
   const lineB="Previous "+d.baseN+": "+shown(d.baseMean)+" "+unit;
+  const lineACompact="Last "+d.recentN+": "+shown(d.recentMean)+" "+shortUnit;
+  const lineBCompact="Previous "+d.baseN+": "+shown(d.baseMean)+" "+shortUnit;
   return {ok:true, n:d.n, recent:d.recentMean, base:d.baseMean, pct:d.pct,
-    recentN:d.recentN, baseN:d.baseN, unit:unit, lineA:lineA, lineB:lineB,
+    recentN:d.recentN, baseN:d.baseN, unit:unit, shortUnit:shortUnit,
+    lineA:lineA, lineB:lineB, lineACompact:lineACompact, lineBCompact:lineBCompact,
     text:lineA+" \u00b7 "+lineB}; }
 
 /* ---------------------------------------------------------------- v11 EXERCISE-ORDER CONTEXT
@@ -1298,9 +1506,21 @@ function orderContext(exId){
   if(!older.length) return null;
   const mean=function(a){ return a.reduce(function(x,y){ return x+y.idx; },0)/a.length; };
   const rm=mean(recent), om=mean(older);
-  if(rm>=om+1.5) return {dir:"later", text:"Performed later than usual ("+Math.round(rm)+"th vs "+Math.round(om)+"th)"};
-  if(rm<=om-1.5) return {dir:"earlier", text:"Performed earlier than usual ("+Math.round(rm)+"th vs "+Math.round(om)+"th)"};
+  /* v13 BUGFIX — this used to hard-code "th", so a 2nd-vs-3rd comparison rendered as
+     "2th vs 3th". The direction logic was already correct and is unchanged: a HIGHER mean
+     index means the exercise now sits LATER in the session (5th vs a usual 2nd = later),
+     a LOWER mean index means EARLIER (2nd vs a usual 3rd = earlier). Still purely contextual —
+     no number is adjusted for it anywhere. */
+  const r=Math.round(rm), o=Math.round(om);
+  if(rm>=om+1.5) return {dir:"later", recent:r, usual:o,
+    text:"Performed later than usual · "+ordinal(r)+" vs "+ordinal(o)};
+  if(rm<=om-1.5) return {dir:"earlier", recent:r, usual:o,
+    text:"Performed earlier than usual · "+ordinal(r)+" vs "+ordinal(o)};
   return null; }
+/* 1st, 2nd, 3rd, 4th … 11th/12th/13th handled, 21st/22nd/23rd handled. */
+function ordinal(n){ const v=Math.abs(Math.round(n)); const t=v%100;
+  if(t>=11&&t<=13) return v+"th";
+  return v+({1:"st",2:"nd",3:"rd"}[v%10]||"th"); }
 
 /* The next concrete action. Kept OUT of the boards (which stay numeric and scannable) and shown
    only in the exercise detail sheet, where an explanation is what you came for. */
@@ -1856,10 +2076,8 @@ function dashLabel(){ const p=DASH_PERIODS.find(function(x){ return x[0]===dashP
 function sessionsInWindow(days,offsetDays){
   const end=Date.now()-(offsetDays||0)*864e5, start=end-days*864e5;
   return completedSessions().filter(function(s){ const t=new Date(s.completedAt).getTime(); return t>=start&&t<=end; }); }
-function volumeByGroup(sessions){ const out={}; MUSCLE_GROUPS.forEach(function(g){ out[g.key]=0; });
-  const vol=weeklyVolume(sessions);
-  Object.keys(vol).forEach(function(mus){ const g=MUSCLE_TO_GROUP[mus]; if(g!=null&&out[g]!=null) out[g]+=vol[mus]; });
-  return out; }
+/* v13 — delegates to the canonical helper so there is exactly one implementation. */
+function volumeByGroup(sessions){ return effectiveSetsByGroup(sessions); }
 function prsInWindow(days,offsetDays){
   const end=Date.now()-(offsetDays||0)*864e5, start=end-days*864e5;
   return achievementTimeline(0).filter(function(a){ const t=new Date(a.date).getTime(); return t>=start&&t<=end; }); }
@@ -2007,7 +2225,8 @@ function dashboardCard(){
     + kpi(d.prs,"personal bests",d.prs,d.prevPrs||null,"PBs")
     + '<div class="dcell"><b style="color:'+(cons.pct>=75?"var(--green)":cons.pct>=50?"var(--amber)":"var(--red)")+'">'+cons.pct+'%</b><span>consistency</span><em style="color:var(--muted)">'+cons.hit+'/'+cons.weeks+' wks</em></div>'
     + '</div>'
-    +'<div class="tiny" style="margin-top:16px">Volume by muscle group · effective sets · vs previous '+dashLabel()+'</div>'
+    +'<div class="tiny" style="margin-top:16px">Effective sets by muscle GROUP · last '+dashLabel()+'</div>'
+    +'<div class="histline" style="margin-top:2px">Chest, back, legs and so on — individual muscles rolled up. Rolling '+dashLabel()+' ending today, compared with the '+dashLabel()+' before it. For per-muscle numbers see <b>Volume &amp; distribution</b> below, which uses its own window.</div>'
     +'<div style="margin-top:6px">'+volRows+'</div>'
     +'</div>'; }
 function heatmapHTML(nWeeks){
@@ -2036,8 +2255,8 @@ function boardRow(p,i,tone){
      then sparkline and % on the right. Two separate lines, never one wrapping string. */
   return '<div class="rrow" data-exhist="'+p.ex.id+'"><span class="rk">'+(i+1)+'</span>'
     +'<div class="rmain"><div class="rnm">'+p.ex.name+(isCustomEx(p.ex)?' <span class="tag" style="color:var(--gold)">custom</span>':'')+'</div>'
-    +'<div class="rsub mono">'+ev.lineA+'</div>'
-    +'<div class="rsub mono" style="opacity:.75">'+ev.lineB+'</div>'
+    +'<div class="rsub mono">'+(ev.lineACompact||ev.lineA)+'</div>'
+    +'<div class="rsub mono" style="opacity:.75">'+(ev.lineBCompact||ev.lineB)+'</div>'
     +(p.stale?'<div class="rsub" style="color:var(--faint)">last trained '+fmtAgo(hist[0]?hist[0].date:null)+'</div>':'')
     +(oc?'<div class="rsub"><span class="tag" style="color:var(--muted);border:1px solid var(--line)">'+oc.text+'</span></div>':'')
     +'</div>'
@@ -2067,6 +2286,14 @@ function progressionBoardCard(){
    so they move across and the Reports tab is retired. */
 /* Effective sets split into DIRECT vs SECONDARY on one bar — the Stats version only showed a
    combined total, which hid whether a muscle was actually being trained or just catching credit. */
+/* v13 — plain-English name for whatever the Stats window selector is currently set to, so the
+   card can state its own window instead of leaving you to infer it from a segmented control
+   several cards further up. Note the default is ALL TIME, which was the single biggest reason
+   these totals looked irreconcilable against the dashboard's rolling 4 weeks. */
+function statsWindowLabel(){
+  if(statsPeriod==="all") return "all time";
+  if(statsPeriod==="week") return "this week (Mon\u2013Sun)";
+  return "last "+statsPeriod+" days"; }
 function muscleSplitCard(){
   var ent=Object.keys(S.muscles).map(function(m){ var c=muscleContrib(m,periodSessions());
     return {m:m,total:c.total,direct:c.direct,secondary:c.secondary}; })
@@ -2081,7 +2308,8 @@ function muscleSplitCard(){
       +'<div class="bar" style="margin-top:5px;display:flex"><i style="width:'+dp+'%;background:var(--accent)"></i><i style="width:'+sp+'%;background:var(--grey)"></i></div></div>'
       +'<span class="mono" style="margin-left:10px">'+x.total.toFixed(1)+'</span></div>'; }).join("")
     :'<div class="empty" style="padding:16px">No sets in this window.</div>';
-  return '<div class="card"><div class="tiny">Effective sets by muscle \u00b7 tap a row to explain it</div>'
+  return '<div class="card"><div class="tiny">Effective sets by INDIVIDUAL muscle \u00b7 '+statsWindowLabel()+'</div>'
+    +'<div class="histline" style="margin-top:2px">Same metric as the dashboard above, different slice: one row per muscle, and this card follows the <b>Window</b> selector rather than the dashboard\u2019s rolling period. Tap a row to see which exercises produced it.</div>'
     +'<p class="muted" style="font-size:11px;margin:4px 0 0"><span style="color:var(--accent)">\u25ae</span> direct \u00b7 <span style="color:var(--grey)">\u25ae</span> secondary</p>'
     +'<div style="margin-top:6px">'+mrows+'</div>'
     +(ent.length>5?'<button class="btn ghost full sm" data-showall style="margin-top:8px">'+(showAllMuscles?'Show top 5':'Show all '+ent.length+' muscles')+'</button>':'')
@@ -2153,7 +2381,7 @@ function viewReports(){
   var mmax=Math.max.apply(null,[1].concat(ent.map(function(x){ return x.total; })));
   var mrows=ent.length?ent.map(function(x){ var dp=Math.round(x.direct/mmax*100), sp=Math.round(x.secondary/mmax*100);
     return '<div class="exline" data-muscle-stat="'+x.m+'" style="padding:7px 0;cursor:pointer"><div style="flex:1"><div class="nm" style="font-size:13px">'+S.muscles[x.m].label+'</div><div class="bar" style="margin-top:5px;display:flex"><i style="width:'+dp+'%;background:var(--accent)"></i><i style="width:'+sp+'%;background:var(--grey)"></i></div></div><span class="mono" style="margin-left:10px">'+x.total.toFixed(1)+'</span></div>'; }).join(""):'<div class="empty" style="padding:16px">No sets logged this week yet.</div>';
-  var muscleH='<div class="card"><div class="tiny">Effective sets by muscle · this week</div><p class="muted" style="font-size:11px;margin:4px 0 0"><span style="color:var(--accent)">▮</span> direct · <span style="color:var(--grey)">▮</span> secondary</p><div style="margin-top:6px">'+mrows+'</div></div>';
+  var muscleH='<div class="card"><div class="tiny">Effective sets by INDIVIDUAL muscle · this week (Mon–Sun)</div><p class="muted" style="font-size:11px;margin:4px 0 0"><span style="color:var(--accent)">▮</span> direct · <span style="color:var(--grey)">▮</span> secondary</p><div style="margin-top:6px">'+mrows+'</div></div>';
   return '<div class="reportshd" style="margin:10px 2px 2px;display:flex;align-items:center;gap:8px"><span style="font-size:18px">📊</span><div class="tiny" style="font-size:13px;text-transform:none;color:var(--text);font-weight:700">Reports · experimental analysis</div></div>'
     +weekH+dashboardCard()+progressionBoardCard()+trendH+muscleH+recentAchievementsCard(10)+diagnoseCard(); }
 
@@ -2257,6 +2485,145 @@ function usableInPool(e){
      that way, which is why exercises trained every week were never being offered. Regular logged
      use overrides the seeded flag; `pref:"avoid"` above remains the way to veto something. */
   if(e.rec===false && uses<REGULAR_USE_MIN) return false;
+  return true; }
+
+/* ================================================================ v13 ASSISTED WORKOUT BUILDER
+   The auto-recommender decides the whole session for you. In practice the workflow was: generate
+   a session, delete most of it, then hand-add the exercises actually wanted. That is the
+   recommender being used as a very expensive exercise picker.
+
+   So "Build Workout" now ranks INDIVIDUAL exercises and lets you assemble the session yourself.
+   Same inputs as the recommender, different output shape: ingredients, not a finished meal.
+   "Tell me what to train" is untouched and remains the fully automatic path.
+
+   Ranking, in the order the brief specified:
+     1  muscles below weekly minimum volume   -> muscleScores() volume-need term
+     2  muscles currently recovered / ready   -> muscleScores() readiness term (blocked = excluded)
+     3  configured muscle priorities          -> muscleScores() TIER_BASE term
+     4  exercises performed frequently        -> familiarityScore().ex   (weighted HARD here)
+     5  equipment regularly used              -> familiarityScore().equip
+     6  exercise preferences                  -> PREF_SCORE
+     7  avoid + limitation rules              -> usableInPool() + limBlock(), both hard filters
+
+   Familiarity is weighted noticeably higher than in recommend(), because the explicit brief is
+   "strongly favour exercises I actually train regularly". It still cannot resurrect a muscle that
+   the recovery engine says is blocked, and it never overrides pref:"avoid" or an active
+   limitation, both of which remain hard exclusions. */
+const BUILD_FAM_WEIGHT_EX=132;        /* how often you do THIS exercise (dominant term) */
+const BUILD_FAM_WEIGHT_EQUIP=38;      /* how much you use this equipment */
+const BUILD_NOVEL_PENALTY=74;         /* never logged, and we have enough history to know */
+const BUILD_MAX_PER_MUSCLE=2;         /* keep the shortlist spread across what needs work */
+const BUILD_SHORTLIST=8;
+
+/* Shared scoring for one exercise, used by both the shortlist and the Today one-tap add. */
+function builderExValue(e,byM,lastExMap,now){
+  const pm=primaryMuscle(e); const lead=byM[pm];
+  if(!lead||!lead.trainable) return null;          /* 2 + 7: primary muscle not trainable today */
+  let val=0;
+  /* 1 + 2 + 3 — reuse the exact muscle scores the recommender uses, so Build Workout and
+     Tell me what to train can never disagree about what needs work. */
+  for(const mk in e.m){ if(!Object.prototype.hasOwnProperty.call(e.m,mk)) continue;
+    const sc=byM[mk]; if(!sc||!sc.trainable) continue; val+=sc.score*e.m[mk]; }
+  /* 4 + 5 */
+  const fam=familiarityScore(e);
+  val+=fam.ex*BUILD_FAM_WEIGHT_EX;
+  val+=fam.equip*BUILD_FAM_WEIGHT_EQUIP;
+  if(fam.uses===0 && familiarityIndex().sessions>=4) val-=BUILD_NOVEL_PENALTY*fam.conf;
+  else if(fam.uses===1) val-=BUILD_NOVEL_PENALTY*0.4*fam.conf;
+  /* 6 */
+  val+=PREF_SCORE[e.pref]*1.4;
+  if(e.rec) val+=8;
+  /* exact-exercise cooldown, mirroring recommend() so you are not offered yesterday's work */
+  const lx=lastExMap[e.id];
+  if(lx){ const h=hoursBetween(lx.date,now); if(h<24) val-=140; else if(h<48) val-=70; else if(h<72) val-=25; }
+  return {ex:e, exId:e.id, muscle:pm, label:(S.muscles[pm]||{}).label||pm,
+    val:val, gap:Math.max(0,lead.cfg.min-lead.v), v:lead.v, min:lead.cfg.min,
+    status:lead.status, uses:fam.uses}; }
+
+/* Every exercise that is legal to offer right now, best first. excludeIds is a plain object of
+   exercise ids already in the draft, so "Added" rows drop out of the shortlist. */
+function builderRanked(excludeIds){
+  const scored=muscleScores({}); const byM={}; scored.forEach(function(x){ byM[x.m]=x; });
+  const excl=excludeIds||{}; const now=new Date(); const lastExMap=lastExerciseMap();
+  const out=[];
+  S.exercises.forEach(function(e){
+    if(excl[e.id]) return;
+    if(!usableInPool(e)) return;                    /* 7: pref avoid, availability, rec flag */
+    if(limBlock(e)) return;                         /* 7: active injury / equipment limitation */
+    const c=builderExValue(e,byM,lastExMap,now);
+    if(c) out.push(c); });
+  out.sort(function(a,b){ return (b.val-a.val)||a.ex.name.localeCompare(b.ex.name); });
+  return out; }
+
+/* Shortlist for the "Recommended to add" panel. Capped per muscle so eight rows cover several
+   things that need work rather than eight variations of the same press. */
+function builderShortlist(excludeIds,limit){
+  const ranked=builderRanked(excludeIds); const perM={}; const picked=[];
+  const cap=limit||BUILD_SHORTLIST;
+  for(let i=0;i<ranked.length;i++){ const c=ranked[i];
+    const n=perM[c.muscle]||0; if(n>=BUILD_MAX_PER_MUSCLE) continue;
+    perM[c.muscle]=n+1; picked.push(c); if(picked.length>=cap) break; }
+  return picked; }
+
+/* The single best familiar, eligible exercise for one specific muscle — what the Today priority
+   row's "+ Add" uses. Direct work (credit >= 1) is preferred over an exercise that only catches
+   secondary credit, because a muscle below its minimum wants training, not spillover. */
+/* You tapped the TRICEPS row, so you get a triceps exercise.
+   This was a real bug found in v13 testing: the first implementation added the target muscle's
+   credit as a bonus on top of the general score, which meant a familiar chest press — scoring
+   highly because it also serves chest and front delts, both also below minimum — beat a direct
+   tricep extension on the triceps row. Adding a chest press does not close a triceps gap, and
+   it is not what the tap said it would do.
+
+   So direct work is now a HARD TIER, not a bonus: if any exercise trains this muscle directly
+   (credit >= 1) then only those are considered, and secondary-credit exercises are used solely
+   when no direct option is eligible at all. Within the chosen tier the ordinary ranking decides,
+   so you still get the FAMILIAR direct exercise rather than an unfamiliar one. */
+function bestForMuscleFromRanked(ranked,muscle){
+  const direct=[], secondary=[];
+  for(let i=0;i<ranked.length;i++){ const c=ranked[i];
+    const credit=c.ex.m[muscle]||0;
+    if(credit>=1) direct.push({c:c,credit:credit});
+    else if(credit>=0.5) secondary.push({c:c,credit:credit}); }
+  const tier=direct.length?direct:secondary;
+  let best=null;
+  for(let i=0;i<tier.length;i++){ const t=tier[i];
+    /* within the tier, credit still breaks ties: 1.0 beats 0.75 on the same score */
+    const adj=t.c.val+t.credit*40;
+    if(!best||adj>best.adj) best={adj:adj, ex:t.c.ex, exId:t.c.exId, muscle:muscle, credit:t.credit}; }
+  return best; }
+/* Convenience wrapper. Takes its own single pass when no ranked list is to hand — the Today
+   snapshot builds one list and reuses it across every priority row instead of paying for
+   muscleScores() and the familiarity pass once per row on a phone. */
+function bestExerciseForMuscle(muscle,excludeIds){
+  return bestForMuscleFromRanked(builderRanked(excludeIds),muscle); }
+
+/* -------------------------------------------------------------- v13 DRAFT HELPERS
+   A "draft" is just an activeSession that has not been finished. These helpers exist so the
+   Today one-tap add and the builder panel share exactly one code path into it, and so every
+   mutation goes through saveActive() — the v10+ durability net (localStorage mirror + journal
+   + periodic snapshot) is unchanged and still the only writer. */
+const BUILD_TITLE="Build workout";
+function draftExIds(){ const o={}; if(activeSession) (activeSession.entries||[]).forEach(function(en){ o[en.exId]=true; }); return o; }
+function inDraft(exId){ return !!draftExIds()[exId]; }
+/* Creates the draft only if one is not already open. Never touches a finished session. */
+function ensureDraft(){
+  if(activeSession) return activeSession;
+  loggerOpen={}; rerollCounts={};
+  activeSession={ id:uid(), startedAt:iso(new Date()), dateISO:new Date().toISOString().slice(0,10),
+    title:BUILD_TITLE, mode:"manual", entries:[] };
+  saveActive();
+  return activeSession; }
+/* Returns true if it actually added. Duplicates are refused, which is what makes "Added" safe
+   to show and what stops a double-tap on a phone creating two copies. */
+function addToDraft(exId){
+  const e=exById(exId); if(!e) return false;
+  ensureDraft();
+  if(inDraft(exId)) return false;
+  activeSession.entries.push({ exId:exId,
+    sets:Array.from({length:DEFAULT_WORK_SETS},function(){ return {weight:"",reps:"",type:"work",done:false}; }) });
+  loggerOpen[activeSession.entries.length-1]=true;
+  saveActive();
   return true; }
 
 function muscleScores(r){ const vol=weeklyVolume(); const wk=weekSessions().length; const remaining=Math.max(1,S.settings.sessionsPerWeek-wk); const avoid=(r&&r.avoid)||[]; const out=[];
@@ -2417,6 +2784,12 @@ let addGroup="", addEquip="", swapGroup="", swapEquip="", mgmtGroup="", mgmtEqui
 let customDraft={name:"",group:"",id:null};   /* v9 custom-exercise composer */
 let reconcileSearch="", reconcileFilter="review", dashPeriod="4w";   /* v9 reconciliation + dashboard */
 let loggerOpen={}, loggerClock=null;
+/* v13 builder panel state. Kept separate from the add-exercise SHEET state (addSearch/addGroup/
+   addEquip) so opening the full library from inside the builder does not wipe what you typed in
+   the builder, and vice versa. Panel open/closed persists so it does not fight you every render. */
+let bldSearch="", bldGroup="", bldEquip="";
+let builderOpen=(function(){ try{ return localStorage.getItem("iron_arc_builderopen")!=="0"; }catch(e){ return true; } })();
+function setBuilderOpen(v){ builderOpen=!!v; try{ localStorage.setItem("iron_arc_builderopen",v?"1":"0"); }catch(e){} }
 let rerollCounts={};   /* v7: exIds already proposed this cycle — each ↻ tap penalises them so the next proposal is genuinely different */
 let limDraft={rules:["foot_pressure"],dur:"1week",note:""};
 let readinessDraft={sleep:3,energy:3,soreness:2,motivation:3,time:60,avoid:[]};
@@ -2429,6 +2802,26 @@ const ICONS={
  settings:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1l2-1.5-2-3.4-2.3 1a7 7 0 0 0-1.7-1l-.3-2.6h-4l-.3 2.6a7 7 0 0 0-1.7 1l-2.3-1-2 3.4 2 1.5a7 7 0 0 0 0 2l-2 1.5 2 3.4 2.3-1a7 7 0 0 0 1.7 1l.3 2.6h4l.3-2.6a7 7 0 0 0 1.7-1l2.3 1 2-3.4-2-1.5a7 7 0 0 0 .1-1z"/></svg>'};
 function go(r){ route=r; bodyDetail=null; window.scrollTo(0,0); render(); }
 function el(h){ const t=document.createElement("template"); t.innerHTML=h.trim(); return t.content.firstElementChild; }
+/* v13 — minimal confirmation for actions that do their work off-screen. The Today "+ Add"
+   buttons put an exercise into a draft further down the page; without a word of feedback the
+   tap feels like it did nothing. Self-removing, no dependencies, no layout impact, and safe to
+   call before the DOM exists (it simply no-ops). */
+let _toastT=null;
+function toast(msg){
+  try{
+    let t=document.getElementById("toastmount");
+    if(!t){ t=document.createElement("div"); t.id="toastmount";
+      t.style.cssText="position:fixed;left:50%;transform:translateX(-50%);bottom:86px;z-index:80;"
+        +"max-width:88vw;padding:10px 15px;border-radius:12px;background:var(--panel2);"
+        +"border:1px solid var(--line2);color:var(--text);font-size:13px;font-weight:600;"
+        +"box-shadow:var(--shadow);pointer-events:none;opacity:0;transition:opacity .16s ease";
+      document.body.appendChild(t); }
+    t.textContent=msg;
+    requestAnimationFrame(function(){ t.style.opacity="1"; });
+    if(_toastT) clearTimeout(_toastT);
+    _toastT=setTimeout(function(){ t.style.opacity="0"; },1900);
+  }catch(e){}
+}
 
 function render(){ const app=document.getElementById("app");
   if(sb && !authUser){ app.innerHTML=authScreen(); document.getElementById("tabbar").innerHTML=""; renderRest(); renderSheet(); wireAuth(); return; }
@@ -2470,16 +2863,29 @@ function viewToday(){
      today's recommendation can offer and you should not have to go looking for that. */
   const _al=activeLimitation();
   if(_al) banner += '<div class="card" style="border-color:rgba(168,123,255,.45);background:rgba(168,123,255,.07);padding:11px 14px"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><div class="histline" style="color:var(--violet)">Limitation active: <b>'+_al.name+'</b>'+(_al.until?' · to '+fmtDate(_al.until):'')+'</div><button class="btn sm" data-act="editlim">Edit</button></div></div>';
-  const q=QUOTES[new Date().getDate()%QUOTES.length];
-  /* v12 — the snapshot sits directly under the CTA so Today opens with "where do I stand and
-     what needs work", not just a start button. */
+  /* ---------------------------------------------------------------- v13 TODAY LAYOUT
+     Ordered per the brief, decisions first and flavour last:
+       1  compact side-by-side actions
+       2  weekly training snapshot
+       3  priority muscles, each with a one-tap "+ Add"   (inside the snapshot card)
+       4  already covered / still recovering              (inside the snapshot card)
+       5  daily quote
+     Two deliberate removals:
+       - "Adaptive - recovery & volume aware" supporting copy. It described the engine, not a
+         decision, and cost a line of screen on every single visit.
+       - Readiness check-in. Removed from THIS SCREEN ONLY. The readiness engine is untouched:
+         readinessDraft still feeds recommend(), pushCheckin() still records it on finish, and
+         Settings > Readiness check-in still opens the full form for when it is wanted. */
+  const q=dailyQuote();
+  const quote='<div class="card" style="padding:12px 16px"><div class="tiny">'+quoteLabel()+'</div>'
+    +'<p class="quote" style="margin:5px 0 0;font-size:13.5px;line-height:1.45">\u201c'+q+'\u201d</p></div>';
+  const actions='<div class="row" style="gap:10px;margin:12px 0">'
+    +'<button class="cta" data-act="recommend" style="flex:1;min-width:0;padding:15px 10px;font-size:14px">Tell me what to train</button>'
+    +'<button class="cta secondary" data-act="build" style="flex:1;min-width:0;padding:15px 10px;font-size:14px">Build Workout</button></div>';
   if(pendingRec){ return resume+banner+recCard(pendingRec)
-    +'<div class="row" style="margin-top:10px"><button class="cta secondary" data-act="recommend" style="flex:1">↻ New recommendation</button><button class="cta secondary" data-act="blank" style="flex:1">Empty workout</button></div>'
-    +snapshotCard(); }
-  return resume+banner+'<div class="card glow"><button class="cta" data-act="recommend">⚡ Tell me what to train today<span class="sub">Adaptive · recovery & volume aware</span></button>'
-    +'<div class="row" style="margin-top:10px"><button class="cta secondary" data-act="readiness" style="flex:1">Readiness check-in</button><button class="cta secondary" data-act="blank" style="flex:1">Empty workout</button></div></div>'
-    +snapshotCard()
-    +'<div class="card"><div class="tiny">Daily directive</div><p class="quote" style="margin:8px 0 0">"'+q+'"</p></div>';
+    +'<div class="row" style="margin-top:10px;gap:10px"><button class="cta secondary" data-act="recommend" style="flex:1;min-width:0;padding:14px 10px">\u21bb New recommendation</button><button class="cta secondary" data-act="build" style="flex:1;min-width:0;padding:14px 10px">Build Workout</button></div>'
+    +snapshotCard()+quote; }
+  return resume+banner+actions+snapshotCard()+quote;
 }
 function unsyncedCount(){ return (S.sessions||[]).filter(s=>s.completedAt&&s.synced===false).length; }
 function resyncAll(){ (S.sessions||[]).filter(s=>s.completedAt&&s.synced===false).forEach(s=>pushWorkout(s)); setTimeout(render,1400); }
@@ -2532,16 +2938,42 @@ const READY_META={ ready:{t:"Ready",c:"var(--green)"}, untrained:{t:"Ready",c:"v
   overloaded:{t:"At cap",c:"var(--red)"} };
 function snapshotCard(){
   const s=weeklySnapshot();
+  /* v13 - one ranked pass, reused by every priority row. Building it per row would re-run
+     muscleScores() and the whole familiarity pass five times on every Today render, which is
+     exactly the sort of thing that feels sluggish on a phone. */
+  const _draft=draftExIds();
+  const _ranked=builderRanked(_draft);
+  const _pick={}, _cov={};
+  s.priority.slice(0,5).forEach(function(r){
+    _pick[r.m]=bestForMuscleFromRanked(_ranked,r.m);
+    /* "Added" is about the MUSCLE, not one exercise: once the draft contains direct work for a
+       muscle, that muscle is handled for this session. Without this the row would immediately
+       offer the next-best exercise for the same muscle, and because weekly volume only counts
+       FINISHED sessions the gap would not visibly move — so you could stack five calf exercises
+       into one draft without the screen ever telling you. */
+    _cov[r.m]=Object.keys(_draft).some(function(id){ const e=exById(id); return e&&(e.m[r.m]||0)>=1; }); });
   const pill=function(st){ const m=READY_META[st]||READY_META.ready;
     return '<span class="mono" style="font-size:10.5px;color:'+m.c+';white-space:nowrap">'+m.t+'</span>'; };
   const setsWord=function(n){ const x=Math.round(n*10)/10; return x+' set'+(x===1?'':'s'); };
+  /* v13 - a priority row now carries its own action. The row still opens the muscle detail; the
+     "+ Add" button carries data-nodrill so the two never fire together. The button appears only
+     when there IS a familiar, eligible exercise for that muscle - an action that might silently
+     do nothing is worse than no action. Same ranking as the Build Workout shortlist, so Today
+     and the builder can never recommend different things for the same muscle. */
   const prow=function(r){
+    const cand=_pick[r.m];
+    const added=!!_cov[r.m];
+    const act=(!cand&&!added)?''
+      :(added?'<span class="tag" data-nodrill="1" style="color:var(--green);border:1px solid rgba(46,204,113,.35);margin-left:8px;white-space:nowrap">Added \u2713</span>'
+             :'<button class="btn sm accent" data-addmuscle="'+r.m+'" data-nodrill="1" style="margin-left:8px;white-space:nowrap">+ Add</button>');
     return '<div class="exline" data-muscle="'+r.m+'" style="padding:6px 0;cursor:pointer">'
       +'<div style="flex:1;min-width:0"><div class="nm" style="font-size:13px">'+r.label
       +(r.tier==="primary"?' <span class="tag" style="color:var(--gold)">priority</span>':'')+'</div>'
-      +'<div class="histline">'+setsWord(r.gap)+' below minimum · '+r.v.toFixed(1)+'/'+r.min
-      +(r.secondary>0.05?' · '+r.direct.toFixed(1)+' direct + '+r.secondary.toFixed(1)+' secondary':'')+'</div></div>'
-      +pill(r.status)+'</div>'; };
+      +'<div class="histline">'+r.v.toFixed(1)+'/'+r.min+' \u00b7 '+setsWord(r.gap)+' below minimum'
+      +(r.secondary>0.05?' \u00b7 '+r.direct.toFixed(1)+' direct + '+r.secondary.toFixed(1)+' secondary':'')+'</div>'
+      +(added?'<div class="histline" style="color:var(--faint)">already in this workout</div>'
+             :(cand?'<div class="histline" style="color:var(--faint)">adds: '+escAttr(cand.ex.name)+'</div>':''))+'</div>'
+      +pill(r.status)+act+'</div>'; };
   const chips=function(list){ return list.map(function(r){
     return '<span class="tag" data-muscle="'+r.m+'" style="cursor:pointer;color:var(--muted);border:1px solid var(--line);margin:2px 4px 2px 0;display:inline-block">'+r.label+' '+r.v.toFixed(1)+'</span>'; }).join(""); };
   const tcol=s.sessions>=s.target?"var(--green)":s.sessions>=s.target-1?"var(--amber)":"var(--accent)";
@@ -2628,9 +3060,90 @@ function viewLogger(){ const isEdit=activeSession.mode==="edit"; const c=loggerC
   const entries=activeSession.entries.map((en,i)=>loggerEx(en,i)).join("");
   const dateBlock=isEdit?('<div class="card"><div class="tiny">Workout date</div><input class="inp" type="date" value="'+(activeSession.dateISO||new Date().toISOString().slice(0,10))+'" data-wdate style="text-align:left;margin-top:6px;padding:9px"></div>'):"";
   const head='<div class="lhead"><div style="flex:1"><div class="ttl">'+(isEdit?"Editing · ":"")+(activeSession.title||"Workout")+'</div><div class="meta">'+(isEdit?fmtDate(activeSession.dateISO||new Date()):'<span id="elapsed">0:00</span> elapsed · tap a set’s ✓ to log the suggested numbers')+'</div></div><div><div class="clk" id="setprog">'+c.done+'/'+c.total+'</div><div class="prog">sets</div></div></div>';
-  return head+dateBlock+entries
+  return head+dateBlock+builderPanel()+entries
     +'<button class="btn ghost full" data-act="add-ex" style="margin:4px 0 12px;color:var(--accent)">+ Add exercise</button>'
     +'<button class="btn ghost full danger" data-act="'+(isEdit?'deleteedit':'discard')+'" style="margin:4px 0 100px">'+(isEdit?"Delete this workout":"Discard workout")+'</button>'; }
+/* ---------------------------------------------------------------- v13 BUILDER PANEL
+   The "good ingredients" half of Build Workout. Sits at the top of the open draft so you can
+   tap + Add, + Add, + Add and have a session, then scroll down and start logging it.
+
+   What it deliberately keeps from the old flow, because the brief asked for all four:
+     - search by exercise name          (the search box, alias-tolerant via exMatches)
+     - muscle-group filters             (the same filterChips control the library uses)
+     - the full exercise library        ("Browse full library" opens the existing add sheet)
+     - custom exercise creation         ("+ Add custom exercise", same composer as the sheet)
+
+   Hidden while EDITING a past workout: retro-fitting today's volume gaps onto a session from
+   three weeks ago would be nonsense. */
+function builderPanel(){
+  if(!activeSession||activeSession.mode==="edit") return "";
+  const excl=draftExIds();
+  const q=(bldSearch||"").trim();
+  const narrowed=!!(q||bldGroup||bldEquip);
+  const nIn=activeSession.entries.length;
+  const hdr='<div data-bldtoggle="1" style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:14px 16px;cursor:pointer">'
+    +'<div><div class="tiny" style="color:var(--accent)">Recommended to add</div>'
+    +'<div class="histline" style="margin-top:2px">'+(nIn?nIn+' exercise'+(nIn===1?'':'s')+' in this workout · ':'')
+    +'ranked by what you need and what you actually train</div></div>'
+    +'<span class="muted" style="font-size:15px">'+(builderOpen?'−':'+')+'</span></div>';
+  if(!builderOpen) return '<div class="card" style="padding:0;overflow:hidden;border-color:var(--line2)">'+hdr+'</div>';
+
+  let rows, note;
+  if(narrowed){
+    /* Searching or filtering widens the net to the whole library, still ranked so the familiar
+       option wins a tie, and still honouring pref:"avoid" and any active limitation. */
+    const ranked=builderRanked({});
+    const rank={}; ranked.forEach(function(c,i){ rank[c.exId]=i; });
+    const byId={}; ranked.forEach(function(c){ byId[c.exId]=c; });
+    const hits=S.exercises.filter(function(e){ return exPassesFilters(e,bldGroup,bldEquip)&&exMatches(e,q); })
+      .sort(function(a,b){
+        const ra=(rank[a.id]==null?9e9:rank[a.id]), rb=(rank[b.id]==null?9e9:rank[b.id]);
+        return ra-rb||a.name.localeCompare(b.name); }).slice(0,30);
+    rows=hits.length?hits.map(function(e){ return builderRow(byId[e.id]||builderFallbackRow(e), !!excl[e.id]); }).join("")
+      :'<div class="empty" style="padding:14px">No matches. Try a broader term, clear the filters, or add it as a custom exercise.</div>';
+    note='Showing '+hits.length+' match'+(hits.length===1?'':'es')+' from the full library, best-fit first.';
+  } else {
+    const list=builderShortlist(excl,BUILD_SHORTLIST);
+    rows=list.length?list.map(function(c){ return builderRow(c,false); }).join("")
+      :'<div class="empty" style="padding:14px">Nothing left to suggest — every trainable muscle is at its weekly minimum, or everything eligible is already in this workout. Search below to add anything you like.</div>';
+    note='Below weekly minimum, recovered, and weighted towards what you train regularly.';
+  }
+  return '<div class="card" style="padding:0;overflow:hidden;border-color:var(--line2)">'+hdr
+    +'<div style="padding:0 16px 14px">'
+    +'<div class="histline" style="margin-bottom:6px">'+note+'</div>'
+    +rows
+    +'<hr class="sub">'
+    +'<input class="inp srch" id="bldSearch" placeholder="Search any exercise by name, muscle, kit..." value="'+escAttr(bldSearch||"")+'">'
+    +filterChips("bld",bldGroup,bldEquip)
+    +'<div class="row" style="margin-top:10px;gap:8px">'
+    +'<button class="btn sm" data-act="add-ex" style="flex:1">Browse full library</button>'
+    +'<button class="btn sm" data-bldcustom="'+escAttr(q)+'" style="flex:1;color:var(--gold)">+ Custom exercise</button></div>'
+    +'</div></div>'; }
+/* An exercise reachable by search but not by the shortlist (e.g. its primary muscle is still
+   recovering) still needs a row. It is shown with honest context rather than hidden. */
+function builderFallbackRow(e){ const pm=primaryMuscle(e); const cfg=S.muscles[pm]||{};
+  const v=(weeklyVolume()[pm]||0);
+  return {ex:e, exId:e.id, muscle:pm, label:cfg.label||pm, val:0,
+    gap:Math.max(0,(cfg.min||0)-v), v:v, min:cfg.min||0,
+    status:recoveryStatus(pm), uses:(familiarityIndex().byEx[e.id]||0)}; }
+/* One shortlist row. Format is the one the brief asked for:
+       Calf Extension
+       Calves - 5 sets below minimum - Ready
+       [+ Add]
+   Once added the control becomes a non-interactive "Added" marker, which is what prevents a
+   double tap from creating a duplicate entry (addToDraft() refuses duplicates as well). */
+function builderRow(c,added){
+  const rm=READY_META[c.status]||READY_META.ready;
+  const g=Math.round(c.gap*10)/10;
+  const need=g>0.01?(g+' set'+(g===1?'':'s')+' below minimum'):'at weekly minimum';
+  const famTag=c.uses>=REGULAR_USE_MIN?' <span class="tag" style="color:var(--green)">regular</span>'
+             :(c.uses===0?' <span class="tag" style="color:var(--faint)">new to you</span>':'');
+  const prefTag=c.ex.pref==="love"?' <span class="tag love">★</span>':'';
+  return '<div class="exline" style="padding:8px 0"><div style="flex:1;min-width:0">'
+    +'<div class="nm" style="font-size:13.5px">'+c.ex.name+prefTag+famTag+'</div>'
+    +'<div class="histline">'+c.label+' · '+need+' · <span style="color:'+rm.c+'">'+rm.t+'</span></div></div>'
+    +(added?'<span class="tag" style="color:var(--green);border:1px solid rgba(46,204,113,.35);white-space:nowrap">Added ✓</span>'
+           :'<button class="btn sm accent" data-bldadd="'+c.exId+'" style="white-space:nowrap">+ Add</button>')+'</div>'; }
 function loggerEx(en,i){ const e=exById(en.exId)||{id:en.exId,name:en.asName||"Unknown exercise",m:{},sl:2,rl:8,rh:12,rest:90,equip:"other",type:"isolation"};
   const cur=loggerCurrentIndex(); const done=entryDone(en);
   /* v11 — one exercise open at a time. Previously every unfinished exercise was expanded, so a
@@ -3285,10 +3798,19 @@ function viewSettings(){ const acct=authProfile?'<div class="card"><div class="t
   const profile='<div class="card"><div class="tiny">Training profile</div><p class="muted" style="font-size:12px;margin:6px 0 10px">Your goals are private to '+(authProfile?authProfile.name:"you")+' — editing here doesn’t affect other users.</p>'
     +'<div class="exline" style="padding:8px 0"><div class="nm" style="font-size:13px">Weekly session target</div><div class="row" style="gap:8px;align-items:center"><button class="btn sm" data-act="target-dec">−</button><b class="mono" style="min-width:20px;text-align:center">'+S.settings.sessionsPerWeek+'</b><button class="btn sm" data-act="target-inc">+</button></div></div>'
     +'<div class="exline" style="padding:8px 0"><div class="nm" style="font-size:13px">Set logging order</div><div class="seg" style="width:58%"><button data-inputorder="wr" class="'+(inputOrder()==="wr"?"on":"")+'">Weight → Reps</button><button data-inputorder="rw" class="'+(inputOrder()==="rw"?"on":"")+'">Reps → Weight</button></div></div>'
-    +'<hr class="sub"><div class="tiny">Muscle priorities</div><p class="muted" style="font-size:11.5px;margin:5px 0 4px">Tap to cycle Primary → Secondary → Maintenance. Drives recommendations and Body ordering.</p>'+muscleRows+'</div>';
+    +'</div>';
+  /* v13 — Muscle priorities was the one heavy block still nailed open inside Training profile:
+     seventeen rows you scroll past every time you visit Settings for something else. It is now
+     a collapsible section like every other heavy area, and its open/closed state persists via
+     the same setOpen store, so it stays how you left it. The control itself is unchanged and
+     the configured weekly minimums are untouched. */
+  const _tierCount=Object.values(S.muscles).reduce(function(a,c){ a[c.tier]=(a[c.tier]||0)+1; return a; },{});
+  const musclePriorities=section('priorities','Muscle priorities',
+    (_tierCount.primary||0)+' primary \u00b7 '+(_tierCount.secondary||0)+' secondary \u00b7 '+(_tierCount.maintenance||0)+' maintenance',
+    function(){ return '<div class="card"><div class="tiny">Muscle priorities</div><p class="muted" style="font-size:11.5px;margin:5px 0 4px">Tap to cycle Primary \u2192 Secondary \u2192 Maintenance. Drives recommendations and Body ordering.</p>'+muscleRows+'</div>'; });
   /* v12 — Settings restructured into collapsible sections. Everything that was here is still
      here; the heavy areas just start closed, and the limitation controls moved in from Today. */
-  return acct + profile
+  return acct + profile + musclePriorities
     +section('lims','Training preferences & limitations',
       (activeLimitation()?'Active: '+activeLimitation().name:'No active limitation')+' \u00b7 injury, equipment, avoid foot pressure',
       function(){ return '<div class="card"><div class="tiny">Injury / limitation</div>'+(activeLimitation()?'<div style="margin-top:8px;font-weight:600">'+activeLimitation().name+'</div><div class="histline">'+(activeLimitation().note||"")+(activeLimitation().until?' · expires '+fmtDate(activeLimitation().until):' · until removed')+'</div><div class="row" style="margin-top:10px"><button class="btn sm" data-act="editlim">Edit</button><button class="btn sm danger" data-act="removelim">Remove</button></div>':'<p class="muted" style="font-size:12.5px;margin:8px 0">Temporarily exclude exercises after an injury or when equipment is unavailable (e.g. broken toe → no foot-pressure exercises).</p><button class="btn full" data-act="addlim">Add limitation</button>')+'</div>'; })
@@ -3466,7 +3988,7 @@ function renderFinish(){ const m=document.getElementById("finmount"); if(!m) ret
 function deriveTitle(entries){ const ms={}; entries.forEach(en=>{ const ex=exById(en.exId); const n=workingSets(en).length; if(!ex||!n) return; const pm=primaryMuscle(ex); if(pm) ms[pm]=(ms[pm]||0)+n; });
   const top=Object.entries(ms).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([m])=>S.muscles[m]?S.muscles[m].label:m); return top.length?top.join(" · "):"Workout"; }
 function startSession(rec){ loggerOpen={}; rerollCounts={}; const entries=(rec?rec.exercises:[]).map(c=>{ const e=exById(c.exId); return { exId:c.exId, sets:Array.from({length:c.sets||DEFAULT_WORK_SETS},()=>({weight:"",reps:"",type:"work",done:false})) }; });
-  activeSession={ id:uid(), startedAt:iso(new Date()), dateISO:new Date().toISOString().slice(0,10), title:rec?rec.title:"Empty workout", mode:rec?"adaptive":"manual", entries }; viewingLogger=true; pendingRec=null; saveActive();
+  activeSession={ id:uid(), startedAt:iso(new Date()), dateISO:new Date().toISOString().slice(0,10), title:rec?rec.title:BUILD_TITLE, mode:rec?"adaptive":"manual", entries }; viewingLogger=true; pendingRec=null; saveActive();
   try{ history.pushState({iron:"workout"},""); }catch(e){} route="today"; render(); }
 function finishWorkout(){ const logged=activeSession.entries.reduce((n,en)=>n+workingSets(en).length,0);
   if(!logged){ confirmSheet("Nothing’s been logged yet. Finish this workout anyway?","Finish anyway",()=>doFinish(),{danger:true,title:"Finish empty workout?"}); return; }
@@ -3480,7 +4002,9 @@ function doFinish(){ let saved=null;
     const updated={...activeSession, id:activeSession.editingId, completedAt, mode:"edit", synced:false}; delete updated.editingId; delete updated.dateISO;
     if(idx>=0) S.sessions[idx]=updated; else S.sessions.push(updated);   // v10: never drop an edit whose original went missing
     journalPut(updated); persistLocal(); pushWorkout(updated); saved=updated; }
-  else { if(!activeSession.title||activeSession.title==="Empty workout") activeSession.title=deriveTitle(activeSession.entries);
+  else { /* v13 — "Empty workout" was renamed to "Build workout"; both are treated as placeholder
+       titles so a draft started on v12 and finished on v13 still gets a derived title. */
+    if(!activeSession.title||activeSession.title==="Empty workout"||activeSession.title===BUILD_TITLE) activeSession.title=deriveTitle(activeSession.entries);
     /* v7: a live session finishes at the moment you hit Finish — never the noon placeholder */
     const sess={ id:activeSession.id, startedAt:activeSession.startedAt, completedAt:iso(new Date()), title:activeSession.title, mode:activeSession.mode, entries:activeSession.entries, synced:false };
     /* v10 ordering matters: journal → local → cloud. The workout is durable on disk in two
@@ -3534,7 +4058,12 @@ function wireScreen(){
   act("readiness",()=>{ document.getElementById("app").innerHTML=header()+'<div class="reveal">'+viewReadiness()+'</div>'; wireScreen(); });
   act("back-today",()=>go("today"));
   act("rec-from-readiness",()=>{ readinessDraft.time=+(document.querySelector("[data-rtime]")||{value:60}).value; rerollCounts={}; pendingRec=recommend(readinessDraft); go("today"); });
-  act("blank",()=>startSession(null));
+  act("blank",()=>startSession(null));            /* legacy id, still wired for old markup */
+  /* v13 "Build Workout": opens the draft (creating one only if none exists) with the
+     Recommended-to-add panel expanded. Deliberately does NOT discard or replace an existing
+     draft — tapping it mid-session just takes you back to the workout you are building. */
+  act("build",()=>{ const fresh=!activeSession; ensureDraft(); if(fresh) setBuilderOpen(true);
+    viewingLogger=true; pendingRec=null; window.scrollTo(0,0); render(); });
   act("start-rec",()=>startSession(pendingRec));
   act("resume",()=>{ viewingLogger=true; render(); });
   act("discard",()=>confirmSheet("Discard this workout? This cannot be undone.","Discard",()=>{ activeSession=null; viewingLogger=false; loggerOpen={}; saveActive(); stopClock(); render(); },{danger:true,title:"Discard workout?"}));
@@ -3597,7 +4126,35 @@ function wireScreen(){
   document.querySelectorAll("[data-dashp]").forEach(b=>b.onclick=()=>{ dashPeriod=b.dataset.dashp; render(); });
   document.querySelectorAll("[data-muscle-group]").forEach(b=>b.onclick=()=>{ const g=MUSCLE_GROUPS.find(x=>x.key===b.dataset.muscleGroup); go("body");
     if(g&&g.muscles.length){ bodyDetail=g.muscles[0]; render(); setTimeout(()=>{ const el2=document.getElementById("bodydetail"); if(el2) el2.scrollIntoView({behavior:"smooth",block:"center"}); },60); } });
-  document.querySelectorAll("[data-muscle]").forEach(b=>b.onclick=()=>{ bodyDetail=b.dataset.muscle; route="body"; render(); setTimeout(()=>{ const d=document.getElementById("bodydetail"); if(d) d.scrollIntoView({behavior:"smooth",block:"center"}); },60); });
+  /* v13 — a priority row is BOTH a drill-down and a container for the "+ Add" button. The row
+     handler ignores clicks that originated inside anything marked data-nodrill, so tapping
+     Add never also navigates you to Body. */
+  document.querySelectorAll("[data-muscle]").forEach(b=>b.onclick=(ev)=>{
+    if(ev&&ev.target&&ev.target.closest&&ev.target.closest("[data-nodrill]")) return;
+    bodyDetail=b.dataset.muscle; route="body"; render(); setTimeout(()=>{ const d=document.getElementById("bodydetail"); if(d) d.scrollIntoView({behavior:"smooth",block:"center"}); },60); });
+  /* v13 — one-tap add from the Today priority list. Creates the draft if there is not one yet,
+     then adds into that same draft on every subsequent tap. Stays on Today: the point is to
+     assemble a session without leaving the decision screen. */
+  document.querySelectorAll("[data-addmuscle]").forEach(b=>b.onclick=(ev)=>{
+    if(ev){ ev.stopPropagation(); ev.preventDefault(); }
+    const m=b.dataset.addmuscle;
+    const pick=bestExerciseForMuscle(m,draftExIds());
+    if(!pick){ toast("Nothing eligible to add for "+((S.muscles[m]||{}).label||m)+" right now."); return; }
+    if(addToDraft(pick.exId)) toast("Added "+pick.ex.name+" · "+DEFAULT_WORK_SETS+" sets");
+    render(); });
+  /* v13 builder panel */
+  document.querySelectorAll("[data-bldtoggle]").forEach(b=>b.onclick=()=>{ setBuilderOpen(!builderOpen); render(); });
+  document.querySelectorAll("[data-bldadd]").forEach(b=>b.onclick=()=>{
+    const id=b.dataset.bldadd; const ex=exById(id); if(!ex) return;
+    if(addToDraft(id)) toast("Added "+ex.name+" \u00b7 "+DEFAULT_WORK_SETS+" sets");
+    render(); });
+  document.querySelectorAll("[data-bldcustom]").forEach(b=>b.onclick=()=>{ customDraft={name:b.dataset.bldcustom||"",group:"",load:"ext",id:null}; openSheet("custom"); });
+  document.querySelectorAll("[data-fbldg]").forEach(b=>b.onclick=()=>{ bldGroup=b.dataset.fbldg||""; render(); });
+  document.querySelectorAll("[data-fblde]").forEach(b=>b.onclick=()=>{ bldEquip=b.dataset.fblde||""; render(); });
+  (function(){ const bs=document.getElementById("bldSearch"); if(!bs) return;
+    bs.oninput=()=>{ bldSearch=bs.value; render();
+      const n=document.getElementById("bldSearch");
+      if(n){ n.focus(); try{ n.setSelectionRange(n.value.length,n.value.length); }catch(e){} } }; })();
   document.querySelectorAll("[data-muscle-stat]").forEach(b=>b.onclick=()=>openSheet("mperiod",b.dataset.muscleStat));
   document.querySelectorAll("[data-insight-muscle]").forEach(b=>b.onclick=()=>{ const cur=statsPeriod; statsPeriod="week"; openSheet("mperiod",b.dataset.insightMuscle); statsPeriod=cur; });
   document.querySelectorAll("[data-exhist]").forEach(b=>b.onclick=()=>openSheet("exhist",b.dataset.exhist));
