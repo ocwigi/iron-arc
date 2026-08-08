@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1" />
-<title>Iron Arc — Training Command</title>
+<title>Dr Mike — Training Command</title>
 <meta name="theme-color" content="#06080B" />
 <!-- v10: this document must never be served from a stale cache. A previous build of the
      persistence layer could destroy completed workouts, so running an old index.html is a
@@ -12,6 +12,11 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
 <meta http-equiv="Pragma" content="no-cache" />
 <meta http-equiv="Expires" content="0" />
+<!-- home-screen / PWA naming. Display name only — storage keys, the Supabase project and
+     every other internal identifier keep their original iron_arc names on purpose, so the
+     rename carries zero migration risk. -->
+<meta name="application-name" content="Dr Mike" />
+<meta name="apple-mobile-web-app-title" content="Dr Mike" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Sora:wght@600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet" />
@@ -253,13 +258,18 @@ button{font-family:inherit; cursor:pointer; border:none; color:inherit;}
 /* ============================================================================
    CONFIG — edit freely; first run seeds this, your in-app edits persist.
    ============================================================================ */
+/* v11 — an exercise starts at 3 working sets everywhere it can be added. The recommender may
+   still choose fewer, but only for an explicit reason (near the weekly cap, low energy, high
+   soreness); it no longer drops to 2 just because 2 was the blanket default. */
+const DEFAULT_WORK_SETS = 3;
+const MAX_SESSION_SETS = 18;   /* was 15, i.e. ~7 exercises x 2; now ~6 x 3 */
 const CONFIG_VERSION = 9; /* v9: custom exercises (persistent cx- ids) + reconciliation workflow \u00b7 reusable exercise-level progression model (assistance is inverse; effective load = bodyweight - assistance) \u00b7 richer post-workout summary, training dashboard, heatmap, trend badges (v8: wall-clock rest timer \u00b7 per-exercise setup & machine settings \u00b7 44 new library variations \u00b7 alias-tolerant search) */
 const SUPABASE_URL = "https://utlhzxbjxvsyluyslfhe.supabase.co";
 const SUPABASE_KEY = "sb_publishable_xNfADG84azbA0wc1_ngVYw_MqxOANCz";
 
 /* App display name — change this one line to rename the app. Storage keys are intentionally
    NOT derived from it, so renaming never breaks existing local or Supabase data. */
-const APP_NAME = "Iron Arc";
+const APP_NAME = "Dr Mike";
 const APP_TAGLINE = "Training Command";
 /* ---------------------------------------------------------------- BUILD IDENTITY (v10)
    BUILD is the app/build version and is INDEPENDENT of CONFIG_VERSION below.
@@ -270,9 +280,9 @@ const APP_TAGLINE = "Training Command";
    recover.html on a v10 build is expected and correct.
    BUILD is shown in Settings and is what the deployed-version check compares against, so
    it must be bumped on every deploy. */
-const BUILD = "v10";
+const BUILD = "v11";
 const BUILD_DATE = "2026-08-08";
-const BUILD_NOTE = "workout durability";
+const BUILD_NOTE = "like-for-like recap";
 
 /* Approved users (client-side UX gate; the real gate is Supabase signup settings — see DEPLOY).
    To add a person: add one line below with their real email (lowercase), display name and role.
@@ -1191,8 +1201,44 @@ function rawVolume(sets){ return (sets||[]).reduce(function(a,s){ return a+(+s.w
      stable      everything else \u2014 i.e. normal session-to-session variation
    Blocks (newest 2 vs the 3 before them) rather than raw last-vs-previous, so a single slightly
    weaker session reads as variation, not regression. */
+/* ---------------------------------------------------------------- v11 TREND METHODOLOGY
+   Rewritten around three rules the previous version broke:
+
+   1. ENOUGH HISTORY OR NO VERDICT. Below 5 logged exposures there is no verdict at all — the
+      board says "Not enough data" rather than extrapolating from 2 or 3 sessions.
+   2. A BIGGER BASELINE. The recent block is the last 2 exposures; the baseline is the 4-6 before
+      them (previously only 3). One heavy or light session can no longer swing a verdict.
+   3. NO CAUSAL CLAIMS. Performance moves with exercise order, fatigue, sleep, food and what was
+      trained beforehand — none of which the app can observe. So the states describe the number,
+      not the athlete: "below baseline", never "declining" or "you are losing strength".
+
+   Recency is handled separately (staleDays / trendIsCurrent) so an exercise you have not touched
+   for six weeks cannot sit in "Biggest improvements" describing training you are not doing. */
+const TREND_RECENT_N=2, TREND_BASE_MIN=3, TREND_BASE_MAX=6, TREND_MIN_N=5, TREND_BAND=4;
+const TREND_STALE_DAYS=28;
 function exerciseTrendData(exId){ const ex=exById(exId); const h=exerciseHistory(exId);
   const ser=h.map(x=>sessionStrength(ex,x.sets,x.bw));   /* newest first, already direction-aware */
+  const n=ser.length;
+  const mean=a=>a.length?a.reduce((x,y)=>x+y,0)/a.length:0;
+  const lastDate=h.length?h[0].date:null;
+  const days=lastDate?Math.floor(hoursBetween(lastDate,new Date())/24):null;
+  const stale=(days!=null&&days>TREND_STALE_DAYS);
+  const base0={n, ser, ex, lastDate, days, stale, recentN:0, baseN:0, recentMean:null, baseMean:null};
+  if(n<TREND_MIN_N) return Object.assign({state:"insufficient", pct:0, need:TREND_MIN_N-n}, base0);
+  const rN=TREND_RECENT_N;
+  const bN=Math.min(TREND_BASE_MAX, Math.max(TREND_BASE_MIN, n-rN));
+  const recent=ser.slice(0,rN), base=ser.slice(rN, rN+bN);
+  if(base.length<TREND_BASE_MIN) return Object.assign({state:"insufficient", pct:0, need:1}, base0);
+  const rm=mean(recent), bm=mean(base);
+  const pct=bm!==0?((rm-bm)/Math.abs(bm))*100:0;
+  Object.assign(base0,{recentN:rN, baseN:base.length, recentMean:rm, baseMean:bm});
+  let state="steady";
+  if(pct>=TREND_BAND) state="above";
+  else if(pct<=-TREND_BAND) state="below";
+  return Object.assign({state, pct}, base0); }
+/* kept for anything still calling the old shape */
+function exerciseTrendDataLegacy(exId){ const ex=exById(exId); const h=exerciseHistory(exId);
+  const ser=h.map(x=>sessionStrength(ex,x.sets,x.bw));
   const n=ser.length;
   const mean=a=>a.length?a.reduce((x,y)=>x+y,0)/a.length:0;
   if(n<2) return {state:"none", n, pct:0, ser, ex};
@@ -1208,20 +1254,75 @@ function exerciseTrendData(exId){ const ex=exById(exId); const h=exerciseHistory
   else if(pct<=-4&&under>=Math.min(2,rN)) state="regressing";
   else if(tight&&Math.abs(pct)<2) state="stalled";
   return {state, n, pct, ser, ex}; }
+/* v11 — evidence as NUMBERS, not a sentence. Scannable: two means and a percentage, in the unit
+   the exercise is actually measured in. Rendered as "Last 2: 61kg · Prev 6: 65kg · −6%". */
+function trendEvidence(exId){
+  const d=exerciseTrendData(exId); const ex=d.ex||exById(exId);
+  /* The mean is of sessionStrength(), which for an assisted movement is EFFECTIVE load
+     (bodyweight − assistance), not the assistance number on the machine. Labelling it
+     "kg assist" read as if assistance had gone up when the athlete had actually improved,
+     so the label has to follow what the number really is. */
+  const kind=ex?loadKind(ex):"ext";
+  const unit=kind==="assist"?(hasBodyweight()?"kg eff":" score")
+           :kind==="bw"?(hasBodyweight()?"kg eff":"kg added"):"kg";
+  const shown=function(v){ return Math.round(Math.abs(v)*10)/10; };
+  if(!ex) return {ok:false, text:""};
+  if(d.state==="insufficient")
+    return {ok:false, n:d.n, need:d.need||0, text:"Not enough data · "+d.n+" of "+TREND_MIN_N+" exposures"};
+  return {ok:true, n:d.n, recent:d.recentMean, base:d.baseMean, pct:d.pct,
+    recentN:d.recentN, baseN:d.baseN, unit:unit,
+    text:"Last "+d.recentN+": "+shown(d.recentMean)+unit+" · Prev "+d.baseN+": "+shown(d.baseMean)+unit }; }
+
+/* ---------------------------------------------------------------- v11 EXERCISE-ORDER CONTEXT
+   Where an exercise sat in the session is recorded in the entry order, so we can surface it as
+   context. Doing an exercise 6th when you normally do it 2nd plausibly explains a weaker number
+   — but "plausibly" is as far as the data goes, so this is shown as a neutral chip and NEVER
+   used to adjust the number. Any mathematical correction would be inventing a coefficient. */
+function exerciseOrderStats(exId){
+  const pos=[];
+  completedSessions().forEach(function(s){
+    const ents=(s.entries||[]).filter(function(en){ return workingSets(en).length; });
+    const i=ents.findIndex(function(en){ return en.exId===exId; });
+    if(i>=0) pos.push({date:s.completedAt, idx:i+1, of:ents.length});
+  });
+  pos.sort(function(a,b){ return new Date(b.date)-new Date(a.date); });
+  return pos; }
+function orderContext(exId){
+  const pos=exerciseOrderStats(exId);
+  if(pos.length<4) return null;
+  const recent=pos.slice(0,TREND_RECENT_N), older=pos.slice(TREND_RECENT_N);
+  if(!older.length) return null;
+  const mean=function(a){ return a.reduce(function(x,y){ return x+y.idx; },0)/a.length; };
+  const rm=mean(recent), om=mean(older);
+  if(rm>=om+1.5) return {dir:"later", text:"Performed later than usual ("+Math.round(rm)+"th vs "+Math.round(om)+"th)"};
+  if(rm<=om-1.5) return {dir:"earlier", text:"Performed earlier than usual ("+Math.round(rm)+"th vs "+Math.round(om)+"th)"};
+  return null; }
+
+/* The next concrete action. Kept OUT of the boards (which stay numeric and scannable) and shown
+   only in the exercise detail sheet, where an explanation is what you came for. */
+function trendAction(exId){
+  const d=exerciseTrendData(exId); const p=progressionFor(exId); const ex=exById(exId);
+  if(!ex||!p) return "";
+  if(d.state==="insufficient") return p.note||"";
+  if(d.state==="below") return "Next time: hold "+(p.weight===""?"the same load":p.weight+"kg")+" and rebuild the reps before adding load.";
+  if(d.state==="steady") return p.note||"Change one variable next time — load or reps.";
+  return p.note||"Keep the progression going."; }
+/* v11 labels describe the NUMBER, not the athlete. "Below baseline" is a fact about a mean;
+   "declining" would be a claim about a person that this data cannot support. */
 const TREND_META={
-  none:{label:"Early signal", c:"var(--muted)", icon:"\u25cb", note:"Log this a couple more times to read a trend."},
-  early:{label:"Early signal", c:"var(--muted)", icon:"\u25cb", note:"Two sessions in \u2014 keep logging to confirm a trend."},
-  progressing:{label:"Progressing", c:"var(--green)", icon:"\u25b2", note:"Clearly up on your recent baseline \u2014 keep the pressure on."},
-  stable:{label:"Stable", c:"var(--accent)", icon:"\u25ac", note:"Holding steady inside normal variation \u2014 chase one more clean rep."},
-  stalled:{label:"Stalled", c:"var(--amber)", icon:"\u25ac", note:"Flat for 3 sessions \u2014 change a variable: more reps, a small load change, or a fresh variation."},
-  regressing:{label:"Regressing", c:"var(--red)", icon:"\u25bc", note:"Down against your recent baseline across more than one session \u2014 consider a lighter day or a deload."}
+  insufficient:{label:"Not enough data", c:"var(--muted)", icon:"\u25cb", note:"Needs "+TREND_MIN_N+" logged sessions before a comparison is worth making."},
+  above:{label:"Above baseline", c:"var(--green)", icon:"\u25b2", note:"Recent exposures are averaging above the block before them."},
+  steady:{label:"In line", c:"var(--accent)", icon:"\u25ac", note:"Recent exposures are in line with the block before them."},
+  below:{label:"Below baseline", c:"var(--red)", icon:"\u25bc", note:"Recent exposures are averaging below the block before them. Performance moves with order, fatigue, sleep and recovery \u2014 this is the number, not a diagnosis."},
+  stale:{label:"Not recently trained", c:"var(--muted)", icon:"\u25cb", note:"No exposure inside the last "+TREND_STALE_DAYS+" days, so this is history rather than current training."}
 };
-function exerciseTrend(exId){ const d=exerciseTrendData(exId); const m=TREND_META[d.state];
+function exerciseTrend(exId){ const d=exerciseTrendData(exId);
+  const key=(d.stale&&d.state!=="insufficient")?"stale":d.state;
+  const m=TREND_META[key]||TREND_META.insufficient;
   let note=m.note;
-  if(d.state==="early"&&d.pct>0) note="Up on your last session \u2014 keep building.";
-  if(d.state==="progressing"&&isAssisted(d.ex)) note="Assistance coming down \u2014 that is real progress. Keep chipping at it.";
-  if(d.state==="regressing"&&isAssisted(d.ex)) note="Needing more assistance than your recent baseline \u2014 fine for a deload, worth watching otherwise.";
-  return {label:m.label, c:m.c, icon:m.icon, note, state:d.state, pct:d.pct, n:d.n}; }
+  if(key==="above"&&isAssisted(d.ex)) note="Assistance is coming down against your baseline \u2014 that is the right direction.";
+  if(key==="below"&&isAssisted(d.ex)) note="More assistance than your baseline block. Order, fatigue and recovery all move this number.";
+  return {label:m.label, c:m.c, icon:m.icon, note, state:key, raw:d.state, pct:d.pct, n:d.n, days:d.days, stale:d.stale}; }
 function exerciseHistory(exId){ const out=[];
   S.sessions.filter(s=>s.completedAt).forEach(sess=>{ (sess.entries||[]).forEach(en=>{ if(en.exId===exId){ const ws=workingSets(en); if(ws.length) out.push({date:sess.completedAt, sessionId:sess.id, sets:ws, bw:bodyweightAt(sess.completedAt), asName:en.asName||null}); } }); });
   out.sort((a,b)=>new Date(b.date)-new Date(a.date)); return out; }
@@ -1576,11 +1677,12 @@ function escAttr(s){ return String(s==null?"":s).replace(/&/g,"&amp;").replace(/
      2. Never show a delta without saying what it is a delta AGAINST.
      3. "Not enough data" is a first-class, visible state, not a silent omission.
    ============================================================================================ */
-const TB_CLASS={progressing:"up", regressing:"dn", stalled:"fl", stable:"st", early:"na", none:"na"};
+const TB_CLASS={above:"up", below:"dn", steady:"st", insufficient:"na", stale:"na"};
 function pctStr(p){ const v=Math.round(Math.abs(p)); return (p>0?"+":p<0?"−":"")+v+"%"; }
 function trendBadge(exId){ const t=exerciseTrend(exId); const cls=TB_CLASS[t.state]||"na";
-  if(t.state==="none"||t.state==="early") return '<span class="tb na" title="needs 3+ sessions">○ '+(t.n||0)+'/3</span>';
-  const showPct=(t.state==="progressing"||t.state==="regressing");
+  if(t.raw==="insufficient") return '<span class="tb na" title="needs '+TREND_MIN_N+' exposures">○ '+(t.n||0)+'/'+TREND_MIN_N+'</span>';
+  if(t.state==="stale") return '<span class="tb na" title="not trained recently">○ '+Math.round((t.days||0)/7)+'w</span>';
+  const showPct=(t.state==="above"||t.state==="below");
   return '<span class="tb '+cls+'">'+t.icon+(showPct?" "+pctStr(t.pct):"")+'</span>'; }
 /* inline 8-point sparkline on the exercise's own default metric (effective load for assisted) */
 function miniSpark(exId){ const ex=exById(exId); if(!ex) return "";
@@ -1595,32 +1697,144 @@ function sessionTotals(sess){ let sets=0,reps=0,vol=0,exN=0;
   (sess.entries||[]).forEach(function(en){ const ws=workingSets(en); if(!ws.length) return; exN++;
     sets+=ws.length; reps+=sessionReps(ws); vol+=rawVolume(ws); });
   return {sets:sets, reps:reps, vol:Math.round(vol), exN:exN}; }
-/* the most recent EARLIER session that trained roughly the same thing — same title first, then the
-   best exercise overlap. Comparing a back day against a leg day would be noise, not insight. */
+/* ---------------------------------------------------------------- v11 LIKE-FOR-LIKE MATCHING
+   Total session tonnage is dominated by exercise selection: a leg day out-tonnages an arm day by
+   a wide margin no matter how well either was performed. So "volume down 16%" against a
+   mismatched session is not a performance signal, it is a selection artefact. v11 grades how
+   comparable two sessions actually are, and only lets a metric carry a delta where that metric
+   is genuinely comparable. Everything below is derived — no stored field changes. */
+function loggedExIds(sess){ return new Set((sess.entries||[]).filter(function(en){ return workingSets(en).length; }).map(function(en){ return en.exId; })); }
+/* muscle-composition similarity: cosine of the two effective-set vectors. 1.0 = identical mix. */
+function compositionSimilarity(a,b){
+  const va=weeklyVolume([a]), vb=weeklyVolume([b]);
+  let dot=0,na=0,nb=0;
+  Object.keys(va).forEach(function(m){ const x=va[m]||0, y=vb[m]||0; dot+=x*y; na+=x*x; nb+=y*y; });
+  if(na<=0||nb<=0) return 0;
+  return dot/(Math.sqrt(na)*Math.sqrt(nb)); }
+/* The dominant muscle groups of a session, for the "same composition" wording. */
+function sessionComposition(sess){
+  const v=weeklyVolume([sess]); const tot=Object.values(v).reduce(function(a,b){ return a+b; },0);
+  if(tot<=0) return [];
+  return Object.entries(v).filter(function(e){ return e[1]/tot>=0.15; }).sort(function(a,b){ return b[1]-a[1]; })
+    .slice(0,3).map(function(e){ return S.muscles[e[0]]?S.muscles[e[0]].label:e[0]; }); }
+/* Grade one candidate against the session under review.
+     tier 1 exercise    — most of the same exercises. Everything is comparable, tonnage included.
+     tier 2 composition — same muscle mix, different exercise choices. Sets/reps comparable; tonnage NOT.
+     tier 3 title       — same named session only. Sets/reps comparable; tonnage NOT.
+   Anything weaker is rejected outright rather than compared badly. */
+function comparabilityOf(sess,other){
+  const mine=loggedExIds(sess), theirs=loggedExIds(other);
+  if(!mine.size||!theirs.size) return null;
+  let overlap=0; mine.forEach(function(id){ if(theirs.has(id)) overlap++; });
+  const share=overlap/mine.size;
+  const comp=compositionSimilarity(sess,other);
+  const sameTitle=!!(sess.title&&other.title&&sess.title===other.title);
+  if(share>=0.6&&overlap>=2)
+    return {tier:1, share:share, overlap:overlap, mineN:mine.size, comp:comp, volComparable:true,
+            why:overlap+" of "+mine.size+" exercises matched"};
+  if(comp>=0.75)
+    return {tier:2, share:share, overlap:overlap, mineN:mine.size, comp:comp, volComparable:false,
+            why:"same muscle composition"+(overlap?" · "+overlap+" shared exercise"+(overlap===1?"":"s"):"")};
+  if(sameTitle)
+    return {tier:3, share:share, overlap:overlap, mineN:mine.size, comp:comp, volComparable:false,
+            why:"same session type"};
+  return null; }
+/* The best earlier session to compare against: strongest tier, then recency. */
 function previousComparable(sess){
   const t=new Date(sess.completedAt).getTime();
-  const mine=new Set((sess.entries||[]).filter(function(en){ return workingSets(en).length; }).map(function(en){ return en.exId; }));
-  if(!mine.size) return null;
+  if(!loggedExIds(sess).size) return null;
   let best=null;
   completedSessions().forEach(function(o){
     if(o.id===sess.id||new Date(o.completedAt).getTime()>=t) return;
-    const ids=new Set((o.entries||[]).filter(function(en){ return workingSets(en).length; }).map(function(en){ return en.exId; }));
-    if(!ids.size) return;
-    let overlap=0; mine.forEach(function(id){ if(ids.has(id)) overlap++; });
-    const share=overlap/mine.size; if(share<0.4) return;
-    const score=share*100+(o.title===sess.title?25:0)+(new Date(o.completedAt).getTime()/1e13);
-    if(!best||score>best.score) best={sess:o, score:score, share:share, overlap:overlap};
+    const c=comparabilityOf(sess,o); if(!c) return;
+    const score=(4-c.tier)*1000 + c.share*100 + c.comp*50 + (new Date(o.completedAt).getTime()/1e13);
+    if(!best||score>best.score) best=Object.assign({sess:o, score:score}, c);
   });
   return best; }
-/* rolling per-session averages over the N days before this session */
-function baselineAvg(sess,days,offsetDays){
+
+/* ---------------------------------------------------------------- v11 EXERCISE-LEVEL PROGRESSION
+   The headline the user actually asked for: what happened to each exercise, in its own units and
+   its own direction (assistance counts down, added load counts up). This is composition-proof —
+   it compares an exercise only against itself. */
+function bestSetOf(ex,sets,bw){
+  let best=null;
+  (sets||[]).forEach(function(s){ const sc=setLoadScore(ex,+s.weight||0,bw);
+    if(!best||sc>best.score||(sc===best.score&&(+s.reps||0)>best.reps)) best={score:sc, w:+s.weight||0, reps:+s.reps||0}; });
+  return best; }
+/* Compare this session's performance of one exercise against the most recent earlier performance. */
+function exerciseDeltaVs(exId,sess,prevSess){
+  const ex=exById(exId); if(!ex) return null;
+  const findEn=function(s){ return (s.entries||[]).filter(function(en){ return en.exId===exId&&workingSets(en).length; })[0]; };
+  const a=findEn(sess), b=findEn(prevSess); if(!a||!b) return null;
+  const bwA=bodyweightAt(sess.completedAt), bwB=bodyweightAt(prevSess.completedAt);
+  const wsA=workingSets(a), wsB=workingSets(b);
+  const bA=bestSetOf(ex,wsA,bwA), bB=bestSetOf(ex,wsB,bwB);
+  if(!bA||!bB) return null;
+  const kind=loadKind(ex);
+  const repsA=sessionReps(wsA), repsB=sessionReps(wsB);
+  const name=ex.name;
+  /* load moved (direction-aware: for an assist machine, less assistance is the improvement) */
+  const rawDelta=bA.w-bB.w;
+  const loadImproved=bA.score>bB.score, loadWorse=bA.score<bB.score;
+  if(Math.abs(rawDelta)>=0.5&&(loadImproved||loadWorse)){
+    const mag=Math.round(Math.abs(rawDelta)*10)/10;
+    const word=kind==="assist"?(loadImproved?"−"+mag+" kg assistance":"+"+mag+" kg assistance")
+                              :(rawDelta>0?"+"+mag+" kg":"−"+mag+" kg");
+    return {exId:exId, name:name, state:loadImproved?"up":"down", text:word, detail:bB.w+"→"+bA.w+" kg"}; }
+  /* same load — did the reps move? */
+  const repDelta=repsA-repsB;
+  if(repDelta!==0){
+    return {exId:exId, name:name, state:repDelta>0?"up":"down",
+            text:(repDelta>0?"+":"−")+Math.abs(repDelta)+" rep"+(Math.abs(repDelta)===1?"":"s"),
+            detail:repsB+"→"+repsA+" reps at the same load"}; }
+  /* same load, same reps — but more or fewer sets is still a real change */
+  if(wsA.length!==wsB.length){
+    const sd=wsA.length-wsB.length;
+    return {exId:exId, name:name, state:sd>0?"up":"down",
+            text:(sd>0?"+":"−")+Math.abs(sd)+" set"+(Math.abs(sd)===1?"":"s"), detail:wsB.length+"→"+wsA.length+" sets"}; }
+  return {exId:exId, name:name, state:"same", text:"held steady", detail:bA.w+" kg × "+repsA+" reps"}; }
+/* Every exercise in this session that has an earlier performance to compare against. Each is
+   matched against its OWN most recent previous session, not against the chosen comparison
+   session, so an exercise you did last week still reports even if it is new to this pairing. */
+function sessionExerciseProgress(sess){
+  const t=new Date(sess.completedAt).getTime();
+  const rows=[];
+  loggedExIds(sess).forEach(function(exId){
+    const prior=completedSessions().filter(function(o){
+      return o.id!==sess.id && new Date(o.completedAt).getTime()<t &&
+        (o.entries||[]).some(function(en){ return en.exId===exId&&workingSets(en).length; }); })
+      .sort(function(a,b){ return new Date(b.completedAt)-new Date(a.completedAt); })[0];
+    if(!prior){ const ex=exById(exId);
+      rows.push({exId:exId, name:ex?ex.name:exId, state:"new", text:"first time logged", detail:""}); return; }
+    const d=exerciseDeltaVs(exId,sess,prior);
+    if(d){ d.since=prior.completedAt; rows.push(d); }
+  });
+  const order={up:0, same:1, down:2, new:3};
+  rows.sort(function(a,b){ return (order[a.state]-order[b.state])||a.name.localeCompare(b.name); });
+  return { rows:rows,
+    up:rows.filter(function(r){ return r.state==="up"; }).length,
+    same:rows.filter(function(r){ return r.state==="same"; }).length,
+    down:rows.filter(function(r){ return r.state==="down"; }).length,
+    fresh:rows.filter(function(r){ return r.state==="new"; }).length }; }
+/* rolling per-session averages over the N days before this session.
+   v11: `similarOnly` restricts the baseline to sessions of comparable composition. Averaging an
+   arm day into the same number as a leg day and then comparing today's arm day to it produced a
+   guaranteed-negative volume delta that said nothing about performance. When enough similar
+   sessions exist we use those and volume stays meaningful; otherwise we fall back to all
+   sessions and mark the result as sets/reps-only. */
+function baselineAvg(sess,days,offsetDays,similarOnly){
   const end=new Date(sess.completedAt).getTime()-(offsetDays||0)*864e5;
   const start=end-days*864e5;
-  const list=completedSessions().filter(function(o){ if(o.id===sess.id) return false;
+  let list=completedSessions().filter(function(o){ if(o.id===sess.id) return false;
     const t=new Date(o.completedAt).getTime(); return t>=start&&t<end; });
+  let similar=false;
+  if(similarOnly){
+    const sim=list.filter(function(o){ return compositionSimilarity(sess,o)>=0.6; });
+    if(sim.length>=2){ list=sim; similar=true; }
+  }
   if(!list.length) return null;
   const tot=list.reduce(function(a,o){ const x=sessionTotals(o); a.sets+=x.sets; a.reps+=x.reps; a.vol+=x.vol; return a; },{sets:0,reps:0,vol:0});
-  return {n:list.length, sets:tot.sets/list.length, reps:tot.reps/list.length, vol:tot.vol/list.length}; }
+  return {n:list.length, similar:similar, sets:tot.sets/list.length, reps:tot.reps/list.length, vol:tot.vol/list.length}; }
 function deltaPct(now,base){ if(base==null||base===0) return null; return ((now-base)/Math.abs(base))*100; }
 /* a delta chip: absolute change on top, percentage underneath, colour only when it is meaningful */
 function deltaChip(now,base,unit){
@@ -1676,16 +1890,26 @@ function heatLevel(sets){ return sets<=0?0:sets<=6?1:sets<=12?2:3; }
 /* ---- ranked improvements / needs attention ---- */
 /* Only exercises with enough history get a verdict. Everything thinner is surfaced separately as
    "not enough data" rather than being quietly dropped or, worse, called a decline. */
+/* v11 — the boards describe CURRENT training. An exercise you last did six weeks ago (because the
+   machine was occupied, or the gym removed it) is real history but says nothing about how you are
+   training now, so it is moved to its own "not recently trained" bucket instead of sitting at the
+   top of "Biggest improvements". Anything without TREND_MIN_N exposures is "not enough data". */
 function progressionBoard(){
   const all=exerciseProgression();
-  const graded=all.filter(function(p){ return p.n>=3; });
-  const thin=all.filter(function(p){ return p.n<3; });
-  const improving=graded.filter(function(p){ return p.state==="progressing"; })
+  const withTrend=all.map(function(p){ const d=exerciseTrendData(p.ex.id);
+    return Object.assign({},p,{tstate:d.state, stale:d.stale, days:d.days, recentPct:d.pct,
+      recentMean:d.recentMean, baseMean:d.baseMean, recentN:d.recentN, baseN:d.baseN, n:d.n}); });
+  const thin=withTrend.filter(function(p){ return p.tstate==="insufficient"; });
+  const rated=withTrend.filter(function(p){ return p.tstate!=="insufficient"; });
+  const stale=rated.filter(function(p){ return p.stale; })
+    .sort(function(a,b){ return a.days-b.days; });
+  const current=rated.filter(function(p){ return !p.stale; });
+  const improving=current.filter(function(p){ return p.tstate==="above"; })
     .sort(function(a,b){ return b.recentPct-a.recentPct; });
-  const attention=graded.filter(function(p){ return p.state==="regressing"||p.state==="stalled"; })
-    .sort(function(a,b){ return (a.state==="regressing"?0:1)-(b.state==="regressing"?0:1) || a.recentPct-b.recentPct; });
-  const steady=graded.filter(function(p){ return p.state==="stable"; });
-  return {improving:improving, attention:attention, steady:steady, thin:thin, graded:graded.length}; }
+  const attention=current.filter(function(p){ return p.tstate==="below"; })
+    .sort(function(a,b){ return a.recentPct-b.recentPct; });
+  const steady=current.filter(function(p){ return p.tstate==="steady"; });
+  return {improving:improving, attention:attention, steady:steady, thin:thin, stale:stale, graded:current.length}; }
 /* the plain-English "what changed" line for one exercise */
 function progDeltaStr(p){
   if(p.kind==="assist") return p.firstRaw+"kg → "+p.latestRaw+"kg assistance over "+p.n+" sessions";
@@ -1694,22 +1918,56 @@ function progDeltaStr(p){
 
 /* The three headline totals, each carrying its change against the last comparable workout, then the
    same three against the rolling 4-week per-session average. Two references, clearly labelled. */
+/* v11 — exercise-level progression leads, because it is the only view of the session that
+   exercise selection cannot distort. Tonnage still appears, but a ± delta is attached to it only
+   when the comparison session is genuinely like-for-like (tier 1). */
+const PROG_META={ up:{c:"var(--green)",i:"▲"}, down:{c:"var(--red)",i:"▼"}, same:{c:"var(--muted)",i:"="}, new:{c:"var(--accent)",i:"✦"} };
+function recapProgress(r){
+  const p=r.prog; if(!p||!p.rows.length) return "";
+  const bits=[];
+  if(p.up) bits.push(p.up+" improved");
+  if(p.same) bits.push(p.same+" held");
+  if(p.down) bits.push(p.down+" down");
+  if(p.fresh) bits.push(p.fresh+" new");
+  const rows=p.rows.map(function(x){ const m=PROG_META[x.state]||PROG_META.same;
+    return '<div class="exline" data-exhist="'+x.exId+'" style="padding:7px 0;cursor:pointer">'
+      +'<div style="flex:1;min-width:0"><div class="nm" style="font-size:13px">'+x.name+'</div>'
+      +(x.detail?'<div class="histline">'+x.detail+'</div>':'')+'</div>'
+      +'<span class="mono" style="margin-left:8px;color:'+m.c+';font-size:12px;white-space:nowrap">'+m.i+' '+x.text+'</span></div>'; }).join("");
+  return '<div class="tiny" style="margin-top:16px">Exercise progression · vs your last time on each</div>'
+    +'<div class="histline" style="margin-top:2px;color:var(--text);font-weight:600">'+(bits.join(" · ")||"—")+'</div>'
+    +'<div style="margin-top:4px">'+rows+'</div>'; }
 function recapDeltas(r){
   const t=r.totals; if(!t) return "";
   const cell=function(val,unit,base){ return '<div class="dcell"><b>'+val+'</b><span>'+unit+'</span>'+deltaChip(val,base,"")+'</div>'; };
-  const c=r.cmpTotals;
-  let h='<div class="tiny" style="margin-top:16px">Totals</div>'
+  const flat=function(val,unit,note){ return '<div class="dcell"><b>'+val+'</b><span>'+unit+'</span><em style="color:var(--faint)">'+(note||"")+'</em></div>'; };
+  const c=r.cmpTotals, cm=r.cmp;
+  const volTxt=(t.vol>=1000?(Math.round(t.vol/100)/10)+'k':t.vol);
+  let h=recapProgress(r);
+  h+='<div class="tiny" style="margin-top:16px">Session totals</div>'
     +'<div class="dgrid"><div class="dcell"><b>'+t.sets+'</b><span>sets</span></div>'
     +'<div class="dcell"><b>'+t.reps+'</b><span>reps</span></div>'
-    +'<div class="dcell"><b>'+(t.vol>=1000?(Math.round(t.vol/100)/10)+'k':t.vol)+'</b><span>kg volume</span></div></div>';
-  if(c){ h+='<div class="tiny" style="margin-top:14px">vs '+fmtDate(r.cmp.sess.completedAt)+' · '+(r.cmp.sess.title||"last comparable")+'</div>'
-    +'<div class="dgrid">'+cell(t.sets,"sets",c.sets)+cell(t.reps,"reps",c.reps)+cell(t.vol,"kg",c.vol)+'</div>'; }
-  else { h+='<div class="histline" style="margin-top:10px">No comparable earlier workout yet — repeat this session type and the comparison appears.</div>'; }
+    +'<div class="dcell"><b>'+volTxt+'</b><span>kg volume</span></div></div>';
+  if(c&&cm){
+    /* the comparison always says which session it picked and why it was considered comparable */
+    h+='<div class="tiny" style="margin-top:14px">Compared with '+fmtDate(cm.sess.completedAt)+' · '+cm.why+'</div>';
+    if(cm.volComparable){
+      h+='<div class="dgrid">'+cell(t.sets,"sets",c.sets)+cell(t.reps,"reps",c.reps)+cell(t.vol,"kg",c.vol)+'</div>';
+    } else {
+      /* different exercise selection — sets and reps still compare, tonnage does not */
+      h+='<div class="dgrid">'+cell(t.sets,"sets",c.sets)+cell(t.reps,"reps",c.reps)+flat(volTxt,"kg volume","not compared")+'</div>'
+        +'<div class="histline" style="margin-top:6px">Different exercise selection, so total kg is shown for reference only — exercise-by-exercise above is the real read.</div>';
+    }
+  } else {
+    h+='<div class="histline" style="margin-top:10px">No comparable earlier workout yet — repeat this session type and the comparison appears.</div>';
+  }
   if(r.base4){ const b=r.base4;
-    h+='<div class="tiny" style="margin-top:14px">vs 4-week average · '+b.n+' session'+(b.n===1?'':'s')+'</div>'
-      +'<div class="dgrid">'+cell(t.sets,"sets",Math.round(b.sets*10)/10)+cell(t.reps,"reps",Math.round(b.reps))+cell(t.vol,"kg",Math.round(b.vol))+'</div>';
-    if(r.prev4){ const pd=deltaPct(b.vol,r.prev4.vol);
-      h+='<div class="histline" style="margin-top:8px">Your 4-week average volume is '+(pd==null?'—':pctStr(pd))+' against the previous 4 weeks.</div>'; } }
+    h+='<div class="tiny" style="margin-top:14px">vs '+(b.similar?'your last '+b.n+' similar session'+(b.n===1?'':'s'):'4-week average · '+b.n+' session'+(b.n===1?'':'s'))+'</div>'
+      +'<div class="dgrid">'+cell(t.sets,"sets",Math.round(b.sets*10)/10)+cell(t.reps,"reps",Math.round(b.reps))
+      +(b.similar?cell(t.vol,"kg",Math.round(b.vol)):flat(volTxt,"kg volume","mixed types"))+'</div>';
+    if(!b.similar) h+='<div class="histline" style="margin-top:6px">That average mixes different session types, so only sets and reps are compared.</div>';
+    if(r.prev4&&b.similar){ const pd=deltaPct(b.vol,r.prev4.vol);
+      h+='<div class="histline" style="margin-top:8px">Your rolling average volume on this kind of session is '+(pd==null?'—':pctStr(pd))+' against the previous 4 weeks.</div>'; } }
   return h; }
 
 /* ---- v9 training dashboard ---- */
@@ -1748,26 +2006,38 @@ function heatmapHTML(nWeeks){
     +'<div class="hmleg"><span>less</span><span class="hmcell"></span><span class="hmcell l1"></span><span class="hmcell l2"></span><span class="hmcell l3"></span><span>more</span><span style="margin-left:auto">each column = 1 week · Mon→Sun</span></div>'; }
 
 /* ---- v9 biggest improvements / needs attention ---- */
+/* v11 row shape, applied identically everywhere so the boards scan in one pass:
+      exercise name  ->  sparkline  ->  the two actual means  ->  % change
+   No explanatory sentence. Order context appears as a neutral chip when it applies. */
 function boardRow(p,i,tone){
   const t=exerciseTrend(p.ex.id);
+  const ev=trendEvidence(p.ex.id);
+  const oc=orderContext(p.ex.id);
   return '<div class="rrow" data-exhist="'+p.ex.id+'"><span class="rk">'+(i+1)+'</span>'
     +'<div class="rmain"><div class="rnm">'+p.ex.name+(isCustomEx(p.ex)?' <span class="tag" style="color:var(--gold)">custom</span>':'')+'</div>'
-    +'<div class="rsub">'+progDeltaStr(p)+'</div></div>'
+    +'<div class="rsub mono">'+(ev.ok?ev.text:progDeltaStr(p))+'</div>'
+    +(p.stale?'<div class="rsub" style="color:var(--faint)">last trained '+fmtAgo(p.ex&&exerciseHistory(p.ex.id)[0]?exerciseHistory(p.ex.id)[0].date:null)+'</div>':'')
+    +(oc?'<div class="rsub"><span class="tag" style="color:var(--muted);border:1px solid var(--line)">'+oc.text+'</span></div>':'')
+    +'</div>'
     +miniSpark(p.ex.id)
-    +'<span class="tb '+(TB_CLASS[p.state]||"na")+'" style="margin-left:8px">'+t.icon+' '+pctStr(p.recentPct)+'</span></div>'; }
+    +'<span class="tb '+(TB_CLASS[t.state]||"na")+'" style="margin-left:8px">'+t.icon+' '+(ev.ok?pctStr(p.recentPct):(p.n+"/"+TREND_MIN_N))+'</span></div>'; }
 function progressionBoardCard(){
   const b=progressionBoard();
-  const sec=function(title,note,list,empty,tone){
+  const sec=function(title,list,empty,tone){
     return '<div class="tiny" style="margin-top:14px;color:'+tone+'">'+title+'</div>'
-      +'<p class="muted" style="font-size:11px;margin:3px 0 2px">'+note+'</p>'
-      +(list.length?list.slice(0,4).map(function(p,i){ return boardRow(p,i,tone); }).join(""):'<div class="histline" style="padding:6px 0">'+empty+'</div>'); };
+      +(list.length?list.slice(0,5).map(function(p,i){ return boardRow(p,i,tone); }).join(""):'<div class="histline" style="padding:6px 0">'+empty+'</div>'); };
   const thinNames=b.thin.slice(0,6).map(function(p){ return p.ex.name; }).join(", ");
+  const staleNames=b.stale.slice(0,6).map(function(p){ return p.ex.name+" ("+Math.round(p.days/7)+"w)"; }).join(", ");
   return '<div class="card"><div class="tiny">Progression board</div>'
-    +'<p class="muted" style="font-size:11.5px;margin:6px 0 0">Verdicts need 3+ logged sessions and compare your two most recent against the three before them — so one off day never counts as a decline.</p>'
-    +sec("📈 Biggest improvements","Clearly ahead of your recent baseline.",b.improving,"Nothing has cleared the improvement threshold yet.","var(--green)")
-    +sec("⚠ Needs attention","Declining or flat across several sessions — worth a change.",b.attention,"Nothing stalled or declining. 🔥","var(--amber)")
-    +(b.steady.length?'<div class="tiny" style="margin-top:14px;color:var(--accent)">◼ Holding steady · '+b.steady.length+'</div><p class="muted" style="font-size:11px;margin:3px 0 0">Inside normal session-to-session variation — no action needed.</p>':'')
-    +(b.thin.length?'<div class="tiny" style="margin-top:14px;color:var(--faint)">○ Not enough data · '+b.thin.length+'</div><p class="muted" style="font-size:11px;margin:3px 0 0">'+thinNames+(b.thin.length>6?' and more':'')+' — log each of these a third time for a verdict.</p>':'')
+    +'<div class="histline" style="margin-top:4px">Last '+TREND_RECENT_N+' exposures vs the '+TREND_BASE_MIN+'\u2013'+TREND_BASE_MAX+' before \u00b7 needs '+TREND_MIN_N+'+ sessions \u00b7 trained within '+Math.round(TREND_STALE_DAYS/7)+' weeks</div>'
+    +sec("\u25b2 Above baseline",b.improving,"Nothing above baseline right now.","var(--green)")
+    +sec("\u25bc Below baseline",b.attention,"Nothing below baseline.","var(--amber)")
+    +(b.steady.length?'<div class="tiny" style="margin-top:14px;color:var(--accent)">\u25ac In line \u00b7 '+b.steady.length+'</div>'
+      +b.steady.slice(0,3).map(function(p,i){ return boardRow(p,i,"var(--accent)"); }).join(''):'')
+    +(b.stale.length?'<div class="tiny" style="margin-top:14px;color:var(--faint)">\u25cb Not recently trained \u00b7 '+b.stale.length+'</div>'
+      +'<div class="histline" style="margin-top:2px">'+staleNames+(b.stale.length>6?' and more':'')+'</div>':'')
+    +(b.thin.length?'<div class="tiny" style="margin-top:14px;color:var(--faint)">\u25cb Not enough data \u00b7 '+b.thin.length+'</div>'
+      +'<div class="histline" style="margin-top:2px">'+thinNames+(b.thin.length>6?' and more':'')+'</div>':'')
     +'</div>'; }
 
 /* ---- Reports tab cards ---- */
@@ -1904,7 +2174,7 @@ function recommend(r,opts){ r=r||{}; opts=opts||{}; const time=r.time||60; const
   function fill(relaxed,thresh){ let safety=0;
     while(chosen.length<maxEx && safety++<60){ let best=null,bestEx=null,bestCaution=false;
       for(const ex of pool){ if(chosen.find(c=>c.exId===ex.id)) continue; const {val,bad,cautionLead}=exValue(ex,relaxed); if(bad||val<=thresh) continue; if(best===null||val>best){ best=val; bestEx=ex; bestCaution=cautionLead; } }
-      if(!bestEx) break; const leadM=primaryMuscle(bestEx); const sc=scored.find(x=>x.m===leadM); let sets=2;
+      if(!bestEx) break; const leadM=primaryMuscle(bestEx); const sc=scored.find(x=>x.m===leadM); let sets=DEFAULT_WORK_SETS;
       if(sc&&sc.cfg.tier==="primary"&&sc.v<sc.cfg.gh&&sc.status==="ready") sets=3; if(sc&&sc.v>=sc.cfg.cap*0.85) sets=2; if(lowEnergy||highSore) sets=Math.min(sets,2);
       chosen.push({exId:bestEx.id,sets,caution:bestCaution}); for(const [m,c] of Object.entries(bestEx.m)){ if(c>=0.5) covered[m]=(covered[m]||0)+sets*c; } } }
   fill(false,0);
@@ -1914,12 +2184,13 @@ function recommend(r,opts){ r=r||{}; opts=opts||{}; const time=r.time||60; const
   needDirect.forEach(nd=>{ if(chosen.some(c=>exById(c.exId).m[nd.m]>=1)) return;
     const cand=pool.filter(e=>e.m[nd.m]>=1&&!chosen.find(c=>c.exId===e.id)&&!exValue(e,false).bad).sort((a,b)=>(exValue(b,false).val-exValue(a,false).val)||(PREF_SCORE[b.pref]-PREF_SCORE[a.pref]))[0];
     if(!cand) return;                                                  // no direct option (limitation / library) — explained below
-    if(chosen.length<maxEx){ chosen.push({exId:cand.id,sets:2,caution:false}); for(const [m,c] of Object.entries(cand.m)){ if(c>=0.5) covered[m]=(covered[m]||0)+2*c; } }
+    const fillSets=(lowEnergy||highSore)?Math.min(DEFAULT_WORK_SETS,2):DEFAULT_WORK_SETS;   /* v11: gap-fillers honour the same fatigue rule as the main picks */
+    if(chosen.length<maxEx){ chosen.push({exId:cand.id,sets:fillSets,caution:false}); for(const [m,c] of Object.entries(cand.m)){ if(c>=0.5) covered[m]=(covered[m]||0)+fillSets*c; } }
     else { let worstIdx=-1,worstVal=Infinity;
       chosen.forEach((c,ci)=>{ const e=exById(c.exId); const guards=[...protectedM].some(pm=>pm!==nd.m&&e.m[pm]>=1); if(guards) return; const v=exValue(e,false).val; if(v<worstVal){ worstVal=v; worstIdx=ci; } });
-      if(worstIdx>=0) chosen.splice(worstIdx,1,{exId:cand.id,sets:2,caution:false}); } });
+      if(worstIdx>=0) chosen.splice(worstIdx,1,{exId:cand.id,sets:fillSets,caution:false}); } });
   if(chosen.length<Math.min(maxEx,3)) fill(true,-150);   // nothing fresh left — program caution work, flagged
-  let tot=chosen.reduce((s,c)=>s+c.sets,0); while(tot>15){ const b=chosen.filter(c=>c.sets===3)[0]; if(!b) break; b.sets=2; tot--; }
+  let tot=chosen.reduce((s,c)=>s+c.sets,0); while(tot>MAX_SESSION_SETS){ const b=chosen.filter(c=>c.sets>2)[0]; if(!b) break; b.sets--; tot--; }
   chosen.sort((a,b)=>orderScore(a)-orderScore(b));   // strategic order
   /* ---- explainability (direct vs secondary precision) ---- */
   const covF={}; chosen.forEach(c=>{ const e=exById(c.exId); for(const [m,k] of Object.entries(e.m)){ if(k>=0.5) covF[m]=(covF[m]||0)+c.sets*k; } });
@@ -2084,6 +2355,28 @@ function miniDash(){ const flagged=Object.keys(S.muscles).map(m=>({m,g:goalStatu
 /* ---------------- LOGGER (new + edit) ---------------- */
 function loggerCurrentIndex(){ for(let i=0;i<activeSession.entries.length;i++){ const en=activeSession.entries[i]; if(en.sets.some(s=>s.type!=="warm"&&!isLogged(s))) return i; } return activeSession.entries.length-1; }
 function entryDone(en){ const work=en.sets.filter(s=>s.type!=="warm"); return work.length>0 && work.every(isLogged); }
+/* v11 — the next exercise still needing work, searching forward first so the session flows in
+   order, then wrapping to pick up anything skipped earlier. -1 when the workout is complete. */
+function nextIncompleteIndex(from){
+  const e=(activeSession&&activeSession.entries)||[];
+  for(let i=from+1;i<e.length;i++){ if(!entryDone(e[i])) return i; }
+  for(let i=0;i<=from&&i<e.length;i++){ if(!entryDone(e[i])) return i; }
+  return -1; }
+/* Called after a set is logged. If that completed the exercise, drop any manual override on it
+   (so it falls back to the collapsed default), clear the override on the next incomplete one
+   (so it opens), re-render and bring it into view. Returns true if it advanced.
+   Deliberately a no-op while editing a past workout — there is no "flow" to follow there. */
+function maybeAdvance(ei){
+  if(!activeSession||activeSession.mode==="edit") return false;
+  const en=activeSession.entries[ei];
+  if(!en||!entryDone(en)) return false;
+  delete loggerOpen[ei];
+  const nx=nextIncompleteIndex(ei);
+  if(nx>=0) delete loggerOpen[nx];
+  render();
+  if(nx>=0) setTimeout(function(){ const el=document.querySelector('.logex[data-ex="'+nx+'"]');
+    if(el&&el.scrollIntoView) el.scrollIntoView({behavior:"smooth",block:"center"}); },70);
+  return true; }
 function loggerCounts(){ let total=0,done=0; activeSession.entries.forEach(en=>en.sets.filter(s=>s.type!=="warm").forEach(s=>{ total++; if(isLogged(s)) done++; })); return {total,done}; }
 /* P1 — ghost/prefill: suggested weight+reps so a planned set is one tap */
 function ghostFor(en,si){ const e=exById(en.exId);
@@ -2102,7 +2395,10 @@ function viewLogger(){ const isEdit=activeSession.mode==="edit"; const c=loggerC
     +'<button class="btn ghost full danger" data-act="'+(isEdit?'deleteedit':'discard')+'" style="margin:4px 0 100px">'+(isEdit?"Delete this workout":"Discard workout")+'</button>'; }
 function loggerEx(en,i){ const e=exById(en.exId)||{id:en.exId,name:en.asName||"Unknown exercise",m:{},sl:2,rl:8,rh:12,rest:90,equip:"other",type:"isolation"};
   const cur=loggerCurrentIndex(); const done=entryDone(en);
-  const override=loggerOpen.hasOwnProperty(i)?loggerOpen[i]:null; const expanded = override!==null ? override : (!done || i===cur);
+  /* v11 — one exercise open at a time. Previously every unfinished exercise was expanded, so a
+     six-exercise session was a wall of inputs. Now only the current (first incomplete) card is
+     open by default; finishing it collapses it and opens the next. A manual tap still wins. */
+  const override=loggerOpen.hasOwnProperty(i)?loggerOpen[i]:null; const expanded = override!==null ? override : (i===cur);
   const work=en.sets.filter(s=>s.type!=="warm"); const loggedN=work.filter(isLogged).length;
   if(!expanded){ const summary=en.sets.filter(isLogged).map(s=>fmtSet(s.weight,s.reps)).join(", ")||"—";
     const setupTag=hasSetup(en.exId)?' <span class="tag" style="color:var(--gold);border:1px solid rgba(212,175,55,.35)">⚙ setup</span>':'';
@@ -2229,7 +2525,12 @@ function renderSheet(){ const m=document.getElementById("sheetmount"); if(!sheet
     var seg='<div class="seg mini" style="margin-top:10px">'+metrics.map(function(mn){ return '<button data-exmetric="'+mn[0]+'" class="'+(exChartMetric===mn[0]?"on":"")+'">'+mn[1]+'</button>'; }).join("")+'</div>';
     var chart=lineChartSVG(exerciseSeries(id,exChartMetric),{unit:metricUnit(exChartMetric),dirNote:dirNoteFor(ex,exChartMetric)});
     var _bwNote=(loadKind(ex)!=="ext"&&!hasBodyweight())?'<div class="ibody" style="margin-top:6px;color:var(--amber)">Log your bodyweight in Settings and this becomes an effective-load chart (bodyweight '+(_asst?"− assistance":"+ added")+'). Until then it shows '+(_asst?"assistance used":"added load")+' only — no figure is invented.</div>':'';
-    inner='<div class="tiny">'+ex.name+'</div><div class="row" style="gap:6px;margin-top:8px;align-items:center"><span class="statuspill" style="background:'+_tr.c+'22;color:'+_tr.c+'">'+_tr.label+'</span>'+(TIPS[id]?'<button class="btn sm" data-tips="'+id+'" style="color:var(--gold)">Form tips</button>':'')+'<button class="btn sm" data-setup="'+id+'" style="color:var(--gold)">⚙ Setup</button></div><div class="ibody" style="margin-top:6px">'+_tr.note+'</div>'+setupStrip(id)
+    inner='<div class="tiny">'+ex.name+'</div><div class="row" style="gap:6px;margin-top:8px;align-items:center"><span class="statuspill" style="background:'+_tr.c+'22;color:'+_tr.c+'">'+_tr.label+'</span>'+(TIPS[id]?'<button class="btn sm" data-tips="'+id+'" style="color:var(--gold)">Form tips</button>':'')+'<button class="btn sm" data-setup="'+id+'" style="color:var(--gold)">⚙ Setup</button></div><div class="ibody" style="margin-top:6px">'+_tr.note+'</div>'
+      /* v11 — the verdict shows its evidence and its next action right where it is asserted */
+      +'<div class="card" style="margin:8px 0 0;padding:10px 12px;background:var(--panel2)"><div class="tiny">Why this verdict</div>'
+      +'<div class="histline" style="margin-top:3px">'+((trendEvidence(id)||{}).text||'Not enough history yet.')+'</div>'
+      +(trendAction(id)?'<div class="histline" style="margin-top:5px;color:var(--accent)">\u2192 '+trendAction(id)+'</div>':'')+'</div>'
+      +setupStrip(id)
       +recGrid
       +'<div class="tiny" style="margin-top:14px">Progress · '+metricLabel(exChartMetric,ex)+'</div>'+seg+'<div class="chartwrap">'+chart+'</div>'+_bwNote
       +'<div class="tiny" style="margin-top:12px">History</div><div style="margin-top:6px">'+(h.length?h.map(function(x){ return '<div class="contrib"><div><b>'+fmtDate(x.date)+(x.asName&&normSearch(x.asName)!==normSearch(ex.name)?' <span class="tag">as “'+escAttr(x.asName)+'”</span>':'')+'</b><div class="muted" style="font-size:12px;margin-top:2px">'+x.sets.map(function(s){ return fmtSet(s.weight,s.reps); }).join("  ")+'</div></div><span class="c-ef">'+(function(){ if(loadKind(ex)==="ext") return rawVolume(x.sets)+'kg'; if(x.bw==null) return sessionReps(x.sets)+' reps'; return Math.round(sessionVolumeFor(ex,x.sets,x.bw))+'kg'; })()+'</span></div>'; }).join(""):'<div class="empty">No logged sessions.</div>')+'</div>'; }
@@ -2366,7 +2667,7 @@ function renderSheet(){ const m=document.getElementById("sheetmount"); if(!sheet
   const _ls=m.querySelector('[data-limsave]'); if(_ls) _ls.onclick=()=>{ if(!limDraft.rules.length){ closeSheet(); return; } setLimitation(limDraft.rules.slice(),null,limDraft.note,limDraft.dur); closeSheet(); render(); };
   const _lr=m.querySelector('[data-limremove]'); if(_lr) _lr.onclick=()=>{ clearLimitation(); closeSheet(); render(); };
   m.querySelectorAll('[data-pick]').forEach(b=>b.onclick=()=>{ activeSession.entries[sheet.data].exId=b.dataset.pick; saveActive(); closeSheet(); render(); });
-  m.querySelectorAll('[data-add]').forEach(b=>b.onclick=()=>{ const ex=exById(b.dataset.add); if(!ex) return; activeSession.entries.push({exId:ex.id, sets:Array.from({length:ex.sl||2},()=>({weight:"",reps:"",type:"work",done:false}))}); saveActive(); closeSheet(); render(); });
+  m.querySelectorAll('[data-add]').forEach(b=>b.onclick=()=>{ const ex=exById(b.dataset.add); if(!ex) return; activeSession.entries.push({exId:ex.id, sets:Array.from({length:DEFAULT_WORK_SETS},()=>({weight:"",reps:"",type:"work",done:false}))}); loggerOpen[activeSession.entries.length-1]=true; saveActive(); closeSheet(); render(); });
   /* ---- v9 custom exercise composer ---- */
   (function(){
     var grab=function(){ var n=m.querySelector('#cxName'); if(n) customDraft.name=n.value; };
@@ -2384,7 +2685,8 @@ function renderSheet(){ const m=document.getElementById("sheetmount"); if(!sheet
       if(id){ var c=customRec(id); if(c){ c.load=customDraft.load||"ext"; } renameCustomExercise(id,name); setCustomGroup(id,customDraft.group); closeSheet(); render(); return; }
       var newId=addCustomExercise(name,customDraft.group,{load:customDraft.load});
       if(newId&&activeSession){ var ex=exById(newId);
-        activeSession.entries.push({exId:newId, asName:name, custom:true, sets:Array.from({length:(ex&&ex.sl)||2},function(){ return {weight:"",reps:"",type:"work",done:false}; })});
+        activeSession.entries.push({exId:newId, asName:name, custom:true, sets:Array.from({length:DEFAULT_WORK_SETS},function(){ return {weight:"",reps:"",type:"work",done:false}; })});
+        loggerOpen[activeSession.entries.length-1]=true;
         saveActive(); }
       customDraft={name:"",group:"",load:"ext",id:null}; closeSheet(); render(); };
   })();
@@ -2464,6 +2766,32 @@ const TOD_BUCKETS=[["Early (before 9am)",0,9],["Morning (9am–12pm)",9,12],["Af
 function timeOfDayCounts(){ return TOD_BUCKETS.map(([label,lo,hi])=>{ let n=0; completedSessions().forEach(s=>{ const h=new Date(s.startedAt||s.completedAt).getHours(); if(h>=lo&&h<hi) n++; }); return {label,n}; }); }
 function bestTimeWindow(){ const total=completedSessions().length; const buckets=timeOfDayCounts(); const best=buckets.slice().sort((a,b)=>b.n-a.n)[0];
   if(!best||best.n===0) return null; return {window:best.label, n:best.n, total, early:total<8}; }
+/* v11 — the full weekday distribution, presented as fact rather than judgement. Which day you
+   train least is as informative as which you train most, and neither is inherently good or bad. */
+function weekdayPattern(){
+  const c=dayOfWeekCounts(); const total=c.reduce(function(a,b){ return a+b; },0);
+  if(total<6) return null;
+  const names=["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+  const full=["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
+  let hi=0, lo=0;
+  c.forEach(function(n,i){ if(n>c[hi]) hi=i; if(n<c[lo]) lo=i; });
+  return {counts:c, names:names, total:total, max:Math.max.apply(null,c),
+    most:{day:full[hi], n:c[hi], share:c[hi]/total},
+    least:{day:full[lo], n:c[lo], share:c[lo]/total}}; }
+/* working sets per week for the last n weeks — the chart asked for, alongside workouts-per-week */
+function weeklySetsSeries(n){
+  const out=[]; const base=startOfWeek();
+  for(let i=n-1;i>=0;i--){ const st=new Date(base); st.setDate(st.getDate()-i*7); const en=new Date(st); en.setDate(en.getDate()+7);
+    const list=completedSessions().filter(function(x){ const t=new Date(x.completedAt); return t>=st&&t<en; });
+    out.push({sets:list.reduce(function(a,x){ return a+sessionSets(x); },0), sessions:list.length, current:i===0, start:new Date(st)}); }
+  return out; }
+/* v11 replaces "0 week streak" — a number that is zero most of the time and says nothing — with
+   how often the weekly target was actually hit over a window you can verify against the bars. */
+function consistencyRecord(weeks){
+  const target=S.settings.sessionsPerWeek||4;
+  const ser=weeklySetsSeries(weeks||8);
+  const hit=ser.filter(function(w){ return w.sessions>=target; }).length;
+  return {hit:hit, weeks:ser.length, target:target, ser:ser}; }
 function progressionInsights(){ return exerciseProgression().filter(p=>p.n>=3); }
 function bestWeekSoFar(){ const wk={}; completedSessions().forEach(s=>{ const k=weekKeyOf(s.completedAt); const o=wk[k]||(wk[k]={sessions:0,sets:0,muscles:new Set()}); o.sessions++; o.sets+=sessionSets(s);
     (s.entries||[]).forEach(en=>{ if(workingSets(en).length){ const ex=exById(en.exId); const pm=ex&&primaryMuscle(ex); if(pm) o.muscles.add(pm); } }); });
@@ -2505,55 +2833,112 @@ function weeklyScorecard(){ const w=weekStatus(); const vol=weeklyVolume();
   return '<div class="card"><div style="display:flex;justify-content:space-between;align-items:center"><div class="tiny">Weekly scorecard · Mon–Sun</div><span class="statuspill" style="background:'+tl+'22;color:'+tl+'">'+(w.sess>=w.target?"On track":w.sess>=w.target-1?"Almost there":"Behind")+'</span></div>'
     +'<div class="scorechips"><div class="sc"><b style="color:'+tl+'">'+w.sess+'/'+w.target+'</b><span>sessions</span></div><div class="sc"><b>'+sets+'</b><span>sets</span></div><div class="sc"><b>'+trained+'</b><span>muscles</span></div><div class="sc"><b style="color:'+(primaryMet===primaryAll?"var(--green)":"var(--amber)")+'">'+primaryMet+'/'+primaryAll+'</b><span>primary</span></div></div>'
     +'<div class="tiny" style="margin-top:12px">Weekly sets · last 8 weeks</div><div class="spark">'+bars+'</div></div>'; }
-function insightsBlock(){ let h=coachCard()+weeklyScorecard(); const cards=[]; const unlock=[];
-  // needs attention (primary direct gaps)
-  const na=needsAttentionPrimary(); if(na.length) cards.push(insightCard({tier:"warn",badge:"Needs attention",title:na.slice(0,3).map(m=>S.muscles[m].label).join(", ")+(na.length>1?" need direct work":" needs direct work"),body:"Primary focus "+(na.length>1?"muscles are":"muscle is")+" below the weekly minimum and recovered enough to train.",muscle:na[0]}));
-  // best next move
-  const nxt=muscleScores({}).filter(s=>s.trainable&&s.v<s.cfg.gl); const al=activeLimitation();
-  if(nxt.length) cards.push(insightCard({tier:"info",badge:"Best next move",title:"Train "+nxt.slice(0,2).map(s=>S.muscles[s.m].label.toLowerCase()).join(" + "),body:"Highest-value focus right now from recovery, weekly gaps and priority"+(al?" (avoiding "+al.name.toLowerCase()+")":"")+"."}));
-  // direct vs secondary
-  const sd=secondaryDominant()[0]; if(sd) cards.push(insightCard({tier:"warn",badge:"Direct vs secondary",title:S.muscles[sd.m].label+" is mostly secondary volume",body:sd.con.direct.toFixed(1)+" direct vs <b>"+sd.con.secondary.toFixed(1)+" secondary</b> sets this week. Add one direct "+S.muscles[sd.m].label.toLowerCase()+" exercise to train it intentionally.",muscle:sd.m}));
-  // best training day
-  const bd=bestTrainingDay(); if(bd) cards.push(insightCard({tier:"info",badge:"Pattern",metric:Math.round(bd.share*100)+"%",title:bd.day+" is your most consistent training day",body:bd.n+" of your "+bd.total+" logged sessions land on "+bd.day+"."}));
-  // best time window
-  const tw=bestTimeWindow(); if(tw) cards.push(insightCard({tier:"info",badge:tw.early?"Early signal":"Pattern",title:(tw.early?"Early signal: you ":"You ")+"train most in the "+tw.window.toLowerCase(),body:tw.n+" of "+tw.total+" sessions"+(tw.early?" — based on limited data so far, keep logging to confirm.":".")}));
-  // progression
-  const board=progressionBoard(); const prog=board.graded?board.improving.concat(board.attention):[];
-  const up=board.improving[0]; const flat=board.attention[0];
-  if(up) cards.push(insightCard({tier:"good",badge:"Trending up",metric:"▲ "+pctStr(up.recentPct),title:up.ex.name+" is climbing",body:progDeltaStr(up)+". Keep pushing."}));
-  if(flat) cards.push(insightCard({tier:"warn",badge:flat.state==="regressing"?"Declining":"Stalled",title:flat.ex.name+(flat.state==="regressing"?" is going backwards":" has plateaued"),
-    body:progDeltaStr(flat)+". "+(flat.state==="regressing"?"Down across more than one session — check sleep, food and recovery before chasing the number.":"Try a small load change, an extra rep, or a fresh variation.")}));
-  // best week
-  const bw=bestWeekSoFar(); if(bw) cards.push(insightCard({tier:"good",badge:"Milestone",title:"Best week so far: "+bw.sessions+" sessions, "+bw.sets+" sets",body:bw.muscles+" muscle groups trained"+(bw.isThis?" — and it’s this week. 🔥":".")}));
-  h+=cards.join("");
-  // unlock hints for thresholded insights not yet available
-  if(!bd) unlock.push("most consistent day (log ~6 sessions)");
-  if(completedSessions().length<8) unlock.push("time-of-day patterns (8+ sessions)");
-  if(!board.graded) unlock.push("exercise progression verdicts (3+ logs of an exercise)");
-  if(unlock.length) h+='<div class="card" style="background:var(--panel2)"><div class="ibody">🔒 Keep logging to unlock: '+unlock.join("; ")+'.</div></div>';
+/* ---------------------------------------------------------------- v11 PATTERN + VOLUME CARDS
+   Charts and counts, no scores. Every element here answers with a number, a bar or a date. */
+function barChartCard(title,sub,series,valKey,labelFn){
+  const max=Math.max.apply(null,[1].concat(series.map(function(x){ return x[valKey]; })));
+  const bars=series.map(function(x){
+    return '<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px">'
+      +'<div style="height:56px;width:100%;display:flex;align-items:flex-end">'
+      +'<i style="width:100%;height:'+Math.round(x[valKey]/max*100)+'%;min-height:3px;background:'+(x.current?'var(--accent)':'var(--grey)')+';border-radius:4px 4px 0 0;display:block"></i></div>'
+      +'<span class="mono" style="font-size:10px;color:var(--muted)">'+x[valKey]+'</span></div>'; }).join("");
+  return '<div class="card"><div class="tiny">'+title+'</div>'
+    +(sub?'<div class="histline" style="margin-top:2px">'+sub+'</div>':'')
+    +'<div style="display:flex;gap:4px;margin-top:10px;align-items:flex-end">'+bars+'</div></div>'; }
+/* Weekday distribution — most AND least common, stated neutrally. */
+function weekdayCard(){
+  const w=weekdayPattern();
+  if(!w) return '<div class="card"><div class="tiny">Training days</div><div class="empty" style="padding:14px">Log ~6 sessions to see your weekday pattern.</div></div>';
+  const bars=w.counts.map(function(n,i){
+    const isHi=w.names[i]===w.names[w.counts.indexOf(w.max)];
+    return '<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px">'
+      +'<div style="height:44px;width:100%;display:flex;align-items:flex-end">'
+      +'<i style="width:100%;height:'+Math.round(n/Math.max(1,w.max)*100)+'%;min-height:3px;background:'+(isHi?'var(--accent)':'var(--grey)')+';border-radius:4px 4px 0 0;display:block"></i></div>'
+      +'<span class="mono" style="font-size:10px;color:var(--muted)">'+w.names[i]+'</span>'
+      +'<span class="mono" style="font-size:10px;color:var(--faint)">'+n+'</span></div>'; }).join("");
+  return '<div class="card"><div class="tiny">Training days · all '+w.total+' sessions</div>'
+    +'<div style="display:flex;gap:4px;margin-top:10px;align-items:flex-end">'+bars+'</div>'
+    +'<div class="histline" style="margin-top:10px">Most: <b>'+w.most.day+'</b> · '+w.most.n+' sessions ('+Math.round(w.most.share*100)+'%)</div>'
+    +'<div class="histline">Least: <b>'+w.least.day+'</b> · '+w.least.n+' session'+(w.least.n===1?'':'s')+' ('+Math.round(w.least.share*100)+'%)</div></div>'; }
+/* Time-of-day distribution, as counts rather than a claim. */
+function timeOfDayCard(){
+  const b=timeOfDayCounts(); const total=b.reduce(function(a,x){ return a+x.n; },0);
+  if(!total) return "";
+  const max=Math.max.apply(null,[1].concat(b.map(function(x){ return x.n; })));
+  const rows=b.map(function(x){
+    return '<div class="exline" style="padding:6px 0"><div style="flex:1"><div class="nm" style="font-size:13px">'+x.label+'</div>'
+      +'<div class="bar" style="margin-top:5px"><i style="width:'+Math.round(x.n/max*100)+'%"></i></div></div>'
+      +'<span class="mono" style="margin-left:10px">'+x.n+'</span></div>'; }).join("");
+  const top=b.slice().sort(function(p,q){ return q.n-p.n; })[0];
+  return '<div class="card"><div class="tiny">Training time · all '+total+' sessions</div><div style="margin-top:6px">'+rows+'</div>'
+    +'<div class="histline" style="margin-top:8px">Most common: <b>'+top.label+'</b> · '+top.n+' of '+total+'</div></div>'; }
+/* Consistency stated as a verifiable record rather than a streak that is usually zero. */
+function consistencyCard(){
+  const c=consistencyRecord(8);
+  const col=c.hit>=c.weeks*0.75?"var(--green)":c.hit>=c.weeks*0.5?"var(--amber)":"var(--red)";
+  return '<div class="card"><div class="tiny">Consistency</div>'
+    +'<div style="margin-top:6px;font-weight:700;font-size:15px">Hit '+c.target+'+ sessions in <span style="color:'+col+'">'+c.hit+' of the last '+c.weeks+' weeks</span></div>'
+    +'<div class="histline" style="margin-top:4px">Target is '+c.target+' sessions per week (Settings).</div></div>'; }
+
+/* ---------------------------------------------------------------- v11 INSIGHTS
+   Cut back to insights that carry a number, a chart or a date. Removed outright: the 0-100
+   momentum score and its ring, "Momentum: strong", "Best next move", and the all-time
+   "best week so far" milestone — none of them changed a decision, and they pushed the
+   comparative data further down the screen. */
+function insightsBlock(){ const cards=[];
+  const na=needsAttentionPrimary();
+  if(na.length) cards.push(insightCard({tier:"warn",badge:"Below weekly minimum",
+    title:na.slice(0,3).map(m=>S.muscles[m].label).join(", "),
+    body:na.slice(0,3).map(function(m){ const v=weeklyVolume()[m]||0; return S.muscles[m].label+" "+v.toFixed(1)+"/"+S.muscles[m].min+" sets"; }).join(" · "),muscle:na[0]}));
+  const sd=secondaryDominant()[0];
+  if(sd) cards.push(insightCard({tier:"warn",badge:"Mostly secondary volume",title:S.muscles[sd.m].label,
+    body:sd.con.direct.toFixed(1)+" direct vs <b>"+sd.con.secondary.toFixed(1)+" secondary</b> sets this week.",muscle:sd.m}));
+  let h=cards.join("");
+  const unlock=[];
+  if(!weekdayPattern()) unlock.push("weekday pattern (log ~6 sessions)");
+  if(completedSessions().length<8) unlock.push("time-of-day pattern (8+ sessions)");
+  const board=progressionBoard();
+  if(!board.graded) unlock.push("progression verdicts ("+TREND_MIN_N+"+ logs of an exercise)");
+  if(unlock.length) h+='<div class="card" style="background:var(--panel2)"><div class="ibody">Not yet available: '+unlock.join("; ")+'.</div></div>';
   return h; }
 
-function viewStats(){ const total=completedSessions().length; const streak=calcStreak(); const bm=bestMonth();
+/* ---------------------------------------------------------------- v11 STATS
+   Ordered by what is actually scannable and comparative:
+     1  Progression board   name -> sparkline -> real numbers -> % change
+     2  Recent achievements with dates
+     3  Volume + body-part distribution with the timeframe toggle
+     4  Most-used exercises with bar, count and trend
+     5  Behavioural pattern: weekly bars, weekday distribution, training time, consistency
+   Removed: the momentum score and ring, "Momentum: strong", "Best next move", the all-time
+   "best week" milestone and the week streak. Each was interpretation or an all-time trophy
+   rather than a number, a chart or a date. */
+function viewStats(){
   const pBtns=[["week","Week"],["30","30d"],["90","90d"],["all","All"]].map(([v,l])=>'<button data-statsperiod="'+v+'" class="'+(statsPeriod===v?'on':'')+'">'+l+'</button>').join("");
-  const weeks=weeklyCounts(10); const wmax=Math.max(1,...weeks.map(w=>w.count));
-  const wbars=weeks.map(w=>'<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px"><div style="height:56px;width:100%;display:flex;align-items:flex-end"><i style="width:100%;height:'+Math.round(w.count/wmax*100)+'%;min-height:3px;background:'+(w.current?'var(--accent)':'var(--grey)')+';border-radius:4px 4px 0 0;display:block"></i></div><span class="mono" style="font-size:10px;color:var(--muted)">'+w.count+'</span></div>').join("");
   const sbp=setsByBodyPartP(); const ent=Object.entries(sbp).filter(([m,v])=>v>0).sort((a,b)=>b[1]-a[1]); const smax=Math.max(1,...ent.map(e=>e[1]));
   const tierC={primary:"var(--gold)",secondary:"var(--accent)",maintenance:"var(--muted)"};
   const sbpRows=ent.length?ent.map(([m,v])=>'<div class="exline" data-muscle-stat="'+m+'" style="padding:7px 0;cursor:pointer"><div style="flex:1"><div class="nm" style="font-size:13px">'+S.muscles[m].label+'</div><div class="bar" style="margin-top:5px"><i style="width:'+Math.round(v/smax*100)+'%;background:'+tierC[S.muscles[m].tier]+'"></i></div></div><span class="mono" style="margin-left:10px">'+v.toFixed(1)+'</span><span class="muted" style="margin-left:8px">›</span></div>').join(""):'<div class="empty" style="padding:16px">No sets in this period.</div>';
-  const mu=mostUsedExercises(6); const muRows=mu.length?mu.map(x=>'<div class="exline" data-exhist="'+x.ex.id+'" style="padding:7px 0;cursor:pointer"><div class="nm" style="font-size:13px;flex:1;min-width:0">'+(x.ex?x.ex.name:'?')+'</div>'+miniSpark(x.ex.id)+'<span class="sets" style="margin-left:8px">'+x.n+'</span><span style="margin-left:6px">'+trendBadge(x.ex.id)+'</span></div>').join(""):'<div class="empty" style="padding:16px">Nothing logged.</div>';
-  const prog=exerciseProgression().slice(0,6); const progRows=prog.length?prog.map(p=>
-    '<div class="exline" data-exhist="'+p.ex.id+'" style="padding:7px 0;cursor:pointer"><div style="flex:1;min-width:0"><div class="nm" style="font-size:13px">'+p.ex.name+'</div><div class="histline">'+progDeltaStr(p)+'</div></div>'
-    +miniSpark(p.ex.id)+'<span style="margin-left:8px">'+trendBadge(p.ex.id)+'</span></div>').join(""):'<div class="empty" style="padding:16px">Log an exercise twice to see progression.</div>';
+  /* most-used now carries usage count, sparkline AND the change, per the same row grammar */
+  const mu=mostUsedExercises(6); const mumax=Math.max(1,...mu.map(x=>x.n));
+  const muRows=mu.length?mu.map(x=>'<div class="exline" data-exhist="'+x.ex.id+'" style="padding:7px 0;cursor:pointer">'
+    +'<div style="flex:1;min-width:0"><div class="nm" style="font-size:13px">'+(x.ex?x.ex.name:'?')+'</div>'
+    +'<div class="bar" style="margin-top:5px"><i style="width:'+Math.round(x.n/mumax*100)+'%"></i></div></div>'
+    +miniSpark(x.ex.id)+'<span class="sets" style="margin-left:8px">'+x.n+'</span><span style="margin-left:6px">'+trendBadge(x.ex.id)+'</span></div>').join(""):'<div class="empty" style="padding:16px">Nothing logged.</div>';
   const weekTop=statsPeriod==="week"?weekSummaryCard():"";
-  return '<div style="display:flex;align-items:center;gap:8px;margin:14px 2px 2px"><span style="font-size:18px">✨</span><div class="tiny" style="font-size:13px;letter-spacing:.02em;text-transform:none;color:var(--text);font-weight:700">Insights</div></div>'
-    +insightsBlock()+progressionBoardCard()+recentAchievementsCard(6)
-    +'<div style="display:flex;align-items:center;gap:8px;margin:18px 2px 2px"><div class="tiny" style="font-size:13px;letter-spacing:.02em;text-transform:none;color:var(--text);font-weight:700">Charts & history</div></div>'
-    +weekTop+'<div class="card"><div class="kpi"><div class="k" data-act="goto-history"><b>'+total+'</b><span>workouts</span></div><div class="k" data-act="goto-history"><b>'+streak+'</b><span>week streak</span></div><div class="k" data-act="goto-history"><b style="font-size:15px;line-height:2">'+(bm?monthLabel(bm.k):'\u2014')+'</b><span>best month'+(bm?' · '+bm.v:'')+'</span></div></div></div>'
-    +'<div class="card"><div class="tiny">Workouts · last 10 weeks</div><div style="display:flex;gap:4px;margin-top:10px;align-items:flex-end">'+wbars+'</div></div>'
+  const hdr=function(t,c){ return '<div style="display:flex;align-items:center;gap:8px;margin:18px 2px 2px"><div class="tiny" style="font-size:13px;letter-spacing:.02em;text-transform:none;color:'+(c||"var(--text)")+';font-weight:700">'+t+'</div></div>'; };
+  return progressionBoardCard()
+    +recentAchievementsCard(6)
+    +insightsBlock()
+    +hdr("Volume & distribution")
+    +weekTop
     +'<div class="card" style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px"><span class="tiny">Window</span><div class="seg" style="width:60%">'+pBtns+'</div></div>'
     +'<div class="card"><div class="tiny">Sets by body part · tap any row to explain this '+(statsPeriod==="week"?"week (Mon–Sun)":statsPeriod==="all"?"period":statsPeriod+"-day window")+'</div><div style="margin-top:8px">'+sbpRows+'</div></div>'
-    +'<div class="card"><div class="tiny">Most-used exercises</div><div style="margin-top:6px">'+muRows+'</div></div>'
-    +'<div class="card"><div class="tiny">Progression · biggest movers (e1RM)</div><div style="margin-top:6px">'+progRows+'</div></div>'; }
+    +'<div class="card"><div class="tiny">Most-used exercises · tap for records and trend</div><div style="margin-top:6px">'+muRows+'</div></div>'
+    +hdr("Training pattern")
+    +barChartCard("Working sets · last 8 weeks","",weeklySetsSeries(8),"sets")
+    +barChartCard("Workouts · last 10 weeks","",weeklyCounts(10).map(function(w){ return {count:w.count,current:w.current}; }),"count")
+    +consistencyCard()
+    +weekdayCard()
+    +timeOfDayCard(); }
 
 /* ---------------- BODY (P6 two-layer + P7 grid + P5 attribution) ---------------- */
 const BODY_GROUPS=[["Chest & push",["upper_chest","chest","triceps","front_delts"]],["Back & pull",["back_lats","upper_back","biceps"]],["Delts",["side_delts","rear_delts"]],["Legs",["quads","hamstrings","glutes","calves"]],["Core & other",["abs","lower_back","forearms"]]];
@@ -2781,7 +3166,7 @@ function renderFinish(){ const m=document.getElementById("finmount"); if(!m) ret
 /* ============================================================================ WIRING ============================================================================ */
 function deriveTitle(entries){ const ms={}; entries.forEach(en=>{ const ex=exById(en.exId); const n=workingSets(en).length; if(!ex||!n) return; const pm=primaryMuscle(ex); if(pm) ms[pm]=(ms[pm]||0)+n; });
   const top=Object.entries(ms).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([m])=>S.muscles[m]?S.muscles[m].label:m); return top.length?top.join(" · "):"Workout"; }
-function startSession(rec){ loggerOpen={}; rerollCounts={}; const entries=(rec?rec.exercises:[]).map(c=>{ const e=exById(c.exId); return { exId:c.exId, sets:Array.from({length:c.sets||e.sl||2},()=>({weight:"",reps:"",type:"work",done:false})) }; });
+function startSession(rec){ loggerOpen={}; rerollCounts={}; const entries=(rec?rec.exercises:[]).map(c=>{ const e=exById(c.exId); return { exId:c.exId, sets:Array.from({length:c.sets||DEFAULT_WORK_SETS},()=>({weight:"",reps:"",type:"work",done:false})) }; });
   activeSession={ id:uid(), startedAt:iso(new Date()), dateISO:new Date().toISOString().slice(0,10), title:rec?rec.title:"Empty workout", mode:rec?"adaptive":"manual", entries }; viewingLogger=true; pendingRec=null; saveActive();
   try{ history.pushState({iron:"workout"},""); }catch(e){} route="today"; render(); }
 function finishWorkout(){ const logged=activeSession.entries.reduce((n,en)=>n+workingSets(en).length,0);
@@ -2810,19 +3195,24 @@ function buildRecap(sess){ const setsN=sess.entries.reduce((a,en)=>a+workingSets
   const totals=sessionTotals(sess);
   const cmp=previousComparable(sess);
   const cmpTotals=cmp?sessionTotals(cmp.sess):null;
-  const base4=baselineAvg(sess,28,0);
-  const prev4=baselineAvg(sess,28,28);
+  const base4=baselineAvg(sess,28,0,true);
+  const prev4=baselineAvg(sess,28,28,true);
+  const prog=sessionExerciseProgress(sess);   /* v11: composition-proof, leads the recap */
   const customUsed=(sess.entries||[]).filter(function(en){ const ex=exById(en.exId); return workingSets(en).length&&isCustomEx(ex)&&ex.customStatus==="unmapped"; }).length;
   const dur=sess.startedAt?Math.max(1,Math.round(hoursBetween(sess.startedAt,sess.completedAt)*60)):null;
   const muscles=[...new Set(sess.entries.flatMap(en=>{ const ex=exById(en.exId); const n=workingSets(en).length; return (ex&&n)?Object.entries(ex.m).filter(([m,c])=>c>=0.5).map(([m])=>m):[]; }))].map(m=>S.muscles[m]?S.muscles[m].label:m);
   const ach=sessionAchievements(sess); const prs=ach.map(achText);
   const vbp=weeklyVolume([sess]); const parts=Object.entries(vbp).filter(([m,v])=>v>0).sort((a,b)=>b[1]-a[1]).slice(0,6).map(([m,v])=>({label:S.muscles[m].label,v}));
+  /* v11 — the coach line leads with what actually moved on the exercises, not with tonnage. */
   let coach=""; const mom=momentumScore(); const na=needsAttentionPrimary();
-  if(prs.length) coach="🏆 "+prs.length+" new achievement"+(prs.length>1?"s":"")+" this session — momentum "+mom.score+"/100.";
+  const movers=prog.rows.filter(function(x){ return x.state==="up"; }).slice(0,2).map(function(x){ return x.name+" "+x.text; });
+  if(prs.length) coach="🏆 "+prs.length+" new achievement"+(prs.length>1?"s":"")+" this session"+(movers.length?" — "+movers.join(", "):"")+".";
+  else if(prog.up) coach=prog.up+" exercise"+(prog.up===1?"":"s")+" improved"+(movers.length?": "+movers.join(", "):"")+".";
+  else if(prog.down&&!prog.up) coach="Nothing moved up this session — "+prog.down+" down, "+prog.same+" held. One flat session is normal; watch it next time.";
   else if(na.length) coach="Momentum "+mom.score+"/100. Still needs direct work this week: "+na.slice(0,2).map(m=>S.muscles[m].label.toLowerCase()).join(", ")+".";
   else coach="Momentum "+mom.score+"/100 — every primary muscle is on track this week. 🔥";
   return {id:sess.id, setsN, exN:sess.entries.filter(en=>workingSets(en).length).length, dur, muscles, prs, ach, parts, title:sess.title, coach,
-          totals, cmp, cmpTotals, base4, prev4, customUsed, date:sess.completedAt}; }
+          totals, cmp, cmpTotals, base4, prev4, customUsed, prog, composition:sessionComposition(sess), date:sess.completedAt}; }
 function editWorkout(id){ const s=S.sessions.find(x=>x.id===id); if(!s) return; loggerOpen={}; activeSession={ id:uid(), editingId:id, startedAt:s.startedAt||s.completedAt, dateISO:new Date(s.completedAt).toISOString().slice(0,10), title:s.title, mode:"edit", entries:JSON.parse(JSON.stringify(s.entries)) }; viewingLogger=true; saveActive(); go("today"); }
 function duplicateWorkout(id){ const s=S.sessions.find(x=>x.id===id); if(!s) return; loggerOpen={}; activeSession={ id:uid(), startedAt:iso(new Date()), dateISO:new Date().toISOString().slice(0,10), title:s.title, mode:"manual", entries:s.entries.map(en=>({exId:en.exId, sets:en.sets.map(()=>({weight:"",reps:"",type:"work",done:false}))})) }; viewingLogger=true; saveActive(); try{ history.pushState({iron:"workout"},""); }catch(e){} go("today"); }
 /* v10: a deliberate delete is tombstoned, so neither the journal nor a cloud rehydrate
@@ -2862,14 +3252,20 @@ function wireScreen(){
   document.querySelectorAll("[data-ravoid]").forEach(b=>b.onclick=()=>{ const m=b.dataset.ravoid; const i=readinessDraft.avoid.indexOf(m); if(i>=0) readinessDraft.avoid.splice(i,1); else readinessDraft.avoid.push(m); document.getElementById("app").innerHTML=header()+'<div class="reveal">'+viewReadiness()+'</div>'; wireScreen(); });
   const rt=document.querySelector("[data-rtime]"); if(rt) rt.oninput=()=>{ readinessDraft.time=+rt.value; const o=document.getElementById("rtime"); if(o) o.textContent=rt.value; };
   // logger inputs — AUTOSAVE on every edit (P1)
-  document.querySelectorAll('.inp[data-f]').forEach(inp=>{ inp.oninput=()=>{ const ei=+inp.dataset.ei, si=+inp.dataset.si, f=inp.dataset.f; activeSession.entries[ei].sets[si][f]=inp.value; saveActive(); }; });
+  document.querySelectorAll('.inp[data-f]').forEach(inp=>{
+    inp.oninput=()=>{ const ei=+inp.dataset.ei, si=+inp.dataset.si, f=inp.dataset.f; activeSession.entries[ei].sets[si][f]=inp.value; saveActive(); };
+    /* v11 — completion is only evaluated on blur/change, never on input. Checking per keystroke
+       would collapse the card mid-number (typing "1" of "180" can momentarily look complete). */
+    inp.onchange=()=>{ const ei=+inp.dataset.ei; maybeAdvance(ei); };
+  });
   const wd=document.querySelector("[data-wdate]"); if(wd) wd.onchange=()=>{ activeSession.dateISO=wd.value; saveActive(); };
   // P1 — tap ✓ commits the ghost values (one-tap log); only edit what you changed
   document.querySelectorAll("[data-log]").forEach(b=>b.onclick=()=>{ const [ei,si]=b.dataset.log.split("-").map(Number); const en=activeSession.entries[ei]; const st=en.sets[si];
     if(st.type!=="warm"){ const g=ghostFor(en,si); if((st.weight===""||st.weight==null)&&g.w!=="") st.weight=g.w; if((st.reps===""||st.reps==null)&&g.r!=="") st.reps=g.r; }
     st.done=true; saveActive(); const ex=exById(en.exId);
     let nextInfo="exercise complete"; for(let k=si+1;k<en.sets.length;k++){ if(en.sets[k].type!=="warm"&&!isLogged(en.sets[k])){ nextInfo="next: set "+(k+1); break; } }
-    if(ex) startRest(ex.rest,ex.name,nextInfo); render(); });
+    if(ex) startRest(ex.rest,ex.name,nextInfo);
+    if(!maybeAdvance(ei)) render(); });
   // keyboard flow: first field → second field → log set (works in either input order)
   document.querySelectorAll(".setrow").forEach(row=>{ const inps=row.querySelectorAll(".inp"); if(inps.length<2) return;
     inps[0].setAttribute("enterkeyhint","next"); inps[1].setAttribute("enterkeyhint","done");
