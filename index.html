@@ -280,9 +280,9 @@ const APP_TAGLINE = "Training Command";
    recover.html on a v10 build is expected and correct.
    BUILD is shown in Settings and is what the deployed-version check compares against, so
    it must be bumped on every deploy. */
-const BUILD = "v11";
+const BUILD = "v12";
 const BUILD_DATE = "2026-08-08";
-const BUILD_NOTE = "like-for-like recap";
+const BUILD_NOTE = "decision-first Today, Body V2, Stats consolidated";
 
 /* Approved users (client-side UX gate; the real gate is Supabase signup settings — see DEPLOY).
    To add a person: add one line below with their real email (lowercase), display name and role.
@@ -1259,19 +1259,23 @@ function exerciseTrendDataLegacy(exId){ const ex=exById(exId); const h=exerciseH
 function trendEvidence(exId){
   const d=exerciseTrendData(exId); const ex=d.ex||exById(exId);
   /* The mean is of sessionStrength(), which for an assisted movement is EFFECTIVE load
-     (bodyweight − assistance), not the assistance number on the machine. Labelling it
-     "kg assist" read as if assistance had gone up when the athlete had actually improved,
-     so the label has to follow what the number really is. */
+     (bodyweight \u2212 assistance), not the number on the machine. v12 spells that out in words
+     rather than an "eff" abbreviation nobody should have to decode. */
   const kind=ex?loadKind(ex):"ext";
-  const unit=kind==="assist"?(hasBodyweight()?"kg eff":" score")
-           :kind==="bw"?(hasBodyweight()?"kg eff":"kg added"):"kg";
+  const unit=kind==="assist"?(hasBodyweight()?"kg effective load":"strength score")
+           :kind==="bw"?(hasBodyweight()?"kg effective load":"kg added"):"kg";
   const shown=function(v){ return Math.round(Math.abs(v)*10)/10; };
-  if(!ex) return {ok:false, text:""};
+  if(!ex) return {ok:false, text:"", lineA:"", lineB:""};
   if(d.state==="insufficient")
-    return {ok:false, n:d.n, need:d.need||0, text:"Not enough data · "+d.n+" of "+TREND_MIN_N+" exposures"};
+    return {ok:false, n:d.n, need:d.need||0, unit:unit,
+      lineA:"Not enough data", lineB:d.n+" of "+TREND_MIN_N+" exposures logged",
+      text:"Not enough data \u00b7 "+d.n+" of "+TREND_MIN_N+" exposures"};
+  /* v12 — always two lines so rows line up instead of wrapping unpredictably on a phone */
+  const lineA="Last "+d.recentN+": "+shown(d.recentMean)+" "+unit;
+  const lineB="Previous "+d.baseN+": "+shown(d.baseMean)+" "+unit;
   return {ok:true, n:d.n, recent:d.recentMean, base:d.baseMean, pct:d.pct,
-    recentN:d.recentN, baseN:d.baseN, unit:unit,
-    text:"Last "+d.recentN+": "+shown(d.recentMean)+unit+" · Prev "+d.baseN+": "+shown(d.baseMean)+unit }; }
+    recentN:d.recentN, baseN:d.baseN, unit:unit, lineA:lineA, lineB:lineB,
+    text:lineA+" \u00b7 "+lineB}; }
 
 /* ---------------------------------------------------------------- v11 EXERCISE-ORDER CONTEXT
    Where an exercise sat in the session is recorded in the entry order, so we can surface it as
@@ -1974,7 +1978,17 @@ function recapDeltas(r){
 function dashboardCard(){
   const d=dashboardStats();
   const pBtns=DASH_PERIODS.map(function(x){ return '<button data-dashp="'+x[0]+'" class="'+(dashPeriod===x[0]?"on":"")+'">'+x[1]+'</button>'; }).join("");
-  const kpi=function(val,label,now,base){ return '<div class="dcell"><b>'+val+'</b><span>'+label+'</span>'+(base==null?'':deltaChip(now,base,""))+'</div>'; };
+  /* v12 — "+3 · +25%" made you decode it. Each KPI now names its own unit and the period it
+     is being compared against, on its own line. */
+  const kpi=function(val,label,now,base,unit){
+    let dd='';
+    if(base!=null){ const diff=now-base, pc=deltaPct(now,base);
+      const c=(pc==null||Math.abs(pc)<3)?"var(--muted)":(pc>0?"var(--green)":"var(--red)");
+      const sign=diff>0?"+":(diff<0?"\u2212":"\u00b1");
+      const mag=Math.abs(diff)>=100?Math.round(Math.abs(diff)):Math.round(Math.abs(diff)*10)/10;
+      dd='<em style="color:'+c+';display:block;line-height:1.35">'+sign+mag+' '+(unit||label)+'</em>'
+        +'<em style="color:var(--faint);display:block;line-height:1.3">'+(pc==null?'\u2014':pctStr(pc))+' vs previous '+dashLabel()+'</em>'; }
+    return '<div class="dcell"><b>'+val+'</b><span>'+label+'</span>'+dd+'</div>'; };
   const groups=MUSCLE_GROUPS.map(function(g){ return {key:g.key, label:g.label, v:d.curVol[g.key]||0, p:d.prevVol[g.key]||0}; })
     .filter(function(x){ return x.v>0||x.p>0; }).sort(function(a,b){ return b.v-a.v; });
   const gmax=Math.max.apply(null,[1].concat(groups.map(function(x){ return x.v; })));
@@ -1986,15 +2000,15 @@ function dashboardCard(){
     :'<div class="empty" style="padding:14px">No sets logged in this window.</div>';
   const cons=d.consistency;
   return '<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><div class="tiny">Training dashboard</div><div class="seg mini" style="width:60%">'+pBtns+'</div></div>'
-    +'<div class="dgrid" style="grid-template-columns:repeat(4,1fr)">'
-    + kpi(d.workouts,"workouts",d.workouts,d.prevWorkouts||null)
+    +'<div class="histline" style="margin-top:3px">A personal best is a new 5RM, 10RM or heaviest working set on any exercise.</div>'
+    +'<div class="dgrid" style="grid-template-columns:repeat(2,1fr)">'
+    + kpi(d.workouts,"workouts",d.workouts,d.prevWorkouts||null,"workouts")
     + '<div class="dcell"><b>'+d.perWeek+'</b><span>per week</span><em style="color:var(--muted)">target '+cons.target+'</em></div>'
-    + kpi(d.prs,"records",d.prs,d.prevPrs||null)
+    + kpi(d.prs,"personal bests",d.prs,d.prevPrs||null,"PBs")
     + '<div class="dcell"><b style="color:'+(cons.pct>=75?"var(--green)":cons.pct>=50?"var(--amber)":"var(--red)")+'">'+cons.pct+'%</b><span>consistency</span><em style="color:var(--muted)">'+cons.hit+'/'+cons.weeks+' wks</em></div>'
     + '</div>'
     +'<div class="tiny" style="margin-top:16px">Volume by muscle group · effective sets · vs previous '+dashLabel()+'</div>'
     +'<div style="margin-top:6px">'+volRows+'</div>'
-    +'<div class="tiny" style="margin-top:16px">Training calendar · last 16 weeks</div>'+heatmapHTML(16)
     +'</div>'; }
 function heatmapHTML(nWeeks){
   const weeks=heatmapWeeks(nWeeks);
@@ -2013,10 +2027,18 @@ function boardRow(p,i,tone){
   const t=exerciseTrend(p.ex.id);
   const ev=trendEvidence(p.ex.id);
   const oc=orderContext(p.ex.id);
+  const hist=exerciseHistory(p.ex.id);
+  /* v12 fixed row grammar, identical on every board:
+       1  exercise name (+ badges)
+       2  "Last N: <value> <unit>"
+       3  "Previous N: <value> <unit>"
+       4  optional context chip
+     then sparkline and % on the right. Two separate lines, never one wrapping string. */
   return '<div class="rrow" data-exhist="'+p.ex.id+'"><span class="rk">'+(i+1)+'</span>'
     +'<div class="rmain"><div class="rnm">'+p.ex.name+(isCustomEx(p.ex)?' <span class="tag" style="color:var(--gold)">custom</span>':'')+'</div>'
-    +'<div class="rsub mono">'+(ev.ok?ev.text:progDeltaStr(p))+'</div>'
-    +(p.stale?'<div class="rsub" style="color:var(--faint)">last trained '+fmtAgo(p.ex&&exerciseHistory(p.ex.id)[0]?exerciseHistory(p.ex.id)[0].date:null)+'</div>':'')
+    +'<div class="rsub mono">'+ev.lineA+'</div>'
+    +'<div class="rsub mono" style="opacity:.75">'+ev.lineB+'</div>'
+    +(p.stale?'<div class="rsub" style="color:var(--faint)">last trained '+fmtAgo(hist[0]?hist[0].date:null)+'</div>':'')
     +(oc?'<div class="rsub"><span class="tag" style="color:var(--muted);border:1px solid var(--line)">'+oc.text+'</span></div>':'')
     +'</div>'
     +miniSpark(p.ex.id)
@@ -2039,6 +2061,52 @@ function progressionBoardCard(){
     +(b.thin.length?'<div class="tiny" style="margin-top:14px;color:var(--faint)">\u25cb Not enough data \u00b7 '+b.thin.length+'</div>'
       +'<div class="histline" style="margin-top:2px">'+thinNames+(b.thin.length>6?' and more':'')+'</div>':'')
     +'</div>'; }
+
+/* ---------------------------------------------------------------- v12 MIGRATED FROM REPORTS
+   Reports duplicated most of Stats. These two cards were the genuinely better implementations,
+   so they move across and the Reports tab is retired. */
+/* Effective sets split into DIRECT vs SECONDARY on one bar — the Stats version only showed a
+   combined total, which hid whether a muscle was actually being trained or just catching credit. */
+function muscleSplitCard(){
+  var ent=Object.keys(S.muscles).map(function(m){ var c=muscleContrib(m,periodSessions());
+    return {m:m,total:c.total,direct:c.direct,secondary:c.secondary}; })
+    .filter(function(x){ return x.total>0; }).sort(function(a,b){ return b.total-a.total; });
+  var mmax=Math.max.apply(null,[1].concat(ent.map(function(x){ return x.total; })));
+  var shown=showAllMuscles?ent:ent.slice(0,5);
+  var mrows=shown.length?shown.map(function(x){ var dp=Math.round(x.direct/mmax*100), sp=Math.round(x.secondary/mmax*100);
+    var below=x.total<S.muscles[x.m].min;
+    return '<div class="exline" data-muscle-stat="'+x.m+'" style="padding:7px 0;cursor:pointer"><div style="flex:1">'
+      +'<div class="nm" style="font-size:13px">'+S.muscles[x.m].label
+      +(below?' <span class="tag" style="color:var(--blue)">below min</span>':'')+'</div>'
+      +'<div class="bar" style="margin-top:5px;display:flex"><i style="width:'+dp+'%;background:var(--accent)"></i><i style="width:'+sp+'%;background:var(--grey)"></i></div></div>'
+      +'<span class="mono" style="margin-left:10px">'+x.total.toFixed(1)+'</span></div>'; }).join("")
+    :'<div class="empty" style="padding:16px">No sets in this window.</div>';
+  return '<div class="card"><div class="tiny">Effective sets by muscle \u00b7 tap a row to explain it</div>'
+    +'<p class="muted" style="font-size:11px;margin:4px 0 0"><span style="color:var(--accent)">\u25ae</span> direct \u00b7 <span style="color:var(--grey)">\u25ae</span> secondary</p>'
+    +'<div style="margin-top:6px">'+mrows+'</div>'
+    +(ent.length>5?'<button class="btn ghost full sm" data-showall style="margin-top:8px">'+(showAllMuscles?'Show top 5':'Show all '+ent.length+' muscles')+'</button>':'')
+    +'</div>'; }
+/* Per-exercise chart with metric toggles and search. */
+function exerciseTrendsCard(){
+  var histList=S.exercises.map(function(e){ return {e:e,n:exerciseHistory(e.id).length}; })
+    .filter(function(x){ return x.n>=1; }).sort(function(a,b){ return b.n-a.n; });
+  if(!repExId||!histList.find(function(x){ return x.e.id===repExId; })) repExId=histList.length?histList[0].e.id:null;
+  if(!repExId) return '<div class="card"><div class="tiny">Exercise charts</div><div class="empty" style="padding:18px">Log a few sessions to chart your progress.</div></div>';
+  var fq=(repSearch||"").toLowerCase();
+  var chips=histList.filter(function(x){ return !fq||exMatches(x.e,fq); }).slice(0,40)
+    .map(function(x){ return '<button data-repexid="'+x.e.id+'" class="'+(x.e.id===repExId?"on":"")+'">'+x.e.name+'</button>'; }).join("");
+  var ex=exById(repExId); var rec=exerciseRecords(repExId);
+  var metrics=metricsFor(ex); if(!metricOK(ex,repMetric)) repMetric=defaultMetricFor(ex);
+  var seg='<div class="seg mini" style="margin-top:8px">'+metrics.map(function(mn){ return '<button data-repmetric="'+mn[0]+'" class="'+(repMetric===mn[0]?"on":"")+'">'+mn[1]+'</button>'; }).join("")+'</div>';
+  var chart=lineChartSVG(exerciseSeries(repExId,repMetric),{unit:metricUnit(repMetric),dirNote:dirNoteFor(ex,repMetric)});
+  return '<div class="card"><div class="tiny">Exercise charts</div>'
+    +'<input class="inp srch" id="repSearch" placeholder="Search exercises..." value="'+escAttr(repSearch||"")+'" style="margin-top:8px">'
+    +'<div class="chips" style="margin-top:8px">'+(chips||'<span class="muted" style="font-size:12px">No matches</span>')+'</div>'
+    +'<div style="font-weight:700;font-size:14px;margin-top:4px">'+ex.name+trendBadge(ex.id)+'</div><div class="histline">'+metricLabel(repMetric,ex)+'</div>'
+    +seg+'<div class="chartwrap">'+chart+'</div>'
+    +'<div class="histline" style="margin-top:8px">'+(isAssisted(ex)
+        ? ('Lowest assistance '+(hasRec(rec.top)?rec.top.raw+"kg"+(rec.top.eff!=null?" \u00b7 "+rec.top.eff+"kg effective load":""):"\u2014")+' \u00b7 at 10+ reps '+(hasRec(rec.rm10)?rec.rm10.raw+"kg":"\u2014"))
+        : ('5RM '+(hasRec(rec.rm5)?rec.rm5.raw+"kg\u00d7"+rec.rm5.reps:"\u2014")+' \u00b7 10RM '+(hasRec(rec.rm10)?rec.rm10.raw+"kg\u00d7"+rec.rm10.reps:"\u2014")+' \u00b7 Top '+(hasRec(rec.top)?rec.top.raw+"kg":"\u2014")))+'</div></div>'; }
 
 /* ---- Reports tab cards ---- */
 function recentAchievementsCard(limit){ var evs=achievementTimeline(limit||8);
@@ -2128,6 +2196,69 @@ function fatigueFlag(exId){ const ex=exById(exId); const h=exerciseHistory(exId)
    Recovering/overloaded muscles score a sentinel low and are never trainable today;
    caution muscles are heavily penalised and their volume-need boost is muted. */
 const TIER_BASE={primary:100,secondary:62,maintenance:34};
+/* ---------------------------------------------------------------- v12 FAMILIARITY MODEL
+   The recommender was picking library-correct exercises the athlete never actually uses, so
+   every session needed swapping. Familiarity is now a first-class term: how often you have
+   trained an exercise, how recently, whether you use that equipment, and your stated preference.
+   Novel exercises are not banned — they simply stop being the default pick. */
+const FAM_WEIGHT_EX=78, FAM_WEIGHT_EQUIP=26, FAM_NOVEL_PENALTY=52, FAM_CONFIDENCE_SESSIONS=8;
+const FAMILIAR_WINDOW_DAYS=84;      /* 12 weeks of history informs "what I actually use" */
+let _famCache=null, _famStamp=null;
+function familiarityIndex(){
+  const stamp=(S.sessions||[]).length+"|"+((S.sessions||[]).slice(-1)[0]||{}).completedAt;
+  if(_famCache&&_famStamp===stamp) return _famCache;
+  const cutoff=Date.now()-FAMILIAR_WINDOW_DAYS*864e5;
+  const byEx={}, byEquip={}; let totalSessions=0, maxEx=0;
+  completedSessions().forEach(function(s){
+    if(new Date(s.completedAt).getTime()<cutoff) return;
+    totalSessions++;
+    const seen={};
+    (s.entries||[]).forEach(function(en){ if(!workingSets(en).length) return;
+      if(seen[en.exId]) return; seen[en.exId]=1;
+      byEx[en.exId]=(byEx[en.exId]||0)+1;
+      const e=exById(en.exId); const eq=(e&&e.equip)||"other";
+      byEquip[eq]=(byEquip[eq]||0)+1; });
+  });
+  Object.keys(byEx).forEach(function(k){ if(byEx[k]>maxEx) maxEx=byEx[k]; });
+  _famStamp=stamp;
+  _famCache={ byEx:byEx, byEquip:byEquip, sessions:totalSessions, maxEx:maxEx };
+  return _famCache; }
+/* 0 = never used, 1 = your most-used exercise. Equipment familiarity is a softer, separate term. */
+function familiarityScore(ex){
+  const f=familiarityIndex();
+  if(!f.sessions||!f.maxEx) return {ex:0, equip:0, uses:0};
+  const uses=f.byEx[ex.id]||0;
+  const eq=(ex.equip||"other");
+  const eqUses=f.byEquip[eq]||0;
+  /* Confidence: with two sessions of history "most used" is noise, so the whole familiarity
+     term is scaled by how much history actually exists. At 8+ recent sessions it applies in
+     full; below that it fades out and recovery/volume logic keeps its original authority. */
+  const conf=Math.min(1, f.sessions/FAM_CONFIDENCE_SESSIONS);
+  return { ex:Math.min(1,uses/f.maxEx)*conf, equip:Math.min(1,eqUses/Math.max(1,f.sessions))*conf,
+           uses:uses, conf:conf }; }
+function isFamiliar(ex){ return familiarityScore(ex).uses>=2; }
+/* v12 — USAGE PROVES AVAILABILITY. Two separate faults were excluding exercises the athlete
+   actually trains from ever being recommended:
+     1. FORCE_AVAIL was declared with a comment saying it overrides stale availability, but was
+        never referenced anywhere in the file — so machine_lat_raise, bitri_machine_curl and the
+        rest stayed avail:"no" and could not be picked.
+     2. Even without that, a stale avail flag outranked the evidence of your own logbook.
+   If you have logged working sets on an exercise inside the familiarity window, you plainly have
+   access to it, and that beats any flag. Applied at the pool filter only — the Settings toggle
+   still shows and controls the underlying value. */
+const REGULAR_USE_MIN=3;   /* logged this often in the window = part of your actual routine */
+function usableInPool(e){
+  if(!e) return false;
+  if(e.pref==="avoid") return false;              /* an explicit dislike is always final */
+  const uses=familiarityIndex().byEx[e.id]||0;
+  const availOk = AVAIL_OK[e.avail] || FORCE_AVAIL.indexOf(e.id)>=0 || uses>0;
+  if(!availOk) return false;
+  /* `rec:false` means "do not auto-programme this". Seeded defaults mark a lot of gym machines
+     that way, which is why exercises trained every week were never being offered. Regular logged
+     use overrides the seeded flag; `pref:"avoid"` above remains the way to veto something. */
+  if(e.rec===false && uses<REGULAR_USE_MIN) return false;
+  return true; }
+
 function muscleScores(r){ const vol=weeklyVolume(); const wk=weekSessions().length; const remaining=Math.max(1,S.settings.sessionsPerWeek-wk); const avoid=(r&&r.avoid)||[]; const out=[];
   for(const [m,cfg] of Object.entries(S.muscles)){ const v=vol[m]; const status=recoveryStatus(m);
     const avoided=avoid.includes(m); const trainable=status!=="recovering"&&status!=="overloaded"&&!avoided;
@@ -2146,7 +2277,7 @@ function recommend(r,opts){ r=r||{}; opts=opts||{}; const time=r.time||60; const
   const scored=muscleScores(r); const wk=weekSessions().length; const remaining=S.settings.sessionsPerWeek-wk;
   const belowMin=scored.filter(s=>s.v<s.cfg.min&&s.trainable);
   const lim=activeLimitation();
-  const pool=S.exercises.filter(e=>AVAIL_OK[e.avail]&&e.rec!==false&&e.pref!=="avoid"&&!limBlock(e)); const chosen=[]; const covered={}; const now=new Date();  // v6: only recommendable/familiar gym exercises · v7: pref "avoid" = hard exclusion, never just a penalty
+  const pool=S.exercises.filter(e=>usableInPool(e)&&!limBlock(e)); const chosen=[]; const covered={}; const now=new Date();  // v6: only recommendable/familiar gym exercises · v7: pref "avoid" = hard exclusion, never just a penalty
   /* v7 reroll: memoised per-call jitter (deterministic when opts.reroll is off, so tests/engine stay stable) */
   const _jmap={}; function jit(id){ if(!opts.reroll) return 0; if(!(id in _jmap)) _jmap[id]=Math.random()*36-18; return _jmap[id]; }
   const lastExMap=lastExerciseMap(), lastPatMap=lastPatternMap(), ltMap=lastTrainedMap();
@@ -2161,6 +2292,14 @@ function recommend(r,opts){ r=r||{}; opts=opts||{}; const time=r.time||60; const
       const usable=sc.trainable||relaxed; if(!usable) continue; const dim=(covered[m]||0)>0?0.35:1;
       val+=(sc.trainable?sc.score:Math.max(sc.score,-40))*c*dim; }
     val+=PREF_SCORE[ex.pref]*1.2;
+    /* v12 familiarity — dominant enough to decide between two otherwise comparable exercises,
+       but never enough to override recovery (bad=true) or a below-minimum muscle's need. */
+    const fam=familiarityScore(ex);
+    val += fam.ex*FAM_WEIGHT_EX;                                  /* how often you do this exercise */
+    val += fam.equip*FAM_WEIGHT_EQUIP;                            /* how much you use this equipment */
+    if(fam.uses===0 && familiarityIndex().sessions>=4) val-=FAM_NOVEL_PENALTY*fam.conf;   /* never used, and we have enough history to know */
+    else if(fam.uses===1) val-=FAM_NOVEL_PENALTY*0.35*fam.conf;   /* tried once — mild */
+    if(ex.rec) val+=10;                                           /* flagged as a default gym option */
     /* v7 reroll: push away from proposals you've already rejected + shuffle near-ties */
     const rrN=opts.avoidIds?(opts.avoidIds[ex.id]||0):0; if(rrN) val-=90*Math.min(rrN,2);
     val+=jit(ex.id);
@@ -2201,7 +2340,7 @@ function recommend(r,opts){ r=r||{}; opts=opts||{}; const time=r.time||60; const
   belowMin.filter(b=>isDirect(b.m)).slice(0,3).forEach(b=>why.push({t:"go",x:b.cfg.label+" below minimum ("+b.v.toFixed(1)+"/"+b.cfg.min+") and recovered — included directly."}));
   belowMin.filter(b=>!isDirect(b.m)&&(b.cfg.tier==="primary"||secVia(b.m))).slice(0,3).forEach(b=>{ const via=secVia(b.m);
     if(via){ why.push({t:"warn",x:b.cfg.label+" below minimum — partially covered via "+via+" (secondary only), no direct exercise."}); }
-    else { let reason="no direct option available"; const directOpts=S.exercises.filter(e=>e.m[b.m]>=1&&AVAIL_OK[e.avail]&&e.pref!=="avoid");
+    else { let reason="no direct option available"; const directOpts=S.exercises.filter(e=>e.m[b.m]>=1&&usableInPool(e)&&e.pref!=="avoid");
       if(lim&&directOpts.length&&directOpts.every(e=>limBlock(e))) reason="active limitation blocks all direct options";
       else if(chosen.length>=maxEx) reason="session already at its exercise cap";
       else if(!directOpts.length) reason="no direct exercise available";
@@ -2216,13 +2355,23 @@ function recommend(r,opts){ r=r||{}; opts=opts||{}; const time=r.time||60; const
   if(lowEnergy) why.push({t:"warn",x:"Low energy/sleep — volume trimmed."});
   const musclesHit=Object.keys(covF).filter(m=>covF[m]>0).sort((a,b)=>covF[b]-covF[a]).map(m=>S.muscles[m].label);
   const orderNote=chosen.length>1?"Order set for performance: compounds and priority muscles while you’re fresh, isolation and pump work last.":"";
-  return {title:musclesHit.slice(0,3).join(" · ")||"Recovery session", why, exercises:chosen, musclesHit, time, orderNote}; }
+  /* v12 — one plain sentence saying why THIS session, before the detailed bullets. */
+  const leadM=scored.filter(function(x){ return x.trainable && x.v<x.cfg.min; })
+    .sort(function(a,b){ return (b.cfg.min-b.v)-(a.cfg.min-a.v); }).slice(0,2);
+  const famN=chosen.filter(function(c){ const e=exById(c.exId); return e&&isFamiliar(e); }).length;
+  let reason;
+  if(leadM.length) reason="Prioritising "+leadM.map(function(x){ return x.cfg.label.toLowerCase(); }).join(" and ")
+      +" because "+(leadM.length>1?"both are":"it is")+" below weekly target and recovered.";
+  else if(musclesHit.length) reason="Everything is at target, so this session spreads work across "+musclesHit.slice(0,3).join(", ").toLowerCase()+" while they are fresh.";
+  else reason="Nothing is fully recovered — this is a light session.";
+  if(chosen.length) reason+=" "+famN+" of "+chosen.length+" are exercises you train regularly.";
+  return {title:musclesHit.slice(0,3).join(" · ")||"Recovery session", why, reason, exercises:chosen, musclesHit, time, orderNote}; }
 
 /* SWAP / SUBSTITUTION (P3) */
 function swapSuggestions(exId){ const ex=exById(exId); if(!ex) return []; const pm=primaryMuscle(ex);
   const inWorkout=new Set((activeSession?activeSession.entries:[]).map(en=>en.exId));                 // exercises already in this workout
   const patternsInWorkout=new Set((activeSession?activeSession.entries:[]).filter(en=>en.exId!==exId).map(en=>{ const e=exById(en.exId); return e?e.pattern:null; }));
-  return S.exercises.filter(e=>e.id!==exId && !inWorkout.has(e.id) && primaryMuscle(e)===pm && AVAIL_OK[e.avail] && e.pref!=="avoid" && !limBlock(e))   // never an exercise already in the workout; unavailable + avoided excluded (v7 — search still finds them)
+  return S.exercises.filter(e=>e.id!==exId && !inWorkout.has(e.id) && primaryMuscle(e)===pm && usableInPool(e) && e.pref!=="avoid" && !limBlock(e))   // never an exercise already in the workout; unavailable + avoided excluded (v7 — search still finds them)
     .map(e=>({e, dupPattern:patternsInWorkout.has(e.pattern)?1:0, recRank:(e.rec?0:1), samePatternAsCur:e.pattern===ex.pattern?1:0}))
     .sort((a,b)=>(a.dupPattern-b.dupPattern)                       // patterns not already in the workout first (no same-pattern duplicates)
                 ||(a.recRank-b.recRank)                            // familiar/default gym options before manual-only
@@ -2247,6 +2396,22 @@ function filterChips(kind,curGroup,curEquip){
         +'<div class="fchips">'+eb("","All kit")+EQUIP_FILTERS.map(p=>eb(p[0],p[1])).join("")+'</div>'; }
 /* ============================================================================ UI STATE + ROUTER ============================================================================ */
 let route="today", activeSession=null, viewingLogger=false, pendingRec=null, restTimer=null, sheet=null, statsPeriod="all", bodyDetail=null;
+/* v12 — Body layout preference, persisted so it survives a reload while you compare the two. */
+/* v12 — Settings is long by nature (it is configuration). Rather than trimming what is there,
+   every heavy area is now a collapsible section, collapsed by default, with the exercise
+   library gated behind search + filters so it never renders 119 rows unasked. */
+let setOpen=(function(){ try{ return JSON.parse(localStorage.getItem("iron_arc_setopen")||'{}')||{}; }catch(e){ return {}; } })();
+function setSectionOpen(k){ return !!setOpen[k]; }
+function toggleSection(k){ setOpen[k]=!setOpen[k]; try{ localStorage.setItem("iron_arc_setopen",JSON.stringify(setOpen)); }catch(e){} }
+function section(key,title,sub,bodyFn){
+  const open=setSectionOpen(key);
+  return '<div class="card" style="padding:0;overflow:hidden">'
+    +'<div data-section="'+key+'" style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:14px 16px;cursor:pointer">'
+    +'<div><div class="tiny">'+title+'</div>'+(sub?'<div class="histline" style="margin-top:2px">'+sub+'</div>':'')+'</div>'
+    +'<span class="muted" style="font-size:15px">'+(open?'\u2212':'+')+'</span></div>'
+    +(open?'<div style="padding:0 16px 14px">'+bodyFn()+'</div>':'')+'</div>'; }
+let bodyView=(function(){ try{ return localStorage.getItem("iron_arc_bodyview")==="v1"?"v1":"v2"; }catch(e){ return "v2"; } })();
+let showAllMuscles=false;
 let exChartMetric="top", addSearch="", swapSearch="", mgmtSearch="", repExId=null, repMetric="top", repSearch="";  /* v6 chart/search UI state */
 let addGroup="", addEquip="", swapGroup="", swapEquip="", mgmtGroup="", mgmtEquip="";  /* v8 library filter state */
 let customDraft={name:"",group:"",id:null};   /* v9 custom-exercise composer */
@@ -2271,7 +2436,7 @@ function render(){ const app=document.getElementById("app");
   if(route==="today") body = (activeSession&&viewingLogger)?viewLogger():viewToday();
   else if(route==="history") body=viewHistory();
   else if(route==="stats") body=viewStats();
-  else if(route==="reports") body=viewReports();
+  else if(route==="reports"){ route="stats"; body=viewStats(); }   /* v12: Reports folded into Stats */
   else if(route==="body") body=viewBody();
   else if(route==="settings") body=viewSettings();
   app.innerHTML=header()+'<div class="reveal">'+body+'</div>';
@@ -2284,7 +2449,11 @@ function header(){ const wk=weekSessions().length;
 function weekStrip(){ const s=startOfWeek(); const names=["M","T","W","T","F","S","S"]; const today=dayKey(new Date()); let c="";
   for(let i=0;i<7;i++){ const d=new Date(s); d.setDate(d.getDate()+i); const done=S.sessions.some(x=>x.completedAt&&dayKey(x.completedAt)===dayKey(d)); const isT=dayKey(d)===today;
     c+='<div class="day '+(done?'done':'')+' '+(isT?'today':'')+'"><b>'+names[i]+'</b><span class="pip"></span></div>'; } return '<div class="weekstrip">'+c+'</div>'; }
-function renderTabs(){ const tabs=[["today","Today"],["history","History"],["stats","Stats"],["reports","Reports"],["body","Body"],["settings","Settings"]];
+/* v12 — Reports retired. The training dashboard, direct-vs-secondary muscle split and
+   per-exercise charts moved into Stats; the duplicated progression board, recent achievements,
+   week scorecard, calendar heatmap and Coach Diagnosis are gone. The route still resolves so a
+   restored route or an old bookmark lands on Stats rather than a blank screen. */
+function renderTabs(){ const tabs=[["today","Today"],["history","History"],["stats","Stats"],["body","Body"],["settings","Settings"]];
   document.getElementById("tabbar").innerHTML=tabs.map(([id,l])=>'<button class="tab '+(route===id?'on':'')+'" data-tab="'+id+'">'+ICONS[id]+'<span>'+l+'</span></button>').join("");
   document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>go(b.dataset.tab)); }
 
@@ -2296,17 +2465,21 @@ function viewToday(){
   let banner="";
   if(cloudReady()&&unsyncedCount()>0) banner='<div class="card" style="border-color:rgba(255,194,61,.4);background:rgba(255,194,61,.06)"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><div class="histline" style="color:var(--amber)">'+unsyncedCount()+' workout'+(unsyncedCount()===1?"":"s")+' not yet synced to the cloud.</div><button class="btn sm" data-act="resync">Retry</button></div></div>';
   banner += buildBanner();   /* v10: stale-build notice, suppressed while a workout is open */
+  /* v12 — the "+ Add limitation" control has moved to Settings › Training preferences &
+     limitations. An ACTIVE limitation still shows here, compactly, because it changes what
+     today's recommendation can offer and you should not have to go looking for that. */
   const _al=activeLimitation();
-  banner += _al
-    ? '<div class="card" style="border-color:rgba(168,123,255,.55);background:rgba(168,123,255,.08)"><div class="tiny" style="color:var(--violet)">Active limitation</div><div style="font-weight:600;margin-top:3px">'+_al.name+(_al.note?' — '+_al.note:'')+'</div><div class="histline">'+(_al.until?'expires '+fmtDate(_al.until):'until you remove it')+' · affected exercises excluded from recommendations</div><div class="row" style="margin-top:10px"><button class="btn sm" data-act="editlim">Edit</button><button class="btn sm danger" data-act="removelim">Remove</button></div></div>'
-    : '<button class="btn ghost full" data-act="addlim" style="margin:12px 0 0;color:var(--violet)">+ Add limitation · injury, equipment, avoid foot pressure</button>';
+  if(_al) banner += '<div class="card" style="border-color:rgba(168,123,255,.45);background:rgba(168,123,255,.07);padding:11px 14px"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><div class="histline" style="color:var(--violet)">Limitation active: <b>'+_al.name+'</b>'+(_al.until?' · to '+fmtDate(_al.until):'')+'</div><button class="btn sm" data-act="editlim">Edit</button></div></div>';
   const q=QUOTES[new Date().getDate()%QUOTES.length];
+  /* v12 — the snapshot sits directly under the CTA so Today opens with "where do I stand and
+     what needs work", not just a start button. */
   if(pendingRec){ return resume+banner+recCard(pendingRec)
     +'<div class="row" style="margin-top:10px"><button class="cta secondary" data-act="recommend" style="flex:1">↻ New recommendation</button><button class="cta secondary" data-act="blank" style="flex:1">Empty workout</button></div>'
-    +weekCard(); }
+    +snapshotCard(); }
   return resume+banner+'<div class="card glow"><button class="cta" data-act="recommend">⚡ Tell me what to train today<span class="sub">Adaptive · recovery & volume aware</span></button>'
     +'<div class="row" style="margin-top:10px"><button class="cta secondary" data-act="readiness" style="flex:1">Readiness check-in</button><button class="cta secondary" data-act="blank" style="flex:1">Empty workout</button></div></div>'
-    +'<div class="card"><div class="tiny">Daily directive</div><p class="quote" style="margin:8px 0 0">"'+q+'"</p></div>'+weekCard();
+    +snapshotCard()
+    +'<div class="card"><div class="tiny">Daily directive</div><p class="quote" style="margin:8px 0 0">"'+q+'"</p></div>';
 }
 function unsyncedCount(){ return (S.sessions||[]).filter(s=>s.completedAt&&s.synced===false).length; }
 function resyncAll(){ (S.sessions||[]).filter(s=>s.completedAt&&s.synced===false).forEach(s=>pushWorkout(s)); setTimeout(render,1400); }
@@ -2315,13 +2488,78 @@ function recCard(rec){ const N=rec.exercises.length; const ex=rec.exercises.map(
     return '<div class="exline"><div><div style="font-family:\'JetBrains Mono\',monospace;font-size:11px;color:var(--faint)">'+(i+1)+'</div></div><div style="flex:1"><div class="nm">'+e.name+tag+ct+pt+'</div><div class="meta">'+musLabels(e)+' · '+e.rest+'s rest</div></div><div class="sets">'+c.sets+'×'+e.rl+'-'+e.rh+'</div></div>'; }).join("");
   const why=rec.why.map(w=>'<li style="display:flex;gap:9px;padding:7px 0;border-top:1px dashed var(--line);font-size:13.5px;color:#C6D0DC"><span style="color:'+(w.t==='neg'?'var(--red)':w.t==='warn'?'var(--amber)':'var(--accent)')+'">'+(w.t==='neg'?'✕':w.t==='warn'?'!':'›')+'</span><span>'+w.x+'</span></li>').join("");
   const tot=rec.exercises.reduce((s,c)=>s+c.sets,0);
-  return '<div class="card glow"><div class="tiny" style="color:var(--accent)">Recommended for today · '+rec.exercises.length+' exercises · '+tot+' sets · ~'+rec.time+'min</div><h2 style="margin:8px 0 4px;font-size:20px">'+rec.title+'</h2>'+(rec.orderNote?'<div class="histline" style="margin:6px 0 2px;color:var(--accent)">↕ '+rec.orderNote+'</div>':'')+'<div style="margin-top:10px">'+ex+'</div><ul style="margin:12px 0 0;padding:0;list-style:none">'+why+'</ul><button class="cta" data-act="start-rec" style="margin-top:14px">Start this session<span class="sub">'+tot+' sets · ~'+rec.time+' min</span></button></div>'; }
+  return '<div class="card glow"><div class="tiny" style="color:var(--accent)">Recommended for today · '+rec.exercises.length+' exercises · '+tot+' sets · ~'+rec.time+'min</div><h2 style="margin:8px 0 4px;font-size:20px">'+rec.title+'</h2>'
+    +(rec.reason?'<div class="ibody" style="margin:6px 0 2px;color:#C6D0DC">'+rec.reason+'</div>':'')
+    +(rec.orderNote?'<div class="histline" style="margin:6px 0 2px;color:var(--accent)">↕ '+rec.orderNote+'</div>':'')+'<div style="margin-top:10px">'+ex+'</div><ul style="margin:12px 0 0;padding:0;list-style:none">'+why+'</ul><button class="cta" data-act="start-rec" style="margin-top:14px">Start this session<span class="sub">'+tot+' sets · ~'+rec.time+' min</span></button></div>'; }
 function musLabels(e){ return Object.entries(e.m).filter(([m,c])=>c>=0.5&&S.muscles[m]).map(([m])=>S.muscles[m].label).join(" / "); }
 function weekStatus(){ const sess=weekSessions(); const vol=weeklyVolume(sess); const target=S.settings.sessionsPerWeek;
   const primaryBelow=[], otherBelow=[], trained=[];
   Object.entries(S.muscles).forEach(([m,cfg])=>{ const v=vol[m]; if(v>=0.5) trained.push(m); if(v<cfg.min){ (cfg.tier==="primary"?primaryBelow:otherBelow).push(m); } });
   const needsAttention=primaryBelow.concat(otherBelow).filter(m=>{ const st=recoveryStatus(m); return st!=="recovering"&&st!=="overloaded"; });
   return {sess:sess.length, target, vol, primaryBelow, otherBelow, trained, needsAttention}; }
+/* ---------------------------------------------------------------- v12 WEEKLY SNAPSHOT
+   Today's job is to answer "what should I focus on?" in one glance. Everything here comes from
+   the volume minimums you already configured and the existing recovery engine — no new targets
+   are invented. Muscles are ranked by how far below minimum they are, gated by whether they are
+   actually trainable right now, because a big gap on a muscle that is still recovering is not
+   today's priority. */
+function weeklySnapshot(){
+  const sess=weekSessions(), vol=weeklyVolume(sess), target=S.settings.sessionsPerWeek||4;
+  const remaining=Math.max(0,target-sess.length);
+  const rows=[];
+  Object.entries(S.muscles).forEach(function(pr){
+    const m=pr[0], cfg=pr[1], v=vol[m]||0;
+    const con=muscleContrib(m,sess);
+    const st=recoveryStatus(m);
+    const gap=Math.max(0,cfg.min-v);
+    rows.push({m:m, label:cfg.label, tier:cfg.tier, v:v, min:cfg.min, gap:gap,
+      direct:con.direct, secondary:con.secondary, status:st,
+      ready:(st==="ready"||st==="untrained"), moderate:(st==="caution"),
+      blocked:(st==="recovering"||st==="overloaded")});
+  });
+  const tierRank={primary:0,secondary:1,maintenance:2};
+  /* priority = below minimum AND trainable, worst gap first, priority muscles ahead of the rest */
+  const priority=rows.filter(function(r){ return r.gap>0.01 && !r.blocked; })
+    .sort(function(a,b){ return (tierRank[a.tier]-tierRank[b.tier]) || (b.gap-a.gap) || (a.ready?-1:1); });
+  const covered=rows.filter(function(r){ return r.gap<=0.01 && r.v>0; })
+    .sort(function(a,b){ return b.v-a.v; });
+  const recovering=rows.filter(function(r){ return r.blocked; })
+    .sort(function(a,b){ return (tierRank[a.tier]-tierRank[b.tier]) || b.gap-a.gap; });
+  return {sessions:sess.length, target:target, remainingSessions:remaining,
+    rows:rows, priority:priority, covered:covered, recovering:recovering}; }
+const READY_META={ ready:{t:"Ready",c:"var(--green)"}, untrained:{t:"Ready",c:"var(--green)"},
+  caution:{t:"Moderate recovery",c:"var(--amber)"}, recovering:{t:"Recovering",c:"var(--violet)"},
+  overloaded:{t:"At cap",c:"var(--red)"} };
+function snapshotCard(){
+  const s=weeklySnapshot();
+  const pill=function(st){ const m=READY_META[st]||READY_META.ready;
+    return '<span class="mono" style="font-size:10.5px;color:'+m.c+';white-space:nowrap">'+m.t+'</span>'; };
+  const setsWord=function(n){ const x=Math.round(n*10)/10; return x+' set'+(x===1?'':'s'); };
+  const prow=function(r){
+    return '<div class="exline" data-muscle="'+r.m+'" style="padding:6px 0;cursor:pointer">'
+      +'<div style="flex:1;min-width:0"><div class="nm" style="font-size:13px">'+r.label
+      +(r.tier==="primary"?' <span class="tag" style="color:var(--gold)">priority</span>':'')+'</div>'
+      +'<div class="histline">'+setsWord(r.gap)+' below minimum · '+r.v.toFixed(1)+'/'+r.min
+      +(r.secondary>0.05?' · '+r.direct.toFixed(1)+' direct + '+r.secondary.toFixed(1)+' secondary':'')+'</div></div>'
+      +pill(r.status)+'</div>'; };
+  const chips=function(list){ return list.map(function(r){
+    return '<span class="tag" data-muscle="'+r.m+'" style="cursor:pointer;color:var(--muted);border:1px solid var(--line);margin:2px 4px 2px 0;display:inline-block">'+r.label+' '+r.v.toFixed(1)+'</span>'; }).join(""); };
+  const tcol=s.sessions>=s.target?"var(--green)":s.sessions>=s.target-1?"var(--amber)":"var(--accent)";
+  let h='<div class="card"><div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px">'
+    +'<div class="tiny">This week · Mon–Sun</div>'
+    +'<div class="mono" style="font-size:13px;color:'+tcol+';font-weight:700">'+s.sessions+'/'+s.target+' sessions</div></div>';
+  if(s.priority.length){
+    h+='<div class="tiny" style="margin-top:12px;color:var(--accent)">Priority · below weekly minimum &amp; trainable</div>'
+      +'<div style="margin-top:2px">'+s.priority.slice(0,5).map(prow).join("")+'</div>';
+    if(s.priority.length>5) h+='<div class="histline" style="margin-top:4px">+'+(s.priority.length-5)+' more below minimum</div>';
+  } else {
+    h+='<div class="histline" style="margin-top:12px;color:var(--green)">Every muscle is at or above its weekly minimum.</div>';
+  }
+  if(s.covered.length) h+='<div class="tiny" style="margin-top:14px">Already covered</div><div style="margin-top:4px">'+chips(s.covered.slice(0,8))+'</div>';
+  if(s.recovering.length) h+='<div class="tiny" style="margin-top:12px;color:var(--violet)">Still recovering</div><div style="margin-top:4px">'+chips(s.recovering.slice(0,6))+'</div>';
+  h+='<div class="histline" style="margin-top:12px">'+(s.remainingSessions?s.remainingSessions+' session'+(s.remainingSessions===1?'':'s')+' left to hit your target.':'Weekly session target met.')+'</div>';
+  return h+'</div>'; }
+
 function weekCard(){ const w=weekStatus(); const mom=momentumScore();
   const setsLogged=weekSessions().reduce((a,x)=>a+sessionSets(x),0); const setTarget=w.target*12;
   const primaryAll=Object.values(S.muscles).filter(c=>c.tier==="primary").length; const primaryMet=primaryAll-w.primaryBelow.length; const primaryPct=primaryAll?Math.round(primaryMet/primaryAll*100):100;
@@ -2914,9 +3152,6 @@ function insightsBlock(){ const cards=[];
    rather than a number, a chart or a date. */
 function viewStats(){
   const pBtns=[["week","Week"],["30","30d"],["90","90d"],["all","All"]].map(([v,l])=>'<button data-statsperiod="'+v+'" class="'+(statsPeriod===v?'on':'')+'">'+l+'</button>').join("");
-  const sbp=setsByBodyPartP(); const ent=Object.entries(sbp).filter(([m,v])=>v>0).sort((a,b)=>b[1]-a[1]); const smax=Math.max(1,...ent.map(e=>e[1]));
-  const tierC={primary:"var(--gold)",secondary:"var(--accent)",maintenance:"var(--muted)"};
-  const sbpRows=ent.length?ent.map(([m,v])=>'<div class="exline" data-muscle-stat="'+m+'" style="padding:7px 0;cursor:pointer"><div style="flex:1"><div class="nm" style="font-size:13px">'+S.muscles[m].label+'</div><div class="bar" style="margin-top:5px"><i style="width:'+Math.round(v/smax*100)+'%;background:'+tierC[S.muscles[m].tier]+'"></i></div></div><span class="mono" style="margin-left:10px">'+v.toFixed(1)+'</span><span class="muted" style="margin-left:8px">›</span></div>').join(""):'<div class="empty" style="padding:16px">No sets in this period.</div>';
   /* most-used now carries usage count, sparkline AND the change, per the same row grammar */
   const mu=mostUsedExercises(6); const mumax=Math.max(1,...mu.map(x=>x.n));
   const muRows=mu.length?mu.map(x=>'<div class="exline" data-exhist="'+x.ex.id+'" style="padding:7px 0;cursor:pointer">'
@@ -2928,13 +3163,16 @@ function viewStats(){
   return progressionBoardCard()
     +recentAchievementsCard(6)
     +insightsBlock()
+    +hdr("Training dashboard")
+    +dashboardCard()
     +hdr("Volume & distribution")
     +weekTop
     +'<div class="card" style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px"><span class="tiny">Window</span><div class="seg" style="width:60%">'+pBtns+'</div></div>'
-    +'<div class="card"><div class="tiny">Sets by body part · tap any row to explain this '+(statsPeriod==="week"?"week (Mon–Sun)":statsPeriod==="all"?"period":statsPeriod+"-day window")+'</div><div style="margin-top:8px">'+sbpRows+'</div></div>'
+    +muscleSplitCard()
     +'<div class="card"><div class="tiny">Most-used exercises · tap for records and trend</div><div style="margin-top:6px">'+muRows+'</div></div>'
+    +exerciseTrendsCard()
     +hdr("Training pattern")
-    +barChartCard("Working sets · last 8 weeks","",weeklySetsSeries(8),"sets")
+    +barChartCard("Working sets · last 10 weeks","",weeklySetsSeries(10),"sets")
     +barChartCard("Workouts · last 10 weeks","",weeklyCounts(10).map(function(w){ return {count:w.count,current:w.current}; }),"count")
     +consistencyCard()
     +weekdayCard()
@@ -2950,7 +3188,56 @@ function orderScore(c){ const ex=exById(c.exId); if(!ex) return 100; const pm=pr
   let s=0; s+=ex.type==="compound"?0:30; s+=t*12; s-=Math.min(ex.fatigue||1,4)*4;
   if(ex.type==="isolation"&&(ex.fatigue||1)<=1.2&&t>0) s+=15; return s; }
 function positionTag(ex,i,total){ if(i===0) return "First"; if(ex.type==="isolation"&&(ex.fatigue||1)<=1.2&&i>=total-1) return "Finisher"; return ""; }
+/* ---------------------------------------------------------------- v12 BODY V2
+   One question, answered in one screen: where am I below my weekly minimum, and what is ready
+   to train? Same numbers as the V1 cards — configured minimum, effective sets, direct vs
+   secondary attribution, existing recovery engine — just laid out as a scannable table and
+   sorted so the actionable rows are at the top. V1 is still there behind the toggle. */
+function bodyV2Rows(){
+  const sess=weekSessions(), vol=weeklyVolume(sess);
+  return Object.entries(S.muscles).map(function(pr){
+    const m=pr[0], cfg=pr[1], v=vol[m]||0, con=muscleContrib(m,sess), st=recoveryStatus(m);
+    const ready=(st==="ready"||st==="untrained"), moderate=(st==="caution");
+    const remaining=Math.max(0,cfg.min-v);
+    /* actionable = below minimum AND trainable; priority tier breaks ties above everything else */
+    const rank=(remaining>0.01?0:1)*100 + (ready?0:moderate?10:20) + TIER_RANK[cfg.tier];
+    return {m:m, label:cfg.label, tier:cfg.tier, direct:con.direct, secondary:con.secondary,
+      eff:v, min:cfg.min, remaining:remaining, status:st, ready:ready, moderate:moderate,
+      below:remaining>0.01, rank:rank}; })
+    .sort(function(a,b){ return (a.rank-b.rank) || (b.remaining-a.remaining) || a.label.localeCompare(b.label); }); }
+function bodyV2(){
+  const rows=bodyV2Rows();
+  const act=rows.filter(function(r){ return r.below && (r.ready||r.moderate); });
+  const n=function(x){ return (Math.round(x*10)/10).toFixed(1); };
+  const line=function(r){
+    const meta=READY_META[r.status]||READY_META.ready;
+    const tone=r.below?(r.ready?"var(--green)":r.moderate?"var(--amber)":"var(--violet)"):"var(--faint)";
+    return '<div class="exline" data-muscle="'+r.m+'" style="padding:8px 0;cursor:pointer;align-items:center">'
+      +'<div style="flex:1;min-width:0">'
+      +'<div class="nm" style="font-size:13px">'+r.label
+      +(r.tier==="primary"?' <span class="tag" style="color:var(--gold)">priority</span>':'')
+      +(r.below?' <span class="tag" style="color:'+tone+';border:1px solid '+tone+'55">'+n(r.remaining)+' to go</span>':'')+'</div>'
+      +'<div class="histline mono" style="font-size:10.5px">Direct '+n(r.direct)+' · Secondary '+n(r.secondary)+' · Effective '+n(r.eff)+'/'+r.min+' min</div>'
+      +'<div class="bar" style="margin-top:5px"><i style="width:'+Math.max(3,Math.min(100,Math.round(r.eff/r.min*100)))+'%;background:'+(r.below?"var(--blue)":"var(--accent)")+'"></i></div></div>'
+      +'<span class="mono" style="margin-left:10px;font-size:10.5px;color:'+meta.c+';white-space:nowrap">'+meta.t+'</span>'
+      +'<span class="muted" style="margin-left:6px">›</span></div>'; };
+  let h='<div class="card"><div class="tiny">Where you stand · this week</div>';
+  h+= act.length
+    ? '<div class="histline" style="margin-top:3px"><b style="color:var(--text)">'+act.length+' muscle'+(act.length===1?'':'s')+' below minimum and trainable now.</b></div>'
+    : '<div class="histline" style="margin-top:3px;color:var(--green)">Nothing is both below minimum and ready — either covered or still recovering.</div>';
+  h+='<div style="margin-top:6px">'+rows.map(line).join("")+'</div>';
+  h+='<div class="histline" style="margin-top:10px">Direct = this muscle was the target · Secondary = credited from other lifts · Effective = both combined, against your configured minimum. Tap any row for full attribution.</div>';
+  return h+'</div>'; }
+function bodyToggle(){
+  return '<div class="card" style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px">'
+    +'<span class="tiny">Layout</span><div class="seg" style="width:56%">'
+    +'<button data-bodyview="v2" class="'+(bodyView==="v2"?"on":"")+'">Summary</button>'
+    +'<button data-bodyview="v1" class="'+(bodyView==="v1"?"on":"")+'">Detailed</button></div></div>'; }
+
 function viewBody(){
+  if(bodyView==="v2") return bodyToggle()+bodyV2()+'<div id="bodydetail">'+(bodyDetail?muscleDetail(bodyDetail):"")+'</div>';
+  return bodyToggle()+viewBodyV1(); }
+function viewBodyV1(){
   const groups=BODY_GROUPS.map(([title,ms])=>{ const ordered=ms.slice().sort((a,b)=>TIER_RANK[S.muscles[a].tier]-TIER_RANK[S.muscles[b].tier]);
     const cards=ordered.map(m=>{ const cfg=S.muscles[m]; const rd=recoveryDisplay(m); const lt=lastTrainedMap()[m]; const v=weeklyVolume()[m]; const con=muscleContrib(m,weekSessions());
       const below=v<cfg.min, over=v>=cfg.cap;
@@ -2986,9 +3273,12 @@ function viewSettings(){ const acct=authProfile?'<div class="card"><div class="t
     :'<div class="card"><div class="tiny">Account</div><div class="histline" style="margin-top:6px">Local mode — not signed in.</div></div>';
   const approved=Object.entries(ALLOWED_USERS).map(([e,v])=>'<div class="exline" style="padding:7px 0"><div><div class="nm" style="font-size:13px">'+v.name+'</div><div class="histline">'+e+'</div></div><span class="tag">'+v.role+'</span></div>').join("");
   const _fam=function(e){ return !AVAIL_OK[e.avail]?{t:"unavailable",c:"var(--faint)"}:(e.rec?{t:"default",c:"var(--green)"}:{t:"manual",c:"var(--muted)"}); };
-  const _exRows=S.exercises.filter(function(e){ return exPassesFilters(e,mgmtGroup,mgmtEquip)&&exMatches(e,mgmtSearch||""); }).map(e=>{ const pm=primaryMuscle(e); const prefC={love:"var(--gold)",like:"var(--green)",neutral:"var(--muted)",avoid:"var(--red)"}[e.pref]; const f=_fam(e);
+  const _exMatched=S.exercises.filter(function(e){ return exPassesFilters(e,mgmtGroup,mgmtEquip)&&exMatches(e,mgmtSearch||""); });
+  const _exNarrowed=!!(mgmtSearch||mgmtGroup||mgmtEquip);
+  /* v12 — without a search or filter we show a capped preview, not all 119 rows */
+  const _exRows=(_exNarrowed?_exMatched:_exMatched.slice(0,12)).map(e=>{ const pm=primaryMuscle(e); const prefC={love:"var(--gold)",like:"var(--green)",neutral:"var(--muted)",avoid:"var(--red)"}[e.pref]; const f=_fam(e);
     return '<div class="exline" style="padding:9px 0"><div style="flex:1"><div class="nm" style="font-size:13.5px">'+e.name+'</div><div class="histline">'+S.muscles[pm].label+' · '+e.equip+' · <span style="color:'+f.c+'">'+f.t+'</span></div>'+(hasSetup(e.id)?'<div class="histline" style="color:var(--gold)">⚙ '+escAttr(setupSummary(e.id,3))+'</div>':'')+'</div><div class="row" style="gap:6px"><button class="btn sm" data-setup="'+e.id+'" style="color:var(--gold)" title="setup / machine settings">⚙</button><button class="btn sm" data-rec="'+e.id+'" title="recommendable">'+(e.rec?"rec":"manual")+'</button><button class="btn sm" data-pref="'+e.id+'" style="color:'+prefC+'">'+e.pref+'</button><button class="btn sm" data-avail="'+e.id+'">'+e.avail+'</button></div></div>'; }).join("");
-  const exList='<input class="inp srch" id="mgmtSearch" placeholder="Search exercises..." value="'+escAttr(mgmtSearch||"")+'">'+filterChips("mgmt",mgmtGroup,mgmtEquip)+'<div style="margin-top:6px">'+(_exRows||'<div class="empty">No matches.</div>')+'</div>';
+  const exList='<input class="inp srch" id="mgmtSearch" placeholder="Search exercises..." value="'+escAttr(mgmtSearch||"")+'">'+filterChips("mgmt",mgmtGroup,mgmtEquip)+(_exNarrowed?'':'<div class="histline" style="margin:8px 0 0">Showing '+Math.min(12,_exMatched.length)+' of '+_exMatched.length+' \u2014 search or filter above to narrow the list.</div>')+'<div style="margin-top:6px">'+(_exRows||'<div class="empty">No matches.</div>')+'</div>';
   const bw=(S.bodyweight||[]).slice(-1)[0];
   const TIERS=["primary","secondary","maintenance"]; const tierC={primary:"var(--gold)",secondary:"var(--accent)",maintenance:"var(--muted)"};
   const muscleRows=Object.entries(S.muscles).map(([m,cfg])=>'<div class="exline" style="padding:7px 0"><div class="nm" style="font-size:13px">'+cfg.label+'</div><button class="btn sm" data-tier="'+m+'" style="color:'+tierC[cfg.tier]+';border-color:'+tierC[cfg.tier]+'55;min-width:104px">'+TIER_LABEL[cfg.tier]+'</button></div>').join("");
@@ -2996,14 +3286,23 @@ function viewSettings(){ const acct=authProfile?'<div class="card"><div class="t
     +'<div class="exline" style="padding:8px 0"><div class="nm" style="font-size:13px">Weekly session target</div><div class="row" style="gap:8px;align-items:center"><button class="btn sm" data-act="target-dec">−</button><b class="mono" style="min-width:20px;text-align:center">'+S.settings.sessionsPerWeek+'</b><button class="btn sm" data-act="target-inc">+</button></div></div>'
     +'<div class="exline" style="padding:8px 0"><div class="nm" style="font-size:13px">Set logging order</div><div class="seg" style="width:58%"><button data-inputorder="wr" class="'+(inputOrder()==="wr"?"on":"")+'">Weight → Reps</button><button data-inputorder="rw" class="'+(inputOrder()==="rw"?"on":"")+'">Reps → Weight</button></div></div>'
     +'<hr class="sub"><div class="tiny">Muscle priorities</div><p class="muted" style="font-size:11.5px;margin:5px 0 4px">Tap to cycle Primary → Secondary → Maintenance. Drives recommendations and Body ordering.</p>'+muscleRows+'</div>';
+  /* v12 — Settings restructured into collapsible sections. Everything that was here is still
+     here; the heavy areas just start closed, and the limitation controls moved in from Today. */
   return acct + profile
-    +'<div class="card"><div class="tiny">Injury / limitation</div>'+(activeLimitation()?'<div style="margin-top:8px;font-weight:600">'+activeLimitation().name+'</div><div class="histline">'+(activeLimitation().note||"")+(activeLimitation().until?' · expires '+fmtDate(activeLimitation().until):' · until removed')+'</div><div class="row" style="margin-top:10px"><button class="btn sm" data-act="editlim">Edit</button><button class="btn sm danger" data-act="removelim">Remove</button></div>':'<p class="muted" style="font-size:12.5px;margin:8px 0">Temporarily exclude exercises after an injury or when equipment is unavailable (e.g. broken toe → no foot-pressure exercises).</p><button class="btn full" data-act="addlim">Add limitation</button>')+'</div>'
-    +'<div class="card"><div class="tiny">Readiness check-in</div><p class="muted" style="font-size:12.5px;margin:8px 0">Optional. It tunes <b>today\u2019s recommendation only</b> — it does not change muscle recovery colours. Low sleep/energy trims volume; high soreness leans toward isolation and caps sets at 2; muscles you flag to avoid are skipped today.</p><button class="btn full" data-act="readiness">Open readiness check-in</button></div>'
-    +'<div class="card"><div class="tiny">Bodyweight</div><div class="row" style="margin-top:8px"><input class="inp" id="bwInput" inputmode="decimal" placeholder="'+(bw?bw.kg+" kg last":"kg")+'" style="flex:1"><button class="btn accent" data-act="logbw">Log</button></div></div>'
+    +section('lims','Training preferences & limitations',
+      (activeLimitation()?'Active: '+activeLimitation().name:'No active limitation')+' \u00b7 injury, equipment, avoid foot pressure',
+      function(){ return '<div class="card"><div class="tiny">Injury / limitation</div>'+(activeLimitation()?'<div style="margin-top:8px;font-weight:600">'+activeLimitation().name+'</div><div class="histline">'+(activeLimitation().note||"")+(activeLimitation().until?' · expires '+fmtDate(activeLimitation().until):' · until removed')+'</div><div class="row" style="margin-top:10px"><button class="btn sm" data-act="editlim">Edit</button><button class="btn sm danger" data-act="removelim">Remove</button></div>':'<p class="muted" style="font-size:12.5px;margin:8px 0">Temporarily exclude exercises after an injury or when equipment is unavailable (e.g. broken toe → no foot-pressure exercises).</p><button class="btn full" data-act="addlim">Add limitation</button>')+'</div>'; })
+    +section('readiness','Readiness check-in','Optional daily tuning for today\u2019s recommendation',
+      function(){ return '<div class="card"><div class="tiny">Readiness check-in</div><p class="muted" style="font-size:12.5px;margin:8px 0">Optional. It tunes <b>today\u2019s recommendation only</b> — it does not change muscle recovery colours. Low sleep/energy trims volume; high soreness leans toward isolation and caps sets at 2; muscles you flag to avoid are skipped today.</p><button class="btn full" data-act="readiness">Open readiness check-in</button></div>'; })
+    +section('bodyweight','Bodyweight','Used for effective-load maths on assisted and bodyweight movements',
+      function(){ return '<div class="card"><div class="tiny">Bodyweight</div><div class="row" style="margin-top:8px"><input class="inp" id="bwInput" inputmode="decimal" placeholder="'+(bw?bw.kg+" kg last":"kg")+'" style="flex:1"><button class="btn accent" data-act="logbw">Log</button></div></div>'; })
     +customExercisesCard()
-    +'<div class="card"><div class="tiny">Exercise management</div><p class="muted" style="font-size:12px;margin:6px 0">Tap <b>rec</b> to include/exclude from auto-recommendations (default vs manual-only). Tap <b>preference</b> to cycle love → like → neutral → avoid. Tap <b>availability</b> to mark if a machine is free / present at your gym.</p><div style="margin-top:6px">'+exList+'</div></div>'
-    +'<div class="card"><div class="tiny">Approved users</div><p class="muted" style="font-size:12px;margin:6px 0">Each person has fully private data (row-level security). Sharing/leaderboards are not built yet.</p>'+approved+'</div>'
-    +'<div class="card"><div class="tiny">Data</div><div class="row" style="margin-top:8px"><button class="btn full" data-act="export">Export backup</button><button class="btn full" data-act="import">Import</button></div><input type="file" id="importFile" accept="application/json" style="display:none"></div>'
+    +section('exmgmt','Exercise management','Availability, preference and what the recommender may pick',
+      function(){ return '<div class="card"><div class="tiny">Exercise management</div><p class="muted" style="font-size:12px;margin:6px 0">Tap <b>rec</b> to include/exclude from auto-recommendations (default vs manual-only). Tap <b>preference</b> to cycle love → like → neutral → avoid. Tap <b>availability</b> to mark if a machine is free / present at your gym.</p><div style="margin-top:6px">'+exList+'</div></div>'; })
+    +section('users','Approved users','Who can sign in \u00b7 each person\u2019s data is fully private',
+      function(){ return '<div class="card"><div class="tiny">Approved users</div><p class="muted" style="font-size:12px;margin:6px 0">Each person has fully private data (row-level security). Sharing/leaderboards are not built yet.</p>'+approved+'</div>'; })
+    +section('data','Data','Export, import and backup',
+      function(){ return '<div class="card"><div class="tiny">Data</div><div class="row" style="margin-top:8px"><button class="btn full" data-act="export">Export backup</button><button class="btn full" data-act="import">Import</button></div><input type="file" id="importFile" accept="application/json" style="display:none"></div>'; })
     +buildCard(); }
 /* v10 — the build actually running on this device. BUILD is the code version and is
    deliberately separate from CONFIG_VERSION (the stored-data shape), which stays at 9
@@ -3305,6 +3604,10 @@ function wireScreen(){
   document.querySelectorAll("[data-cxreview]").forEach(b=>b.onclick=()=>{ reconcileSearch=""; openSheet("reconcile",b.dataset.cxreview); });
   document.querySelectorAll("[data-addcustom]").forEach(b=>b.onclick=()=>{ customDraft={name:b.dataset.addcustom||"",group:"",load:"ext",id:null}; openSheet("custom"); });
   document.querySelectorAll("[data-closedetail]").forEach(b=>b.onclick=()=>{ bodyDetail=null; render(); });
+  document.querySelectorAll("[data-section]").forEach(b=>b.onclick=()=>{ toggleSection(b.dataset.section); render(); });
+  document.querySelectorAll("[data-bodyview]").forEach(b=>b.onclick=()=>{ bodyView=b.dataset.bodyview;
+    try{ localStorage.setItem("iron_arc_bodyview",bodyView); }catch(e){} render(); });
+  document.querySelectorAll("[data-showall]").forEach(b=>b.onclick=()=>{ showAllMuscles=!showAllMuscles; render(); });
   // settings
   // per-user training profile
   document.querySelectorAll("[data-tier]").forEach(b=>b.onclick=()=>{ const m=b.dataset.tier; const order=["primary","secondary","maintenance"]; S.muscles[m].tier=order[(order.indexOf(S.muscles[m].tier)+1)%3]; save(); render(); });
