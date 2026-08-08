@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Iron Arc — Workout Recovery &amp; Audit</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{ --bg:#0d0f12; --card:#15181d; --line:#242932; --tx:#e8ecf2; --mut:#8b93a1;
+       --hot:#ff5b2e; --green:#3ecf8e; --amber:#ffc23d; --red:#ff5f56; --blue:#5aa9ff; }
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;padding:16px;max-width:900px;margin:0 auto}
+h1{font-size:20px;margin:0 0 4px} h2{font-size:15px;margin:22px 0 8px;color:var(--hot);letter-spacing:.02em;text-transform:uppercase}
+.sub{color:var(--mut);font-size:13px;margin-bottom:18px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin:10px 0}
+.btn{background:#1e232b;border:1px solid var(--line);color:var(--tx);border-radius:10px;padding:10px 14px;font-size:14px;font-weight:600;cursor:pointer;margin:4px 4px 4px 0}
+.btn.accent{background:var(--hot);border-color:var(--hot);color:#fff}
+.btn.good{background:#12351f;border-color:#1f6b3f;color:var(--green)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.tiny{font-size:12px;color:var(--mut)}
+table{width:100%;border-collapse:collapse;font-size:13px;margin-top:6px}
+th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--mut);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.04em}
+code{background:#0a0c0f;padding:1px 5px;border-radius:4px;font-size:12px;color:var(--blue)}
+pre{background:#0a0c0f;border:1px solid var(--line);border-radius:8px;padding:10px;overflow:auto;font-size:11px;max-height:320px}
+.pill{display:inline-block;padding:1px 8px;border-radius:99px;font-size:11px;font-weight:700}
+.p-local{background:rgba(255,194,61,.14);color:var(--amber)}
+.p-cloud{background:rgba(90,169,255,.14);color:var(--blue)}
+.p-both{background:rgba(62,207,142,.14);color:var(--green)}
+.p-risk{background:rgba(255,95,86,.16);color:var(--red)}
+.ok{color:var(--green)} .warn{color:var(--amber)} .bad{color:var(--red)}
+</style>
+</head>
+<body>
+
+<h1>Iron Arc — Recovery &amp; Audit</h1>
+<div class="sub">Read-only until you press a restore button. Keep this file next to <code>index.html</code> and open it from the <b>same address</b> you open the app from — browser storage is per-origin, so a different URL sees different data.</div>
+
+<div class="card">
+  <button class="btn accent" id="scan">1 · Scan this device</button>
+  <button class="btn" id="cloud">2 · Query the cloud</button>
+  <button class="btn" id="backup">3 · Download a full backup</button>
+  <div class="tiny" id="status" style="margin-top:8px">Ready.</div>
+</div>
+
+<div id="out"></div>
+
+<script>
+const SUPABASE_URL = "https://utlhzxbjxvsyluyslfhe.supabase.co";
+const SUPABASE_KEY = "sb_publishable_xNfADG84azbA0wc1_ngVYw_MqxOANCz";
+const TARGET_DATES = ["2026-08-05","2026-08-07"];   /* the two sessions under investigation */
+
+let sb=null;
+try{ if(window.supabase) sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,storageKey:"iron_arc_auth"}}); }catch(e){}
+
+const out=document.getElementById("out"), status=document.getElementById("status");
+const say=t=>status.textContent=t;
+const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const dkey=d=>{ try{ const x=new Date(d); return x.getFullYear()+"-"+String(x.getMonth()+1).padStart(2,"0")+"-"+String(x.getDate()).padStart(2,"0"); }catch(e){ return "?"; } };
+const fmt=d=>{ try{ return new Date(d).toLocaleString("en-AU",{weekday:"short",day:"numeric",month:"short",year:"numeric",hour:"numeric",minute:"2-digit"}); }catch(e){ return String(d); } };
+
+/* ------------------------------------------------------------------ 1. DEVICE SCAN */
+let device={ keys:[], sessions:new Map(), activeKeys:[], journals:[] };
+
+function scan(){
+  device={ keys:[], sessions:new Map(), activeKeys:[], journals:[] };
+  let html='<h2>Device storage</h2>';
+
+  const all=[];
+  for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); all.push(k); }
+  const mine=all.filter(k=>/iron[_-]?arc/i.test(k));
+  device.keys=mine;
+
+  html+='<div class="card"><div class="tiny">'+all.length+' storage keys on this origin ('+location.origin+location.pathname+'), '+mine.length+' belong to Iron Arc.</div>';
+  if(!mine.length){
+    html+='<div class="bad" style="margin-top:8px"><b>No Iron Arc data on this origin at all.</b> This almost certainly means you are opening this page from a different address than the app. Open the app, copy its exact URL, and put <code>recover.html</code> at the same path.</div>';
+  }
+  html+='<table><tr><th>Key</th><th>Size</th><th>Contents</th></tr>';
+  mine.forEach(k=>{
+    const raw=localStorage.getItem(k)||"";
+    let desc="—";
+    try{
+      const d=JSON.parse(raw);
+      if(k.indexOf("iron_arc_v2")===0){ desc=(d.sessions?d.sessions.length:0)+" sessions · cfgVersion "+d.cfgVersion; (d.sessions||[]).forEach(s=>addSession(s,"local:"+k)); }
+      else if(k.indexOf("iron_arc_active_v2")===0){ desc="UNFINISHED workout · "+((d.entries||[]).length)+" exercises · started "+fmt(d.startedAt); device.activeKeys.push({k,d}); }
+      else if(k.indexOf("iron_arc_journal_v1")===0){ desc="journal · "+(Array.isArray(d)?d.length:0)+" workouts"; device.journals.push({k,d}); (Array.isArray(d)?d:[]).forEach(s=>addSession(s,"journal:"+k)); }
+      else if(k.indexOf("iron_arc_auth")===0){ desc="auth session · "+((d&&d.user&&d.user.email)||"signed out"); }
+      else if(k.indexOf("iron_arc_rest")===0){ desc="rest timer state"; }
+      else desc=raw.slice(0,60);
+    }catch(e){ desc='<span class="warn">unparseable — '+esc(String(e.message))+'</span>'; }
+    html+='<tr><td><code>'+esc(k)+'</code></td><td>'+(raw.length/1024).toFixed(1)+' kB</td><td>'+desc+'</td></tr>';
+  });
+  html+='</table></div>';
+
+  /* unfinished workouts sitting in the active key are recoverable data too */
+  if(device.activeKeys.length){
+    html+='<div class="card"><b class="warn">Unfinished workout found in storage</b><div class="tiny">This was entered but never marked finished, so it never reached History. You can finish it in the app (Today → Resume workout), or restore it below as a completed session.</div>';
+    device.activeKeys.forEach(({k,d},i)=>{
+      const sets=(d.entries||[]).reduce((n,en)=>n+(en.sets||[]).filter(s=>s.type!=="warm"&&s.weight!==""&&s.weight!=null&&s.reps!==""&&s.reps!=null).length,0);
+      html+='<div style="margin-top:10px"><b>'+esc(d.title||"Workout")+'</b> · started '+fmt(d.startedAt)+' · '+(d.entries||[]).length+' exercises · '+sets+' logged sets'
+          +'<div class="tiny">'+(d.entries||[]).map(en=>esc(en.exId)+" ("+(en.sets||[]).map(s=>s.weight+"×"+s.reps).join(", ")+")").join(" · ")+'</div>'
+          +'<button class="btn good" data-promote="'+i+'">Restore as a completed workout</button></div>';
+    });
+    html+='</div>';
+  }
+
+  html+=renderAudit("Device-only view — run step 2 to compare against the cloud");
+  out.innerHTML=html;
+  wire();
+  say(mine.length+" Iron Arc keys scanned · "+device.sessions.size+" distinct completed workouts found on this device.");
+}
+
+function addSession(s,src){
+  if(!s||!s.completedAt) return;
+  const id=s.id||("nokey-"+s.completedAt);
+  const prev=device.sessions.get(id);
+  const rec=prev||{ id, sess:s, sources:[] };
+  rec.sources.push(src);
+  /* keep the copy with the most logged sets */
+  const n=x=>(x.entries||[]).reduce((a,en)=>a+(en.sets||[]).length,0);
+  if(n(s)>n(rec.sess)) rec.sess=s;
+  device.sessions.set(id,rec);
+}
+
+/* ------------------------------------------------------------------ 2. CLOUD QUERY */
+let cloud={ ok:false, sessions:new Map(), user:null, errors:[] };
+
+async function queryCloud(){
+  if(!sb){ say("Supabase library did not load — check your connection."); return; }
+  say("Checking your sign-in…");
+  const { data:sdata } = await sb.auth.getSession();
+  const user=sdata&&sdata.session?sdata.session.user:null;
+  if(!user){ say("Not signed in on this origin. Open the app, sign in, then reload this page."); return; }
+  cloud={ ok:false, sessions:new Map(), user, errors:[] };
+  say("Signed in as "+user.email+" — reading the cloud…");
+
+  const [wR,weR,setR]=await Promise.all([
+    sb.from("workouts").select("*").eq("user_id",user.id).order("performed_at",{ascending:true}),
+    sb.from("workout_exercises").select("*").eq("user_id",user.id),
+    sb.from("sets").select("*").eq("user_id",user.id)
+  ]);
+  [["workouts",wR],["workout_exercises",weR],["sets",setR]].forEach(([n,r])=>{ if(r.error) cloud.errors.push(n+": "+r.error.message); });
+
+  const weByW={}; (weR.data||[]).forEach(we=>{(weByW[we.workout_id]=weByW[we.workout_id]||[]).push(we);});
+  const setByWe={}; (setR.data||[]).forEach(s=>{(setByWe[s.workout_exercise_id]=setByWe[s.workout_exercise_id]||[]).push(s);});
+  (wR.data||[]).forEach(w=>{
+    const wes=(weByW[w.id]||[]).sort((a,b)=>a.order_index-b.order_index);
+    cloud.sessions.set(w.id,{ id:w.id, completedAt:w.performed_at, title:w.title, mode:w.mode,
+      entries:wes.map(we=>({ exId:we.exercise_slug, sets:(setByWe[we.id]||[]).sort((a,b)=>a.set_index-b.set_index)
+        .map(s=>({weight:s.weight==null?"":Number(s.weight),reps:s.reps==null?"":s.reps,type:s.is_warmup?"warm":"work",done:!!s.completed})) })) });
+  });
+  cloud.ok=!cloud.errors.length;
+
+  let html='<h2>Cloud</h2><div class="card">';
+  html+='<div class="tiny">Signed in as <b>'+esc(user.email)+'</b> · user id <code>'+esc(user.id)+'</code></div>';
+  if(cloud.errors.length) html+='<div class="bad" style="margin-top:8px"><b>Read errors:</b><br>'+cloud.errors.map(esc).join("<br>")+'</div>';
+  html+='<div style="margin-top:8px">'+(wR.data||[]).length+' workout rows · '+(weR.data||[]).length+' exercise rows · '+(setR.data||[]).length+' set rows</div>';
+  const empties=[...cloud.sessions.values()].filter(s=>!s.entries.length);
+  if(empties.length) html+='<div class="warn" style="margin-top:8px"><b>'+empties.length+' workout(s) in the cloud have no exercise rows attached</b> — the sign of a half-finished write: '+empties.map(s=>dkey(s.completedAt)).join(", ")+'</div>';
+  html+='</div>';
+
+  out.innerHTML=document.querySelector("#out").innerHTML.split('<h2>Cloud</h2>')[0].split('<h2>Audit')[0]+html+renderAudit("Device vs cloud");
+  wire();
+  say("Cloud read complete — "+cloud.sessions.size+" workouts in the cloud, "+device.sessions.size+" on this device.");
+}
+
+/* ------------------------------------------------------------------ 3. AUDIT */
+function renderAudit(note){
+  const ids=new Set([...device.sessions.keys(), ...cloud.sessions.keys()]);
+  if(!ids.size) return '<h2>Audit</h2><div class="card">Nothing to compare yet — run step 1.</div>';
+  const rows=[...ids].map(id=>{
+    const d=device.sessions.get(id), c=cloud.sessions.get(id);
+    const s=(d&&d.sess)||c;
+    const nSets=x=>(x&&x.entries||[]).reduce((a,en)=>a+(en.sets||[]).filter(t=>t.type!=="warm"&&t.weight!==""&&t.weight!=null&&t.reps!==""&&t.reps!=null).length,0);
+    return { id, date:s.completedAt, title:s.title, dev:!!d, cld:!!c,
+             devSets:nSets(d&&d.sess), cldSets:nSets(c), sources:(d?d.sources:[]), sess:(d&&d.sess)||c };
+  }).sort((a,b)=>new Date(b.date)-new Date(a.date));
+
+  const localOnly=rows.filter(r=>r.dev&&!r.cld);
+  const cloudOnly=rows.filter(r=>!r.dev&&r.cld);
+  const mismatch=rows.filter(r=>r.dev&&r.cld&&r.devSets!==r.cldSets);
+  const hitTargets=rows.filter(r=>TARGET_DATES.indexOf(dkey(r.date))>=0);
+
+  let html='<h2>Audit <span class="tiny">· '+esc(note)+'</span></h2>';
+
+  html+='<div class="card"><b>The two sessions under investigation</b>';
+  TARGET_DATES.forEach(t=>{
+    const hits=hitTargets.filter(r=>dkey(r.date)===t);
+    if(!hits.length) html+='<div style="margin-top:6px" class="bad">✗ <b>'+t+'</b> — no trace in device storage'+(cloud.ok?' or the cloud':'')+'. Unrecoverable from data; re-enter it backdated in the app (History → any workout → Duplicate, then Edit and set the date).</div>';
+    else hits.forEach(r=>{ html+='<div style="margin-top:6px" class="ok">✓ <b>'+t+'</b> — found: '+esc(r.title||"Workout")+' · '+Math.max(r.devSets,r.cldSets)+' working sets · '+(r.dev?"on device":"")+(r.dev&&r.cld?" + ":"")+(r.cld?"in cloud":"")+'</div>'; });
+  });
+  html+='</div>';
+
+  html+='<div class="card"><b>Every workout, everywhere</b> <span class="tiny">'+rows.length+' distinct sessions</span>'
+      +'<table><tr><th>Date</th><th>Title</th><th>Where</th><th>Sets dev/cloud</th><th>Id</th></tr>';
+  rows.forEach(r=>{
+    const pill=r.dev&&r.cld?'<span class="pill p-both">both</span>':(r.dev?'<span class="pill p-local">device only</span>':'<span class="pill p-cloud">cloud only</span>');
+    const risk=(r.dev&&r.cld&&r.devSets!==r.cldSets)?' <span class="pill p-risk">set count differs</span>':'';
+    html+='<tr><td>'+esc(fmt(r.date))+'</td><td>'+esc(r.title||"—")+'</td><td>'+pill+risk+'</td><td>'+r.devSets+' / '+(r.cld?r.cldSets:"—")+'</td><td><code>'+esc(String(r.id).slice(0,8))+'</code></td></tr>';
+  });
+  html+='</table></div>';
+
+  html+='<div class="card"><b>Findings</b><ul style="margin:8px 0 0;padding-left:20px;font-size:14px">'
+     +'<li>'+localOnly.length+' workout(s) exist on this device but not in the cloud'+(localOnly.length?' <span class="warn">— these were at risk of being deleted by the old rehydrate</span>':'')+'</li>'
+     +'<li>'+cloudOnly.length+' workout(s) exist in the cloud but not on this device'+(cloudOnly.length?' <span class="warn">— restore them below</span>':'')+'</li>'
+     +'<li>'+mismatch.length+' workout(s) have a different number of logged sets on each side'+(mismatch.length?' <span class="warn">— sign of a partial write</span>':'')+'</li>'
+     +'</ul>';
+  if(localOnly.length||cloudOnly.length||mismatch.length)
+    html+='<button class="btn accent" id="repair">Restore everything into this device</button>'
+        + '<div class="tiny">Merges the union of device + cloud + journal back into local storage, keeping the copy with the most logged sets, and marks them unsynced so the app re-uploads them. Nothing is deleted.</div>';
+  html+='</div>';
+  return html;
+}
+
+/* ------------------------------------------------------------------ 4. REPAIR */
+function scopedKey(){
+  const u=cloud.user&&cloud.user.id;
+  if(u&&localStorage.getItem("iron_arc_v2:"+u)!=null) return "iron_arc_v2:"+u;
+  if(u) return "iron_arc_v2:"+u;
+  const k=device.keys.filter(k=>k.indexOf("iron_arc_v2")===0&&k.indexOf("active")<0&&k.indexOf("journal")<0);
+  return k[0]||"iron_arc_v2";
+}
+function repair(){
+  const key=scopedKey();
+  let base;
+  try{ base=JSON.parse(localStorage.getItem(key)||"null"); }catch(e){ base=null; }
+  if(!base){ alert("Could not read "+key+" — restore aborted so nothing is damaged."); return; }
+  /* safety copy before we touch anything */
+  try{ localStorage.setItem(key+".prerepair."+Date.now(), JSON.stringify(base)); }catch(e){}
+
+  const byId={}; (base.sessions||[]).forEach(s=>{ if(s&&s.id) byId[s.id]=s; });
+  const nSets=x=>(x&&x.entries||[]).reduce((a,en)=>a+(en.sets||[]).length,0);
+  let added=0, improved=0;
+  const consider=s=>{ if(!s||!s.id||!s.completedAt) return;
+    const cur=byId[s.id];
+    if(!cur){ byId[s.id]={...s,synced:false}; added++; }
+    else if(nSets(s)>nSets(cur)){ byId[s.id]={...s,synced:false}; improved++; } };
+  device.sessions.forEach(r=>consider(r.sess));
+  cloud.sessions.forEach(c=>consider(c));
+
+  base.sessions=Object.values(byId).sort((a,b)=>new Date(a.completedAt)-new Date(b.completedAt));
+  localStorage.setItem(key,JSON.stringify(base));
+  /* seed the journal too, so the new build's recovery net has them */
+  try{
+    const jk=(cloud.user&&cloud.user.id)?"iron_arc_journal_v1:"+cloud.user.id:"iron_arc_journal_v1";
+    localStorage.setItem(jk,JSON.stringify(base.sessions.slice(-500)));
+  }catch(e){}
+  alert("Restored into "+key+"\n\n"+added+" workout(s) added\n"+improved+" workout(s) upgraded to a fuller copy\n"+base.sessions.length+" total\n\nA pre-repair snapshot was kept. Now reopen the app — it will re-upload anything the cloud is missing.");
+  scan();
+}
+
+function promoteActive(i){
+  const rec=device.activeKeys[i]; if(!rec) return;
+  const d=rec.d;
+  const when=prompt("What date and time did you finish this workout?\nFormat: YYYY-MM-DD HH:MM (24h)", dkey(d.startedAt)+" 18:30");
+  if(!when) return;
+  const t=new Date(when.replace(" ","T"));
+  if(isNaN(t)){ alert("Could not read that date."); return; }
+  const key=scopedKey(); let base;
+  try{ base=JSON.parse(localStorage.getItem(key)||"null"); }catch(e){ base=null; }
+  if(!base){ alert("Could not read "+key+"."); return; }
+  try{ localStorage.setItem(key+".prerepair."+Date.now(), JSON.stringify(base)); }catch(e){}
+  const sess={ id:d.id||("rec-"+Date.now()), startedAt:d.startedAt||t.toISOString(), completedAt:t.toISOString(),
+               title:d.title||"Recovered workout", mode:d.mode||"manual", entries:d.entries||[], synced:false };
+  base.sessions=(base.sessions||[]).filter(s=>s.id!==sess.id).concat([sess]).sort((a,b)=>new Date(a.completedAt)-new Date(b.completedAt));
+  localStorage.setItem(key,JSON.stringify(base));
+  localStorage.removeItem(rec.k);
+  alert("Restored as a completed workout on "+t.toLocaleString("en-AU")+".\nReopen the app — it will appear in History and feed your progress views.");
+  scan();
+}
+
+function backup(){
+  const dump={ takenAt:new Date().toISOString(), origin:location.href, storage:{} };
+  for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); if(/iron[_-]?arc/i.test(k)) dump.storage[k]=localStorage.getItem(k); }
+  dump.cloud=[...cloud.sessions.values()];
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(new Blob([JSON.stringify(dump,null,2)],{type:"application/json"}));
+  a.download="iron-arc-recovery-backup-"+dkey(new Date())+".json"; a.click();
+  say("Backup downloaded. Keep this file before doing anything else.");
+}
+
+function wire(){
+  const r=document.getElementById("repair"); if(r) r.onclick=repair;
+  document.querySelectorAll("[data-promote]").forEach(b=>b.onclick=()=>promoteActive(+b.dataset.promote));
+}
+document.getElementById("scan").onclick=scan;
+document.getElementById("cloud").onclick=()=>queryCloud().catch(e=>say("Cloud query failed: "+e.message));
+document.getElementById("backup").onclick=backup;
+scan();
+</script>
+</body>
+</html>

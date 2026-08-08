@@ -191,6 +191,47 @@ button{font-family:inherit; cursor:pointer; border:none; color:inherit;}
 .restt{font-family:'JetBrains Mono',monospace; font-size:27px; font-weight:700; color:var(--accent); min-width:76px; text-align:right; line-height:1;}
 .restctl{display:flex; gap:8px; margin-top:10px;}
 .restctl button{flex:1; padding:8px; border-radius:9px; background:var(--panel); border:1px solid var(--line); color:var(--muted); font-size:12px; font-weight:600;}
+
+/* ===== v9 additions ===== */
+.gchips{display:flex; flex-wrap:wrap; gap:6px; margin-top:6px;}
+.gchip{font-size:12px; padding:7px 11px; border-radius:999px; background:var(--panel2); border:1px solid var(--line); color:var(--muted); font-weight:600;}
+.gchip.on{background:var(--accent); color:var(--accent-ink); border-color:var(--accent);}
+.opt.customadd{border-style:dashed; border-color:rgba(224,165,60,.5); background:rgba(224,165,60,.07);}
+/* trend badge — one consistent visual language for progression vs variation vs decline */
+.tb{display:inline-flex; align-items:center; gap:3px; font-size:10.5px; font-weight:800; padding:2px 7px; border-radius:999px; white-space:nowrap; font-family:'JetBrains Mono',monospace;}
+.tb.up{background:rgba(52,199,89,.16); color:var(--green);}
+.tb.dn{background:rgba(255,90,82,.16); color:var(--red);}
+.tb.fl{background:rgba(255,159,10,.16); color:var(--amber);}
+.tb.st{background:rgba(59,130,246,.14); color:var(--accent);}
+.tb.na{background:var(--panel2); color:var(--faint);}
+/* micro sparkline that sits inline on an exercise row */
+.mspark{display:inline-flex; align-items:flex-end; gap:1.5px; height:16px; width:46px; vertical-align:middle;}
+.mspark i{flex:1; min-height:2px; border-radius:1px; display:block; background:var(--grey);}
+.mspark i.hi{background:var(--accent);}
+/* delta chips in the post-workout summary */
+.dgrid{display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:10px;}
+.dcell{background:var(--panel2); border:1px solid var(--line); border-radius:12px; padding:10px 8px; text-align:center;}
+.dcell b{display:block; font-family:'JetBrains Mono',monospace; font-size:17px; line-height:1.25;}
+.dcell span{display:block; font-size:9px; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); margin-top:2px;}
+.dcell em{display:block; font-style:normal; font-size:10.5px; font-weight:700; margin-top:4px; font-family:'JetBrains Mono',monospace;}
+/* training calendar heatmap */
+.hmap{display:flex; gap:3px; margin-top:8px; overflow-x:auto; padding-bottom:2px;}
+.hmcol{display:flex; flex-direction:column; gap:3px;}
+.hmcell{width:11px; height:11px; border-radius:2.5px; background:var(--panel2); flex:none;}
+.hmcell.l1{background:rgba(59,130,246,.35);} .hmcell.l2{background:rgba(59,130,246,.62);} .hmcell.l3{background:var(--accent);}
+.hmcell.out{background:transparent;}
+.hmleg{display:flex; align-items:center; gap:4px; font-size:10px; color:var(--muted); margin-top:8px;}
+/* ranked improvement / attention rows */
+.rrow{display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid var(--line); cursor:pointer;}
+.rrow:last-child{border-bottom:none;}
+.rrow .rk{font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--faint); width:14px; flex:none;}
+.rrow .rmain{flex:1; min-width:0;}
+.rrow .rnm{font-size:13px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.rrow .rsub{font-size:11px; color:var(--muted); margin-top:2px;}
+.volrow{display:flex; align-items:center; gap:9px; padding:6px 0;}
+.volrow .vnm{font-size:12.5px; width:82px; flex:none; color:var(--text);}
+.volrow .vbar{flex:1; height:8px; border-radius:4px; background:var(--panel2); overflow:hidden; display:flex;}
+.volrow .vbar i{display:block; height:100%; background:var(--accent);}
 </style>
 </head>
 <body>
@@ -205,7 +246,7 @@ button{font-family:inherit; cursor:pointer; border:none; color:inherit;}
 /* ============================================================================
    CONFIG — edit freely; first run seeds this, your in-app edits persist.
    ============================================================================ */
-const CONFIG_VERSION = 8; /* v8: wall-clock rest timer (endsAt timestamp, survives backgrounding) \u00b7 per-exercise setup & machine settings \u00b7 Smith Machine Bent-Over Row \u00b7 44 new library variations \u00b7 alias-tolerant search + muscle/equipment filters (v7: Lying Leg Curl added · avoid-pref hard-excluded from recs/swaps · reroll gives a genuinely new proposal · finish time = submit time · prev/last follow your logging order (v6: gym-specific library + achievements + charts + Reports)) */
+const CONFIG_VERSION = 9; /* v9: custom exercises (persistent cx- ids) + reconciliation workflow \u00b7 reusable exercise-level progression model (assistance is inverse; effective load = bodyweight - assistance) \u00b7 richer post-workout summary, training dashboard, heatmap, trend badges (v8: wall-clock rest timer \u00b7 per-exercise setup & machine settings \u00b7 44 new library variations \u00b7 alias-tolerant search) */
 const SUPABASE_URL = "https://utlhzxbjxvsyluyslfhe.supabase.co";
 const SUPABASE_KEY = "sb_publishable_xNfADG84azbA0wc1_ngVYw_MqxOANCz";
 
@@ -295,7 +336,7 @@ const EXERCISES = [
  /* ---- BACK / LATS ---- */
  {id:"lat_pulldown", name:"Lat Pulldown", type:"compound", equip:"machine", pattern:"vertical_pull", pref:"like", avail:"always", rec:true, src:"confirmed", rest:120, rl:8, rh:12, sl:2, sh:3, fatigue:2, m:{back_lats:1, biceps:.5, upper_back:.5, rear_delts:.25}, aliases:"sportsart df-103 wide grip pulldown lats vertical pull"},
  {id:"neutral_pulldown", name:"Neutral-Grip Pulldown", type:"compound", equip:"machine", pattern:"vertical_pull", pref:"like", avail:"always", rec:true, src:"confirmed", rest:120, rl:8, rh:12, sl:2, sh:3, fatigue:2, m:{back_lats:1, biceps:.5, upper_back:.5}, aliases:"close neutral grip pulldown lats vertical pull"},
- {id:"assisted_chin", name:"Assisted Chin-Up", type:"compound", equip:"machine", pattern:"vertical_pull", pref:"love", avail:"always", rec:true, src:"confirmed", rest:120, rl:6, rh:12, sl:2, sh:3, fatigue:2.5, m:{back_lats:1, biceps:.5, upper_back:.5, rear_delts:.25}, aliases:"df-107-a assisted chin up pull up lats"},
+ {id:"assisted_chin", name:"Assisted Chin-Up", type:"compound", equip:"machine", pattern:"vertical_pull", load:"assist", pref:"love", avail:"always", rec:true, src:"confirmed", rest:120, rl:6, rh:12, sl:2, sh:3, fatigue:2.5, m:{back_lats:1, biceps:.5, upper_back:.5, rear_delts:.25}, aliases:"df-107-a assisted chin up pull up lats"},
  {id:"machine_row", name:"Mid Row Machine", type:"compound", equip:"machine", pattern:"mid_row", pref:"like", avail:"always", rec:true, src:"confirmed", rest:120, rl:8, rh:12, sl:2, sh:3, fatigue:2, m:{upper_back:1, back_lats:.5, rear_delts:.5, biceps:.25}, aliases:"df-103 sportsart mid row seated row upper back"},
  {id:"cs_row", name:"Chest-Supported Row", type:"compound", equip:"machine", pattern:"horizontal_pull", pref:"like", avail:"always", rec:false, src:"manual", rest:120, rl:8, rh:12, sl:2, sh:3, fatigue:2, m:{upper_back:1, back_lats:.5, rear_delts:.5, biceps:.25}, aliases:"chest supported row plate row upper back manual"},
  {id:"seated_cable_row", name:"Seated Cable Row", type:"compound", equip:"cable", pattern:"cable_row", pref:"like", avail:"always", rec:false, src:"manual", rest:120, rl:8, rh:12, sl:2, sh:3, fatigue:2, m:{upper_back:1, back_lats:.5, rear_delts:.5, biceps:.25}, aliases:"cable row seated row upper back manual"},
@@ -326,7 +367,7 @@ const EXERCISES = [
  {id:"overhead_rope_ext", name:"Overhead Cable Tricep Extension", type:"isolation", equip:"cable", pattern:"overhead_ext", pref:"like", avail:"always", rec:true, src:"cable", rest:75, rl:10, rh:15, sl:2, sh:3, fatigue:1.3, m:{triceps:1}, aliases:"overhead cable rope tricep extension triceps long head"},
  {id:"single_overhead_ext", name:"Single-Arm Cable Tricep Extension", type:"isolation", equip:"cable", pattern:"single_arm_ext", pref:"neutral", avail:"always", rec:true, src:"cable", rest:60, rl:10, rh:15, sl:2, sh:3, fatigue:1.2, m:{triceps:1}, aliases:"single arm overhead cable tricep extension triceps"},
  {id:"machine_tricep_ext", name:"Machine Tricep Extension", type:"isolation", equip:"machine", pattern:"machine_ext", pref:"like", avail:"always", rec:true, src:"confirmed", rest:75, rl:8, rh:15, sl:2, sh:3, fatigue:1.3, m:{triceps:1}, aliases:"df-105-b sportsart machine tricep extension dip triceps"},
- {id:"assisted_dip", name:"Assisted Dip", type:"compound", equip:"machine", pattern:"dip", pref:"like", avail:"always", rec:true, src:"confirmed", rest:120, rl:6, rh:12, sl:2, sh:3, fatigue:2, m:{triceps:1, chest:.5, front_delts:.25}, aliases:"df-107-b assisted dip shoulder dip triceps"},
+ {id:"assisted_dip", name:"Assisted Dip", type:"compound", equip:"machine", pattern:"dip", load:"assist", pref:"like", avail:"always", rec:true, src:"confirmed", rest:120, rl:6, rh:12, sl:2, sh:3, fatigue:2, m:{triceps:1, chest:.5, front_delts:.25}, aliases:"df-107-b assisted dip shoulder dip triceps"},
  {id:"db_overhead_ext", name:"DB Overhead Tricep Ext.", type:"isolation", equip:"dumbbell", pattern:"overhead_ext", pref:"like", avail:"always", rec:false, src:"manual", rest:75, rl:8, rh:15, sl:2, sh:3, fatigue:1.4, m:{triceps:1}, aliases:"dumbbell overhead tricep extension triceps manual"},
  {id:"bench_dip", name:"Bench Dip", type:"compound", equip:"bodyweight", pattern:"dip", pref:"neutral", avail:"always", rec:false, src:"manual", rest:90, rl:8, rh:15, sl:2, sh:3, fatigue:1.5, m:{triceps:1, chest:.5, front_delts:.25}, aliases:"bench dip bodyweight triceps manual"},
  {id:"crossbody_ext", name:"Cross-Body Cable Tricep Ext.", type:"isolation", equip:"cable", pattern:"crossbody_ext", pref:"neutral", avail:"no", rec:false, src:"unavailable", rest:60, rl:10, rh:15, sl:2, sh:3, fatigue:1.1, m:{triceps:1}, aliases:"cross body cable tricep extension not used"},
@@ -363,7 +404,9 @@ const EXERCISES = [
  {id:"smith_bent_row", name:"Smith Machine Bent-Over Row", type:"compound", equip:"smith", pattern:"bent_row", pref:"neutral", avail:"always", rec:false, src:"manual", rest:120, rl:6, rh:12, sl:3, sh:4, fatigue:2.8, m:{back_lats:1, upper_back:1, rear_delts:.5, biceps:.5, lower_back:.5, abs:.25}, aliases:"smith machine bent over row bent-over row bentover row smith row back row lats rhomboids middle traps hinge row barbell fixed bar row"},
  {id:"bb_bent_row", name:"Barbell Bent-Over Row", type:"compound", equip:"barbell", pattern:"bent_row", pref:"neutral", avail:"usually", rec:false, src:"manual", rest:120, rl:6, rh:12, sl:3, sh:4, fatigue:3, m:{back_lats:1, upper_back:1, rear_delts:.5, biceps:.5, lower_back:.5, abs:.25}, aliases:"barbell bent over row bent-over row bentover row pendlay row back row lats rhomboids traps"},
  {id:"t_bar_row", name:"T-Bar Row (Machine)", type:"compound", equip:"machine", pattern:"tbar_row", pref:"neutral", avail:"usually", rec:false, src:"manual", rest:120, rl:8, rh:12, sl:2, sh:3, fatigue:2.4, m:{upper_back:1, back_lats:.5, rear_delts:.5, biceps:.25}, aliases:"t-bar tbar t bar row landmine row upper back thickness"},
- {id:"pull_up", name:"Pull-Up (Bodyweight)", type:"compound", equip:"bodyweight", pattern:"vertical_pull", pref:"neutral", avail:"always", rec:false, src:"manual", rest:150, rl:4, rh:12, sl:2, sh:4, fatigue:2.8, m:{back_lats:1, biceps:.5, upper_back:.5, rear_delts:.25, abs:.25}, aliases:"pull up pullup chin up wide grip bodyweight lats vertical pull"},
+ {id:"chin_up", name:"Chin-Up (Bodyweight / Weighted)", type:"compound", equip:"bodyweight", pattern:"vertical_pull", load:"bw", pref:"neutral", avail:"always", rec:false, src:"manual", rest:150, rl:4, rh:12, sl:2, sh:4, fatigue:2.8, m:{back_lats:1, biceps:.75, upper_back:.5, rear_delts:.25, abs:.25}, aliases:"chin up chinup supinated underhand grip chin bodyweight weighted belt lats biceps vertical pull graduation"},
+ {id:"bw_dip", name:"Dip (Bodyweight / Weighted)", type:"compound", equip:"bodyweight", pattern:"dip", load:"bw", pref:"neutral", avail:"always", rec:false, src:"manual", rest:150, rl:5, rh:12, sl:2, sh:4, fatigue:2.4, m:{triceps:1, chest:.75, front_delts:.5}, aliases:"dip dips parallel bar bodyweight weighted belt triceps chest graduation"},
+ {id:"pull_up", name:"Pull-Up (Bodyweight)", type:"compound", equip:"bodyweight", pattern:"vertical_pull", load:"bw", pref:"neutral", avail:"always", rec:false, src:"manual", rest:150, rl:4, rh:12, sl:2, sh:4, fatigue:2.8, m:{back_lats:1, biceps:.5, upper_back:.5, rear_delts:.25, abs:.25}, aliases:"pull up pullup chin up wide grip bodyweight lats vertical pull"},
  {id:"single_arm_pulldown", name:"Single-Arm Cable Pulldown", type:"compound", equip:"cable", pattern:"single_arm_pulldown", pref:"neutral", avail:"always", rec:false, src:"manual", rest:90, rl:8, rh:14, sl:2, sh:3, fatigue:1.8, m:{back_lats:1, biceps:.25, upper_back:.25}, aliases:"one arm single arm cable lat pulldown unilateral lats"},
  {id:"db_pullover", name:"Dumbbell Pullover", type:"isolation", equip:"dumbbell", pattern:"pullover", pref:"neutral", avail:"usually", rec:false, src:"manual", rest:75, rl:10, rh:15, sl:2, sh:3, fatigue:1.6, m:{back_lats:1, chest:.5, triceps:.25}, aliases:"dumbbell pullover lats serratus chest stretch"},
  {id:"inverted_row", name:"Inverted Row (Bodyweight)", type:"compound", equip:"bodyweight", pattern:"horizontal_pull", pref:"neutral", avail:"always", rec:false, src:"manual", rest:90, rl:8, rh:15, sl:2, sh:3, fatigue:1.8, m:{upper_back:1, back_lats:.5, rear_delts:.5, biceps:.25}, aliases:"inverted row bodyweight row smith bar row horizontal pull upper back"},
@@ -504,7 +547,7 @@ const SETUP_SPEC = {
   leaning_lat_raise:["pulley","handle"], bentover_db_rear_fly:["bench"], prone_rear_delt_row:["bench"],
   /* --- arms --- */
   machine_tricep_ext:["seat","arm","rom"], machine_curl:["seat","arm","pad","rom"], preacher_curl:["seat","pad"],
-  assisted_dip:["seat","handle"], tricep_pushdown:["pulley","handle"], rope_pushdown:["pulley","handle"],
+  assisted_dip:["seat","handle"], chin_up:["handle"], bw_dip:["handle"], tricep_pushdown:["pulley","handle"], rope_pushdown:["pulley","handle"],
   straightbar_pushdown:["pulley","handle"], overhead_rope_ext:["pulley","handle"], single_overhead_ext:["pulley","handle"],
   crossbody_ext:["pulley","handle"], cable_curl:["pulley","handle"], single_arm_cable_curl:["pulley","handle"],
   rope_hammer_curl:["pulley","handle"], bayesian_curl:["pulley","handle"], incline_db_curl:["bench"],
@@ -593,6 +636,8 @@ function load(){
   try{ const raw=localStorage.getItem(KEY); if(!raw) return seed(); const d=JSON.parse(raw);
     if(d.cfgVersion!==CONFIG_VERSION){ const fresh=seed();
       fresh.sessions=d.sessions||[]; fresh.bodyweight=d.bodyweight||[]; fresh.measurements=d.measurements||[]; fresh.photos=d.photos||[];
+      /* settings carry across every version bump \u2014 that is what keeps exSetup (v8) and, from v9,
+         customEx + exAlias alive through a migration without any SQL. */
       fresh.settings={...fresh.settings,...(d.settings||{})};
       if(d.muscles){ for(const k in fresh.muscles){ if(d.muscles[k]&&d.muscles[k].tier) fresh.muscles[k].tier=d.muscles[k].tier; } }
       const pref={}; (d.exercises||[]).forEach(e=>pref[e.id]={pref:e.pref,avail:e.avail});
@@ -602,8 +647,64 @@ function load(){
     d.measurements=d.measurements||[]; d.photos=d.photos||[]; d.bodyweight=d.bodyweight||[]; return d;
   }catch(e){ return seed(); }
 }
-function persistLocal(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }
+/* v10 — persistLocal now REPORTS failure instead of swallowing it. A silent
+   QuotaExceededError used to mean a finished workout never reached disk at all. */
+let lastPersistError=null;
+function persistLocal(){
+  try{ localStorage.setItem(KEY, JSON.stringify(S)); lastPersistError=null; return true; }
+  catch(e){
+    lastPersistError=String((e&&e.name)||e);
+    /* Quota: shed the two payloads we can rebuild from the cloud (photos, then the
+       oldest sessions' warm-up noise) rather than losing the write entirely. */
+    try{ const slim={...S, photos:[]}; localStorage.setItem(KEY, JSON.stringify(slim)); S.photos=[]; lastPersistError=null; return true; }catch(e2){}
+    return false;
+  }
+}
 function save(){ S.updatedAt=iso(new Date()); persistLocal(); scheduleCloudPush(); }
+
+/* ---------------------------------------------------------------- WORKOUT JOURNAL (v10)
+   An append-only, write-ahead record of every completed workout, kept in its own
+   localStorage key. It is deliberately NOT part of S, so no rehydrate, migration,
+   import or state replacement can ever take it with them. If a workout goes missing
+   from S for any reason, recoverFromJournal() puts it back and re-queues the push.
+   Deletions you make on purpose are recorded as tombstones, which ride app_settings
+   to the cloud, so a deliberate delete is never resurrected on another device. */
+function journalKey(){ return (authUser&&authUser.id) ? "iron_arc_journal_v1:"+authUser.id : "iron_arc_journal_v1"; }
+function journalRead(){ try{ const r=localStorage.getItem(journalKey()); const a=r?JSON.parse(r):[]; return Array.isArray(a)?a:[]; }catch(e){ return []; } }
+function journalWrite(list){
+  try{ localStorage.setItem(journalKey(), JSON.stringify(list)); return true; }
+  catch(e){ /* under quota, keep the most recent 120 sessions — recent data is what is at risk */
+    try{ localStorage.setItem(journalKey(), JSON.stringify(list.slice(-120))); return true; }catch(e2){ return false; } }
+}
+const JOURNAL_MAX=500;
+function journalPut(sess){
+  if(!sess||!sess.id||!sess.completedAt) return;
+  let rec; try{ rec=JSON.parse(JSON.stringify(sess)); }catch(e){ return; }
+  const list=journalRead(); const i=list.findIndex(x=>x&&x.id===rec.id);
+  if(i>=0) list[i]=rec; else list.push(rec);
+  while(list.length>JOURNAL_MAX) list.shift();
+  journalWrite(list);
+}
+function tombRead(){ const t=(S.settings&&S.settings.deletedWorkouts)||{}; return t; }
+function tombAdd(id){ if(!id) return; if(!S.settings) S.settings={};
+  const t=S.settings.deletedWorkouts=S.settings.deletedWorkouts||{};
+  t[id]=iso(new Date());
+  const keys=Object.keys(t); if(keys.length>500){ keys.sort((a,b)=>new Date(t[a])-new Date(t[b])).slice(0,keys.length-500).forEach(k=>delete t[k]); } }
+function isTombstoned(id){ return !!tombRead()[id]; }
+function journalForget(id){ tombAdd(id); journalWrite(journalRead().filter(x=>x&&x.id!==id)); persistLocal(); }
+/* Put back anything the journal has that S has lost. Returns how many were rescued. */
+function recoverFromJournal(){
+  if(!S.sessions) S.sessions=[];
+  const have=new Set(S.sessions.map(s=>s&&s.id).filter(Boolean));
+  let n=0;
+  journalRead().forEach(j=>{
+    if(!j||!j.id||!j.completedAt) return;
+    if(have.has(j.id)||isTombstoned(j.id)) return;
+    S.sessions.push({...j, synced:false, recovered:true}); have.add(j.id); n++;
+  });
+  if(n){ S.sessions.sort((a,b)=>new Date(a.completedAt)-new Date(b.completedAt)); persistLocal(); }
+  return n;
+}
 function exById(id){ return S.exercises.find(e=>e.id===id); }
 function inputOrder(){ return (S.settings&&S.settings.inputOrder)==="rw"?"rw":"wr"; }
 /* v7: every "previous / last" pair is shown in YOUR logging order (Settings → Set logging order).
@@ -619,6 +720,16 @@ function loadActive(){ try{ const r=localStorage.getItem(ACTIVE_KEY); return r?J
 /* ============================================================================ SUPABASE ============================================================================ */
 let sb=null, authUser=null, authProfile=null, pushTimer=null, syncing=false, authMode="magic", authMsg="";
 function cloudReady(){ return !!(sb && authUser); }
+/* v10 — THE root cause of the lost-workout bug.
+   supabase-js v2 PostgREST calls RESOLVE with {data,error}; they do not throw, not even
+   on a network fault. The old code awaited them bare inside a try/catch, so the catch was
+   dead code and every workout was stamped synced:true whether or not it reached the
+   server. sbq() turns an error response back into a real exception so failure is visible. */
+async function sbq(builder){
+  const r=await builder;
+  if(r&&r.error) throw new Error((r.error.message||r.error.details||"supabase write failed"));
+  return r;
+}
 try{ if(window.supabase && SUPABASE_KEY.indexOf("sb_publishable_")===0){
   sb=window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth:{ persistSession:true, autoRefreshToken:true, detectSessionInUrl:true, storageKey:"iron_arc_auth" } }); }
 }catch(e){ sb=null; }
@@ -649,7 +760,13 @@ async function afterAuth(){
   if(legacyRaw && !localStorage.getItem(KEY) && authUser.email.toLowerCase()===ADMIN_EMAIL){
     try{ localStorage.setItem(KEY, legacyRaw); const la=localStorage.getItem("iron_arc_active_v2"); if(la) localStorage.setItem(ACTIVE_KEY, la); }catch(e){}
   }
-  S=load(); try{ ensureSetupDefaults(); }catch(e){} activeSession=loadActive(); if(activeSession) viewingLogger=false;
+  S=load(); try{ ensureSetupDefaults(); }catch(e){} try{ recoverFromJournal(); }catch(e){}
+  /* v10: auth resolves asynchronously at boot. A workout already open under the pre-auth
+     (unscoped) key must be carried into the user's scope, not silently replaced by null. */
+  const preAuthActive=activeSession;
+  activeSession=loadActive();
+  if(!activeSession && preAuthActive && (preAuthActive.entries||[]).some(en=>(en.sets||[]).length)){ activeSession=preAuthActive; saveActive(); }
+  if(activeSession) viewingLogger=false;
   try{ restState=null; resumeRest(); }catch(e){}      /* v8: rest timer is per-user scoped; re-read under the new key */
   try{ await sb.from("profiles").upsert({ user_id:authUser.id, email:authUser.email, display_name:meta.name, role:meta.role }, { onConflict:"user_id" }); }catch(e){}
   await hydrateFromCloud();
@@ -666,10 +783,17 @@ async function hydrateFromCloud(){
       sb.from("workout_exercises").select("*").eq("user_id",u),
       sb.from("sets").select("*").eq("user_id",u),
       sb.from("measurements").select("*").eq("user_id",u).order("taken_at",{ascending:true}) ]);
+    /* v10 — if ANY of the six reads failed we do not know what the cloud actually holds.
+       Rebuilding from a partial picture used to delete the entire local history (a single
+       503 on the workouts query was enough). Abort, keep local, retry later. */
+    const reads=[stR,exR,wR,weR,setR,mR];
+    if(reads.some(r=>r&&r.error)){ syncing=false; try{ recoverFromJournal(); }catch(e){} retryUnsynced(); render(); return; }
     const hasCloud=(wR.data&&wR.data.length)||(exR.data&&exR.data.length)||stR.data;
     if(!hasCloud){ await migrateLocalToCloud(); syncing=false; return; }
     const rb=seed();
     if(stR.data&&stR.data.data){ const d=stR.data.data; rb.settings={...rb.settings,...(d.settings||{})}; if(d.muscles) rb.muscles=d.muscles; }
+    /* tombstones are the union of both sides — a delete made anywhere stays deleted everywhere */
+    rb.settings.deletedWorkouts={...((S.settings&&S.settings.deletedWorkouts)||{}), ...(rb.settings.deletedWorkouts||{})};
     if(exR.data&&exR.data.length){ const byId={}; exR.data.forEach(r=>byId[r.slug]=r);  // overlay saved prefs onto the full v2 library (keep new exercises)
       rb.exercises.forEach(e=>{ const r=byId[e.id]; if(r){ if(r.pref) e.pref=r.pref; if(r.muscles&&Object.keys(r.muscles).length) e.m=r.muscles; } }); }  // v6: avail+rec stay authoritative from seed
     const weByW={}; (weR.data||[]).forEach(we=>{(weByW[we.workout_id]=weByW[we.workout_id]||[]).push(we);});
@@ -681,14 +805,65 @@ async function hydrateFromCloud(){
     (mR.data||[]).forEach(r=>{ if(r.metric==="bodyweight") rb.bodyweight.push({id:r.id,date:r.taken_at,kg:Number(r.value),synced:true});
       else { (snaps[r.taken_at]=snaps[r.taken_at]||{date:r.taken_at,vals:{},synced:true}); snaps[r.taken_at].vals[r.metric]=Number(r.value); } });
     rb.measurements=Object.values(snaps); rb.photos=S.photos||[];
-    const cloudIds=new Set(rb.sessions.map(s=>s.id));
-    const localUnsynced=(S.sessions||[]).filter(s=>s.completedAt&&s.synced===false&&!cloudIds.has(s.id));
-    rb.sessions=rb.sessions.concat(localUnsynced);
+    /* local bodyweight rows the cloud has not got yet are carried over, not dropped */
+    { const bwIds=new Set(rb.bodyweight.map(b=>b.id));
+      (S.bodyweight||[]).forEach(b=>{ if(b&&b.id&&!bwIds.has(b.id)) rb.bodyweight.push({...b,synced:false}); });
+      rb.bodyweight.sort((a,b)=>new Date(a.date)-new Date(b.date)); }
+
+    /* ------------------------------------------------------------------ v10 SESSION MERGE
+       Previously: S was replaced outright by the cloud rebuild, and the only local sessions
+       that survived were those whose synced flag was strictly === false. Because pushWorkout
+       stamped synced:true even when the write had failed, any workout that did not reach the
+       server was deleted from the device on the next launch — permanently, and silently.
+       Now the cloud is a peer, not an authority. A completed workout is only ever removed
+       from the device by an explicit, tombstoned delete. */
+    const tomb=(rb.settings.deletedWorkouts)||{};
+    const cloudById={}; rb.sessions.forEach(s=>{ cloudById[s.id]=s; });
+    const localById={}; (S.sessions||[]).forEach(s=>{ if(s&&s.id) localById[s.id]=s; });
+    const merged=[], needPush=[];
+    rb.sessions.forEach(cs=>{
+      if(tomb[cs.id]) return;                                  // deleted on purpose elsewhere
+      const ls=localById[cs.id];
+      if(ls && ls.synced===false){ merged.push(ls); needPush.push(ls); }  // unpushed local edit wins
+      else merged.push(cs);
+    });
+    (S.sessions||[]).forEach(ls=>{
+      if(!ls||!ls.id||!ls.completedAt) return;
+      if(cloudById[ls.id]||tomb[ls.id]) return;
+      ls.synced=false; merged.push(ls); needPush.push(ls);      // cloud never had it — keep it and push it
+    });
+    rb.sessions=merged.sort((a,b)=>new Date(a.completedAt)-new Date(b.completedAt));
+
     S=rb; try{ ensureSetupDefaults(); }catch(e){}   /* v8: keeps cloud-hydrated accounts' machine settings intact */
+    try{ rebuildCustomExercises(); }catch(e){}     /* v9: custom exercises ride app_settings, so re-apply them after a rehydrate */
+    /* last line of defence: anything the journal has and S does not comes back here */
+    try{ const n=recoverFromJournal(); if(n) (S.sessions||[]).forEach(s=>{ if(s.recovered&&needPush.indexOf(s)<0) needPush.push(s); }); }catch(e){}
     persistLocal();
-    for(const s of localUnsynced){ await pushWorkout(s); }
+    for(const s of needPush){ await pushWorkout(s); }
+    if(needPush.length) pushSettings();             // tombstones + settings back up
   }catch(e){}
   syncing=false; render();
+}
+
+/* ---------------------------------------------------------------- RETRY QUEUE (v10)
+   The "N workouts not yet synced · Retry" banner already existed but was unreachable,
+   because synced was never left false. Now that failures are honest, back the banner
+   with an automatic exponential retry that also fires when connectivity or focus returns. */
+let retryTimer=null, retryDelay=8000;
+const RETRY_MIN=8000, RETRY_MAX=300000;
+function scheduleRetry(){
+  if(retryTimer||!cloudReady()) return;
+  retryTimer=setTimeout(()=>{ retryTimer=null; retryUnsynced(); }, retryDelay);
+  retryDelay=Math.min(retryDelay*2, RETRY_MAX);
+}
+async function retryUnsynced(){
+  if(!cloudReady()||syncing) return;
+  const list=(S.sessions||[]).filter(s=>s&&s.completedAt&&s.synced===false);
+  if(!list.length){ retryDelay=RETRY_MIN; return; }
+  let allOk=true;
+  for(const s of list){ const done=await pushWorkout(s); if(!done) allOk=false; }
+  if(allOk) retryDelay=RETRY_MIN;
+  render();
 }
 async function migrateLocalToCloud(){ if(!cloudReady()) return;
   try{ await pushSettings(); await pushAllExercises();
@@ -701,21 +876,41 @@ async function pushSettings(){ if(!cloudReady()) return; try{ await sb.from("app
 function exRow(e){ return { user_id:authUser.id, slug:e.id, name:e.name, type:e.type, equip:e.equip, pref:e.pref, avail:e.avail, rest:e.rest, rep_low:e.rl, rep_high:e.rh, set_low:e.sl, set_high:e.sh, fatigue:e.fatigue, muscles:e.m }; }
 async function pushAllExercises(){ if(!cloudReady()) return; try{ await sb.from("exercises").upsert(S.exercises.map(exRow),{onConflict:"user_id,slug"}); }catch(e){} }
 async function pushExercisePref(ex){ if(!cloudReady()) return; try{ await sb.from("exercises").upsert(exRow(ex),{onConflict:"user_id,slug"}); }catch(e){} }
-async function pushWorkout(session){ if(!cloudReady()) return;
-  try{ if(!session.id) session.id=uid();
-    await sb.from("workouts").upsert({ id:session.id, user_id:authUser.id, performed_at:session.completedAt||iso(new Date()), title:session.title||null, mode:session.mode||null },{onConflict:"id"});
-    await sb.from("workout_exercises").delete().eq("workout_id",session.id);
+/* v10 — returns true only when the workout is provably in the cloud, in full.
+   Every call is error-checked (see sbq). The device copy and the journal are the source
+   of truth until the server confirms; a failure marks the session unsynced and queues a
+   retry instead of pretending the write worked. */
+async function pushWorkout(session){
+  if(!session||!session.completedAt) return false;
+  if(!session.id) session.id=uid();
+  journalPut(session);                                    // write-ahead: on disk before we touch the network
+  if(!cloudReady()){ if(session.synced!==false){ session.synced=false; persistLocal(); } return false; }
+  try{
+    await sbq(sb.from("workouts").upsert({ id:session.id, user_id:authUser.id, performed_at:session.completedAt||iso(new Date()), title:session.title||null, mode:session.mode||null },{onConflict:"id"}));
     const weRows=[], setRows=[];
-    session.entries.forEach((en,i)=>{ const ex=exById(en.exId); const weId=uid();
+    (session.entries||[]).forEach((en,i)=>{ const ex=exById(en.exId); const weId=uid();
       weRows.push({ id:weId, user_id:authUser.id, workout_id:session.id, exercise_slug:en.exId, order_index:i, target_sets:en.sets.length, rep_low:ex?ex.rl:null, rep_high:ex?ex.rh:null });
       en.sets.forEach((s,j)=>setRows.push({ id:uid(), user_id:authUser.id, workout_id:session.id, workout_exercise_id:weId, set_index:j,
         weight:(s.weight===""||s.weight==null)?null:Number(s.weight), reps:(s.reps===""||s.reps==null)?null:parseInt(s.reps,10), rpe:null, is_warmup:s.type==="warm", completed:isLogged(s) })); });
-    if(weRows.length) await sb.from("workout_exercises").insert(weRows);
-    if(setRows.length) await sb.from("sets").insert(setRows);
-    session.synced=true; persistLocal();
-  }catch(e){ session.synced=false; persistLocal(); }
+    /* children before parents-of-children: deleting sets first is correct whether or not
+       the FK cascades, and avoids leaving orphan set rows behind on a rewrite */
+    await sbq(sb.from("sets").delete().eq("workout_id",session.id));
+    await sbq(sb.from("workout_exercises").delete().eq("workout_id",session.id));
+    if(weRows.length) await sbq(sb.from("workout_exercises").insert(weRows));
+    if(setRows.length) await sbq(sb.from("sets").insert(setRows));
+    session.synced=true; delete session.syncError; delete session.recovered;
+    persistLocal(); journalPut(session);
+    return true;
+  }catch(e){
+    session.synced=false; session.syncError=String((e&&e.message)||e);
+    persistLocal(); scheduleRetry();
+    return false;
+  }
 }
-async function deleteWorkoutCloud(id){ if(!cloudReady()) return; try{ await sb.from("workouts").delete().eq("id",id); }catch(e){} }
+async function deleteWorkoutCloud(id){ if(!cloudReady()) return false;
+  try{ await sbq(sb.from("sets").delete().eq("workout_id",id));
+       await sbq(sb.from("workout_exercises").delete().eq("workout_id",id));
+       await sbq(sb.from("workouts").delete().eq("id",id)); return true; }catch(e){ return false; } }
 async function pushCheckin(r,wid){ if(!cloudReady()||!r) return; try{ await sb.from("daily_checkins").insert({ user_id:authUser.id, workout_id:wid||null, sleep:r.sleep, energy:r.energy, soreness:r.soreness, motivation:r.motivation, time_available:r.time, avoid:r.avoid||[] }); }catch(e){} }
 async function pushMeasurementRow(id,t,metric,value){ if(!cloudReady()) return; try{ await sb.from("measurements").upsert({ id, user_id:authUser.id, taken_at:t, metric, value },{onConflict:"id"}); }catch(e){} }
 async function pushAllMeasurements(){ if(!cloudReady()) return;
@@ -753,7 +948,7 @@ function weeklyVolume(sessions){ const list=sessions||weekSessions(); const vol=
 /* P5/P8 — explainable attribution: who contributed to a muscle's number */
 function muscleContrib(muscle, sessions){ const list=sessions||weekSessions(); const map={};
   list.forEach(sess=>{ (sess.entries||[]).forEach(en=>{ const ex=exById(en.exId); if(!ex||!ex.m[muscle]) return; const n=workingSets(en).length; if(!n) return;
-    const c=ex.m[muscle]; const k=en.exId; if(!map[k]) map[k]={exId:k, name:ex.name, credit:c, sets:0, effective:0, dates:[]};
+    const c=ex.m[muscle]; const k=en.exId; if(!map[k]) map[k]={exId:k, name:entryName(en), credit:c, sets:0, effective:0, dates:[]};
     map[k].sets+=n; map[k].effective+=n*c; map[k].dates.push(sess.completedAt); }); });
   const rows=Object.values(map).sort((a,b)=>b.effective-a.effective);
   const direct=rows.filter(r=>r.credit>=1).reduce((s,r)=>s+r.effective,0);
@@ -873,21 +1068,141 @@ const TIPS={
  seated_calf_raise:{feel:"Calves (soleus) through a full stretch.",avoid:"Bouncing, half reps.",cues:["Pad on the lower thighs, balls of feet on the step.","Drop the heels for a deep stretch.","Press up tall, pause at the top."]},
  plate_row:{feel:"Mid-back and lats pulling.",avoid:"Yanking with the lower back, shrugging early.",cues:["Chest on the pad if available, neutral spine.","Drive the elbows back, squeeze the shoulder blades.","Control the stretch, don't let the plates crash."]}
 };
-function exerciseTrend(exId){ const h=exerciseHistory(exId); if(h.length<2) return {label:"Early signal", c:"var(--muted)", note:"Log this a couple more times to read a trend."};
-  const metric=(sets)=>{ const e=Math.max(0,...sets.map(s=>est1RM(+s.weight||0,+s.reps||0))); return e>0?e:topSetLoad(sets); };
-  const ser=h.map(x=>metric(x.sets));   // newest first
-  if(h.length<3){ const up=ser[0]>ser[1]; return {label:up?"Trending up":"Early signal", c:up?"var(--green)":"var(--muted)", note:up?"Up on your last session — keep building.":"Mixed so far — keep logging to confirm a trend."}; }
-  const a=ser[0],b=ser[1],c=ser[2]; const flat=(x,y)=>Math.abs(x-y)/Math.max(1,y)<0.03;
-  if(a>b&&b>=c) return {label:"Progressing", c:"var(--green)", note:"Up two sessions running — add a rep or a small load bump."};
-  if(a<b&&b<=c) return {label:"Regressing", c:"var(--red)", note:"Down two sessions — likely fatigue. Consider a lighter day or a deload week."};
-  if(flat(a,b)&&flat(b,c)) return {label:"Stalled", c:"var(--amber)", note:"Flat for 3 sessions — change a variable: more reps, a small load increase, or a fresh variation."};
-  return {label:"Stable", c:"var(--accent)", note:"Holding steady — chase one more clean rep."}; }
+/* ============================================================================================
+   v9 — EXERCISE-LEVEL PROGRESSION MODEL
+   Every exercise declares how the number in its weight column relates to getting stronger:
 
+     load:"ext"    (default)  the weight column IS the load. Higher = better.
+     load:"assist"            the weight column is MACHINE ASSISTANCE. LOWER = better.
+     load:"bw"                the weight column is ADDED load on top of bodyweight (0 = pure
+                              bodyweight). Higher = better, and one exercise spans both the
+                              bodyweight and the weighted stage.
+
+   Everything downstream — trends, PRs, achievements, charts, recommendations, insights — ranks
+   on setLoadScore(), never on the raw number, so the direction is handled in exactly one place
+   and no exercise needs a hard-coded exception.
+
+   Effective load = bodyweight − assistance (assist) or bodyweight + added (bw). Bodyweight is
+   taken from the nearest logged reading at or before the session, so it tracks changes over
+   time. With no bodyweight on record we never fabricate a figure: assisted exercises fall back
+   to ranking on negated assistance (still the right direction) and the UI shows the assistance
+   trend instead of an effective-load number.
+   ============================================================================================ */
+const PROG_CHAINS={ assisted_chin:{next:"chin_up", label:"bodyweight chin-up"}, assisted_dip:{next:"bw_dip", label:"bodyweight dip"} };
+function loadKind(ex){ var k=ex&&ex.load; return (k==="assist"||k==="bw")?k:"ext"; }
+function isAssisted(ex){ return loadKind(ex)==="assist"; }
+function isBodyweightLoaded(ex){ return loadKind(ex)==="bw"; }
+/* +1 => a HIGHER logged number is better · -1 => a LOWER logged number is better */
+function progDir(ex){ return isAssisted(ex)?-1:1; }
+function loadColLabel(ex){ return isAssisted(ex)?"assist":(isBodyweightLoaded(ex)?"+kg":"kg"); }
+function loadNoun(ex){ return isAssisted(ex)?"assistance":(isBodyweightLoaded(ex)?"added load":"weight"); }
+
+/* nearest bodyweight reading at or before `date`; falls back to the earliest reading on record
+   when the only readings are later (better than nothing, and still honest about the direction).
+   Returns null when no bodyweight has ever been logged. */
+function bodyweightAt(date){
+  var list=(S.bodyweight||[]).filter(function(b){ return b&&+b.kg>0&&b.date; })
+    .sort(function(a,b){ return new Date(a.date)-new Date(b.date); });
+  if(!list.length) return null;
+  var t=new Date(date).getTime(), before=null;
+  for(var i=0;i<list.length;i++){ if(new Date(list[i].date).getTime()<=t) before=list[i]; else break; }
+  return +((before||list[0]).kg);
+}
+function hasBodyweight(){ return bodyweightAt(new Date())!=null; }
+/* the real load moved, in kg — null when it cannot be computed honestly */
+function effLoad(ex,w,bw){ var k=loadKind(ex); w=+w||0;
+  if(k==="assist") return bw==null?null:Math.round((bw-w)*10)/10;
+  if(k==="bw")     return bw==null?null:Math.round((bw+w)*10)/10;
+  return w; }
+/* THE primitive: one comparable "how good was this set" number, always higher = better */
+function setLoadScore(ex,w,bw){ var k=loadKind(ex); w=+w||0;
+  if(k==="assist") return bw==null? -w : (bw-w);
+  if(k==="bw")     return bw==null?  w : (bw+w);
+  return w; }
+function betterLoad(ex,a,b){ if(a==null) return false; if(b==null) return true; return progDir(ex)>0? a>b : a<b; }
+/* best RAW number to display (heaviest weight, or lowest assistance) */
+function bestRawLoad(ex,sets){ var dir=progDir(ex), best=null;
+  (sets||[]).forEach(function(s){ var w=+s.weight||0; if(best==null||(dir>0?w>best:w<best)) best=w; });
+  return best==null?0:best; }
+function bestLoadScore(ex,sets,bw){ var best=null;
+  (sets||[]).forEach(function(s){ var v=setLoadScore(ex,+s.weight||0,bw); if(best==null||v>best) best=v; });
+  return best==null?0:best; }
+/* best raw number at >= minReps, in the right direction. null when no set qualifies. */
+function bestLoadAtReps(ex,sets,minReps){ var dir=progDir(ex), w=null;
+  (sets||[]).forEach(function(s){ var ww=+s.weight||0, rr=+s.reps||0;
+    if(rr>=minReps && (w==null||(dir>0?ww>w:ww<w))) w=ww; });
+  return w; }
+function repsAtLoad(sets,weight,minReps){ var r=0; (sets||[]).forEach(function(s){ var ww=+s.weight||0, rr=+s.reps||0; if(ww===weight&&rr>=minReps&&rr>r) r=rr; }); return r; }
+/* direction-aware estimated 1RM. Built on effective load, so an assisted set only produces a
+   strength estimate once bodyweight is known — we never invent one. */
+function exE1RM(ex,w,r,bw){ r=+r||0; if(!(r>0&&r<=E1RM_MAX_REPS)) return 0;
+  if(isAssisted(ex)&&bw==null) return 0;
+  var L=setLoadScore(ex,w,bw); if(L<=0) return 0;
+  return Math.round(L*(1+r/30)*10)/10; }
+/* one comparable strength number for a whole session of an exercise */
+function sessionStrength(ex,sets,bw){ var best=null;
+  (sets||[]).forEach(function(s){ var e=exE1RM(ex,+s.weight||0,+s.reps||0,bw); if(e>0&&(best==null||e>best)) best=e; });
+  return best!=null?best:bestLoadScore(ex,sets,bw); }
+function sessionVolumeFor(ex,sets,bw){ var v=0;
+  (sets||[]).forEach(function(s){ var L=setLoadScore(ex,+s.weight||0,bw); v+=Math.max(0,L)*(+s.reps||0); });
+  return Math.round(v*10)/10; }
+function sessionReps(sets){ return (sets||[]).reduce(function(a,s){ return a+(+s.reps||0); },0); }
+/* plain kg×reps tonnage — what "volume" has always meant in this app, kept for continuity */
+function rawVolume(sets){ return (sets||[]).reduce(function(a,s){ return a+(+s.weight||0)*(+s.reps||0); },0); }
+
+/* Trend states, deliberately conservative:
+     none        <2 sessions            · nothing to say
+     early       2 sessions             · direction only, never a decline verdict
+     progressing recent block up >=4%
+     regressing  recent block down >=4% AND at least two recent sessions under the baseline
+     stalled     3 sessions inside a 3% band
+     stable      everything else \u2014 i.e. normal session-to-session variation
+   Blocks (newest 2 vs the 3 before them) rather than raw last-vs-previous, so a single slightly
+   weaker session reads as variation, not regression. */
+function exerciseTrendData(exId){ const ex=exById(exId); const h=exerciseHistory(exId);
+  const ser=h.map(x=>sessionStrength(ex,x.sets,x.bw));   /* newest first, already direction-aware */
+  const n=ser.length;
+  const mean=a=>a.length?a.reduce((x,y)=>x+y,0)/a.length:0;
+  if(n<2) return {state:"none", n, pct:0, ser, ex};
+  const rN=Math.min(2,n-1), recent=ser.slice(0,rN), base=ser.slice(rN,rN+3);
+  const rm=mean(recent), bm=mean(base);
+  const pct=bm!==0?((rm-bm)/Math.abs(bm))*100:0;
+  if(n===2) return {state:"early", n, pct, ser, ex};
+  const under=recent.filter(v=>v<bm).length;
+  const band=ser.slice(0,3), bmax=Math.max.apply(null,band), bmin=Math.min.apply(null,band);
+  const tight=bmax>0&&((bmax-bmin)/bmax)<0.03;
+  let state="stable";
+  if(pct>=4) state="progressing";
+  else if(pct<=-4&&under>=Math.min(2,rN)) state="regressing";
+  else if(tight&&Math.abs(pct)<2) state="stalled";
+  return {state, n, pct, ser, ex}; }
+const TREND_META={
+  none:{label:"Early signal", c:"var(--muted)", icon:"\u25cb", note:"Log this a couple more times to read a trend."},
+  early:{label:"Early signal", c:"var(--muted)", icon:"\u25cb", note:"Two sessions in \u2014 keep logging to confirm a trend."},
+  progressing:{label:"Progressing", c:"var(--green)", icon:"\u25b2", note:"Clearly up on your recent baseline \u2014 keep the pressure on."},
+  stable:{label:"Stable", c:"var(--accent)", icon:"\u25ac", note:"Holding steady inside normal variation \u2014 chase one more clean rep."},
+  stalled:{label:"Stalled", c:"var(--amber)", icon:"\u25ac", note:"Flat for 3 sessions \u2014 change a variable: more reps, a small load change, or a fresh variation."},
+  regressing:{label:"Regressing", c:"var(--red)", icon:"\u25bc", note:"Down against your recent baseline across more than one session \u2014 consider a lighter day or a deload."}
+};
+function exerciseTrend(exId){ const d=exerciseTrendData(exId); const m=TREND_META[d.state];
+  let note=m.note;
+  if(d.state==="early"&&d.pct>0) note="Up on your last session \u2014 keep building.";
+  if(d.state==="progressing"&&isAssisted(d.ex)) note="Assistance coming down \u2014 that is real progress. Keep chipping at it.";
+  if(d.state==="regressing"&&isAssisted(d.ex)) note="Needing more assistance than your recent baseline \u2014 fine for a deload, worth watching otherwise.";
+  return {label:m.label, c:m.c, icon:m.icon, note, state:d.state, pct:d.pct, n:d.n}; }
 function exerciseHistory(exId){ const out=[];
-  S.sessions.filter(s=>s.completedAt).forEach(sess=>{ (sess.entries||[]).forEach(en=>{ if(en.exId===exId){ const ws=workingSets(en); if(ws.length) out.push({date:sess.completedAt, sessionId:sess.id, sets:ws}); } }); });
+  S.sessions.filter(s=>s.completedAt).forEach(sess=>{ (sess.entries||[]).forEach(en=>{ if(en.exId===exId){ const ws=workingSets(en); if(ws.length) out.push({date:sess.completedAt, sessionId:sess.id, sets:ws, bw:bodyweightAt(sess.completedAt), asName:en.asName||null}); } }); });
   out.sort((a,b)=>new Date(b.date)-new Date(a.date)); return out; }
-function exerciseBests(exId){ let bw=0,br=0,b1=0,bv=0; exerciseHistory(exId).forEach(h=>{ let v=0;
-  h.sets.forEach(s=>{ const w=+s.weight||0,r=+s.reps||0; v+=w*r; if(w>bw)bw=w; if(r>br)br=r; const e=est1RM(w,r); if(e>b1)b1=e; }); if(v>bv)bv=v; }); return {bestW:bw,bestReps:br,best1rm:b1,bestVol:bv}; }
+/* Best-ever marks. bestW is the best RAW number in the exercise's own direction (heaviest weight,
+   or LOWEST assistance) and bestScore is the comparable effective-load figure PRs are judged on. */
+function exerciseBests(exId){ const ex=exById(exId); let bw=null,br=0,b1=0,bv=0,bs=null;
+  exerciseHistory(exId).forEach(h=>{ let v=0;
+    h.sets.forEach(s=>{ const w=+s.weight||0,r=+s.reps||0; v+=w*r;
+      if(betterLoad(ex,w,bw)) bw=w; if(r>br)br=r;
+      const e=exE1RM(ex,w,r,h.bw); if(e>b1)b1=e;
+      const sc=setLoadScore(ex,w,h.bw); if(bs==null||sc>bs) bs=sc; });
+    if(v>bv)bv=v; });
+  return {bestW:bw==null?0:bw, bestRaw:bw, bestReps:br, best1rm:b1, bestVol:bv, bestScore:bs}; }
 
 /* ============================================================================ v6 — ACHIEVEMENTS (5RM / 10RM / weight PR), CHARTS, SEARCH ============================================================================
    All derived from logged WORKING sets only (warm-ups already excluded by workingSets()).
@@ -897,48 +1212,99 @@ function exerciseBests(exId){ let bw=0,br=0,b1=0,bv=0; exerciseHistory(exId).for
 function topWeightAtReps(sets,minReps){ var w=0; (sets||[]).forEach(function(s){ var ww=+s.weight||0, rr=+s.reps||0; if(rr>=minReps && ww>w) w=ww; }); return w; }
 function repsAtWeight(sets,weight,minReps){ var r=0; (sets||[]).forEach(function(s){ var ww=+s.weight||0, rr=+s.reps||0; if(ww===weight && rr>=minReps && rr>r) r=rr; }); return r; }
 /* current records with the date each was first achieved (oldest->newest scan) */
-function exerciseRecords(exId){ var h=exerciseHistory(exId).slice().reverse();
-  var top={w:0,reps:0,date:null}, rm5={w:0,reps:0,date:null}, rm10={w:0,reps:0,date:null}, vol={v:0,date:null};
-  h.forEach(function(s){ var sTop=0,sTopReps=0,sVol=0;
-    s.sets.forEach(function(st){ var w=+st.weight||0,r=+st.reps||0; sVol+=w*r; if(w>sTop){ sTop=w; sTopReps=r; } });
-    var r5=topWeightAtReps(s.sets,5), r10=topWeightAtReps(s.sets,10);
-    if(sTop>top.w){ top={w:sTop,reps:sTopReps,date:s.date}; }
-    if(r5>rm5.w){ rm5={w:r5,reps:repsAtWeight(s.sets,r5,5),date:s.date}; }
-    if(r10>rm10.w){ rm10={w:r10,reps:repsAtWeight(s.sets,r10,10),date:s.date}; }
-    if(sVol>vol.v){ vol={v:sVol,date:s.date}; }
+function exerciseRecords(exId){ var ex=exById(exId); var h=exerciseHistory(exId).slice().reverse();
+  var top={w:null,reps:0,date:null,eff:null}, rm5={w:null,reps:0,date:null,eff:null}, rm10={w:null,reps:0,date:null,eff:null}, vol={v:0,date:null};
+  h.forEach(function(s){ var sTop=null,sTopReps=0,sVol=0;
+    s.sets.forEach(function(st){ var w=+st.weight||0,r=+st.reps||0; sVol+=w*r; if(betterLoad(ex,w,sTop)){ sTop=w; sTopReps=r; } });
+    var r5=bestLoadAtReps(ex,s.sets,5), r10=bestLoadAtReps(ex,s.sets,10);
+    if(betterLoad(ex,sTop,top.w)){ top={w:sTop,reps:sTopReps,date:s.date,eff:effLoad(ex,sTop,s.bw)}; }
+    if(betterLoad(ex,r5,rm5.w)){ rm5={w:r5,reps:repsAtLoad(s.sets,r5,5),date:s.date,eff:effLoad(ex,r5,s.bw)}; }
+    if(betterLoad(ex,r10,rm10.w)){ rm10={w:r10,reps:repsAtLoad(s.sets,r10,10),date:s.date,eff:effLoad(ex,r10,s.bw)}; }
+    var useVol=(loadKind(ex)==="ext")?sVol:(s.bw==null?null:sessionVolumeFor(ex,s.sets,s.bw));
+    if(useVol!=null&&useVol>vol.v){ vol={v:Math.round(useVol),date:s.date}; }
   });
-  return {top:top, rm5:rm5, rm10:rm10, vol:vol, n:h.length}; }
+  var norm=function(o){ return {w:(o.w==null?0:o.w), raw:o.w, reps:o.reps, date:o.date, eff:o.eff}; };
+  return {top:norm(top), rm5:norm(rm5), rm10:norm(rm10), vol:vol, n:h.length, ex:ex}; }
+/* For assisted exercises 0kg assistance is a legitimate best, so "was a record ever set" has to be
+   a null check \u2014 never a truthiness check on the number itself. */
+function hasRec(r){ return !!(r&&r.raw!=null); }
 /* chronological achievement timeline across all exercises (newest first). first:true => first-ever record */
 function achievementTimeline(limit){
   var sessions=completedSessions().slice().sort(function(a,b){ return new Date(a.completedAt)-new Date(b.completedAt); });
   var best={}, events=[];
   sessions.forEach(function(sess){ (sess.entries||[]).forEach(function(en){ var ws=workingSets(en); if(!ws.length) return; var ex=exById(en.exId); if(!ex) return;
-    var b=best[en.exId]||(best[en.exId]={top:0,rm5:0,rm10:0});
-    var sTop=0,sTopReps=0; ws.forEach(function(s){ var w=+s.weight||0,r=+s.reps||0; if(w>sTop){ sTop=w; sTopReps=r; } });
-    var r10=topWeightAtReps(ws,10); var r5=topWeightAtReps(ws,5);
-    if(r10>b.rm10){ events.push({type:"10RM",first:b.rm10===0,exId:en.exId,name:ex.name,weight:r10,reps:repsAtWeight(ws,r10,10),date:sess.completedAt,sessionId:sess.id}); }
-    if(r5>b.rm5 && r5>r10){ events.push({type:"5RM",first:b.rm5===0,exId:en.exId,name:ex.name,weight:r5,reps:repsAtWeight(ws,r5,5),date:sess.completedAt,sessionId:sess.id}); }   // distinct 5RM only (heavier than the 10RM weight)
-    if(sTop>b.top && sTopReps<5){ events.push({type:"PR",first:b.top===0,exId:en.exId,name:ex.name,weight:sTop,reps:sTopReps,date:sess.completedAt,sessionId:sess.id}); }   // standalone weight PR only for heavy sub-5-rep sets; 5RM/10RM cover the rest
-    if(r10>b.rm10) b.rm10=r10; if(r5>b.rm5) b.rm5=r5; if(sTop>b.top) b.top=sTop;
+    var b=best[en.exId]||(best[en.exId]={top:null,rm5:null,rm10:null});
+    var bwt=bodyweightAt(sess.completedAt);
+    var sTop=null,sTopReps=0; ws.forEach(function(s){ var w=+s.weight||0,r=+s.reps||0; if(betterLoad(ex,w,sTop)){ sTop=w; sTopReps=r; } });
+    var r10=bestLoadAtReps(ex,ws,10); var r5=bestLoadAtReps(ex,ws,5);
+    var meta=function(w){ return {load:w, eff:effLoad(ex,w,bwt), kind:loadKind(ex)}; };
+    if(betterLoad(ex,r10,b.rm10)){ events.push(Object.assign({type:"10RM",first:b.rm10==null,exId:en.exId,name:ex.name,weight:r10,reps:repsAtLoad(ws,r10,10),date:sess.completedAt,sessionId:sess.id},meta(r10))); }
+    if(betterLoad(ex,r5,b.rm5) && betterLoad(ex,r5,r10)){ events.push(Object.assign({type:"5RM",first:b.rm5==null,exId:en.exId,name:ex.name,weight:r5,reps:repsAtLoad(ws,r5,5),date:sess.completedAt,sessionId:sess.id},meta(r5))); }   // distinct 5RM only (heavier than the 10RM weight)
+    if(betterLoad(ex,sTop,b.top) && sTopReps<5){ events.push(Object.assign({type:"PR",first:b.top==null,exId:en.exId,name:ex.name,weight:sTop,reps:sTopReps,date:sess.completedAt,sessionId:sess.id},meta(sTop))); }   // standalone weight PR only for heavy sub-5-rep sets; 5RM/10RM cover the rest
+    if(betterLoad(ex,r10,b.rm10)) b.rm10=r10; if(betterLoad(ex,r5,b.rm5)) b.rm5=r5; if(betterLoad(ex,sTop,b.top)) b.top=sTop;
   }); });
   events.sort(function(a,b){ return new Date(b.date)-new Date(a.date); });
   return limit?events.slice(0,limit):events; }
 function sessionAchievements(sess){ if(!sess) return []; return achievementTimeline(0).filter(function(e){ return e.sessionId===sess.id; }); }
 function achBadgeClass(t){ return t==="5RM"?"rm5":t==="10RM"?"rm10":"pr"; }
-function achText(a){ return (a.first?"First ":"New ")+(a.type==="PR"?"weight PR":a.type)+" — "+a.name+": "+a.weight+"kg × "+a.reps; }
-/* per-session metric series (oldest->newest) for charts */
-function exerciseSeries(exId,metric){ var h=exerciseHistory(exId).slice().reverse(); var out=[];
+function achLoadStr(a){ if(a.kind==="assist") return a.weight+"kg assist"+(a.eff!=null?" \u00b7 "+a.eff+"kg effective":"");
+  if(a.kind==="bw") return (a.weight>0?"+"+a.weight+"kg":"bodyweight")+(a.eff!=null?" \u00b7 "+a.eff+"kg effective":"");
+  return a.weight+"kg"; }
+function achLabel(a){ return a.type==="PR"?(a.kind==="assist"?"lowest assist":"weight PR"):a.type; }
+function achText(a){ return (a.first?"First ":"New ")+achLabel(a)+" \u2014 "+a.name+": "+achLoadStr(a)+" \u00d7 "+a.reps; }
+/* per-session metric series (oldest->newest) for charts.
+   "eff" charts effective load (bodyweight - assistance, or bodyweight + added) which always rises
+   as you get stronger; "top" charts the raw number you actually dial into the machine. A series we
+   cannot compute honestly (effective load with no bodyweight on record) comes back empty rather
+   than guessed. */
+function bestEffLoad(ex,sets,bw){ if(loadKind(ex)==="ext") return bestRawLoad(ex,sets);
+  if(bw==null) return null; return Math.round(bestLoadScore(ex,sets,bw)*10)/10; }
+function exerciseSeries(exId,metric){ var ex=exById(exId); if(!ex) return [];
+  var h=exerciseHistory(exId).slice().reverse(); var out=[];
   h.forEach(function(s){ var v=null;
-    if(metric==="top") v=topSetLoad(s.sets);
-    else if(metric==="rm5") v=topWeightAtReps(s.sets,5);
-    else if(metric==="rm10") v=topWeightAtReps(s.sets,10);
-    else if(metric==="vol") v=s.sets.reduce(function(a,st){ return a+(+st.weight||0)*(+st.reps||0); },0);
+    if(metric==="top") v=bestRawLoad(ex,s.sets);
+    else if(metric==="eff") v=bestEffLoad(ex,s.sets,s.bw);
+    else if(metric==="rm5") v=bestLoadAtReps(ex,s.sets,5);
+    else if(metric==="rm10") v=bestLoadAtReps(ex,s.sets,10);
+    else if(metric==="reps") v=sessionReps(s.sets);
     else if(metric==="sets") v=s.sets.length;
-    if(v!=null && (metric==="vol"||metric==="sets"||metric==="top"||v>0)) out.push({date:s.date,val:v});
-  });
+    else if(metric==="e1rm"){ var q=sessionStrength(ex,s.sets,s.bw); v=q>0?q:null; }
+    else if(metric==="vol") v=(loadKind(ex)==="ext")?rawVolume(s.sets):(s.bw==null?null:sessionVolumeFor(ex,s.sets,s.bw));
+    if(v==null) return;
+    if((metric==="rm5"||metric==="rm10"||metric==="e1rm")&&!(v>0)&&!isAssisted(ex)) return;
+    out.push({date:s.date,val:v}); });
   return out; }
-function metricUnit(m){ return m==="sets"?"sets":"kg"; }
-function metricLabel(m){ return {top:"Top working weight",rm5:"5RM (heaviest at 5+ reps)",rm10:"10RM (heaviest at 10+ reps)",vol:"Session volume",sets:"Working sets"}[m]||m; }
+function metricUnit(m){ return (m==="sets")?"sets":(m==="reps")?"reps":"kg"; }
+function metricLabel(m,ex){
+  if(m==="top"){ if(ex&&isAssisted(ex)) return "Assistance used \u00b7 lower is better";
+                 if(ex&&isBodyweightLoaded(ex)) return "Added load on top of bodyweight";
+                 return "Top working weight"; }
+  if(m==="eff") return "Effective load (bodyweight "+((ex&&isAssisted(ex))?"\u2212 assistance":"+ added")+") \u00b7 higher is better";
+  if(m==="rm5") return (ex&&isAssisted(ex))?"5RM \u00b7 lowest assistance at 5+ reps":"5RM (heaviest at 5+ reps)";
+  if(m==="rm10") return (ex&&isAssisted(ex))?"10RM \u00b7 lowest assistance at 10+ reps":"10RM (heaviest at 10+ reps)";
+  if(m==="reps") return "Total working reps";
+  if(m==="vol") return (ex&&loadKind(ex)!=="ext")?"Session volume (effective load \u00d7 reps)":"Session volume";
+  if(m==="e1rm") return "Estimated strength (e1RM)";
+  if(m==="sets") return "Working sets";
+  return m; }
+/* Which chart toggles make sense for this exercise. Assisted movements lead with effective load
+   when a bodyweight reading exists, and we never offer a metric that cannot be computed. */
+function metricsFor(ex){ var out=[];
+  if(!ex) return [["top","Top kg"]];
+  if(loadKind(ex)!=="ext"&&hasBodyweight()) out.push(["eff","Effective"]);
+  out.push(["top", isAssisted(ex)?"Assist":(isBodyweightLoaded(ex)?"Added":"Top kg")]);
+  if(!isAssisted(ex)) out.push(["rm5","5RM"]);
+  out.push(["rm10","10RM"]);
+  out.push(["reps","Reps"]);
+  if(loadKind(ex)==="ext"||hasBodyweight()) out.push(["vol","Volume"]);
+  out.push(["sets","Sets"]);
+  return out; }
+function defaultMetricFor(ex){ return (ex&&loadKind(ex)!=="ext"&&hasBodyweight())?"eff":"top"; }
+function metricOK(ex,m){ return metricsFor(ex).some(function(pr){ return pr[0]===m; }); }
+function metricGoodUp(ex,m){ return !(m==="top"&&isAssisted(ex)); }
+function dirNoteFor(ex,m){ if(m==="top"&&isAssisted(ex)) return "\u2193 lower = better \u00b7 less assistance needed";
+  if(m==="eff") return "\u2191 higher = better \u00b7 more of your own bodyweight moved";
+  return ""; }
 function fmtNum(v){ return (Math.round(v*10)/10).toString(); }
 /* lightweight inline SVG line chart — mobile friendly, dark UI, no dependencies */
 function lineChartSVG(series,opts){ opts=opts||{}; var unit=opts.unit||"";
@@ -957,7 +1323,11 @@ function lineChartSVG(series,opts){ opts=opts||{}; var unit=opts.unit||"";
   var d0='<text x="'+padL+'" y="'+(H-6)+'" font-size="9" fill="var(--muted)">'+fmtDate(series[0].date)+'</text>';
   var d1=n>1?'<text x="'+(W-padR)+'" y="'+(H-6)+'" text-anchor="end" font-size="9" fill="var(--muted)">'+fmtDate(series[n-1].date)+'</text>':'';
   var last=series[n-1].val; var lastLab='<text x="'+(W-padR)+'" y="'+Math.max(10,Y(last)-6).toFixed(1)+'" text-anchor="end" font-size="10" font-weight="700" fill="var(--accent)">'+fmtNum(last)+(unit?(" "+unit):"")+'</text>';
-  return '<svg viewBox="0 0 '+W+' '+H+'" width="100%" style="display:block">'+gl+line+dots+labMax+labMin+d0+d1+lastLab+'</svg>'; }
+  var svg='<svg viewBox="0 0 '+W+' '+H+'" width="100%" style="display:block">'+gl+line+dots+labMax+labMin+d0+d1+lastLab+'</svg>';
+  /* v9 - an explicit direction caption. Without it an assistance chart sloping downwards reads like
+     a failure when it is in fact exactly what progress looks like. */
+  if(opts.dirNote) svg+='<div class="histline" style="margin-top:2px;font-weight:700;color:var(--green)">'+opts.dirNote+'</div>';
+  return svg; }
 /* ============================================================================================
    v8 SEARCH — alias- and spelling-tolerant matching across name / muscles / equipment / pattern /
    source / aliases / group. Both the haystack and the query are pushed through the same
@@ -992,9 +1362,9 @@ function canonTokens(s){ return normSearch(s).split(" ").filter(Boolean)
 function exHayRaw(e){ var pm=primaryMuscle(e);
   var sec=Object.keys(e.m||{}).map(function(k){ return S.muscles[k]?S.muscles[k].label:k; }).join(" ");
   return [e.name,(S.muscles[pm]?S.muscles[pm].label:pm||""),sec,e.equip||"",(e.pattern||"").replace(/_/g," "),
-          e.src||"",e.aliases||"",groupLabel(exGroup(e))||"",e.type||""].join(" "); }
+          e.src||"",e.aliases||"",userAliases(e.id),groupLabel(exGroup(e))||"",e.type||""].join(" "); }
 var _hayCache={};
-function exHay(e){ var k=e.id+"|"+e.name+"|"+(e.aliases||"").length;
+function exHay(e){ var k=e.id+"|"+e.name+"|"+(e.aliases||"").length+"|"+userAliases(e.id).length;
   if(_hayCache[k]) return _hayCache[k];
   var h=" "+canonTokens(exHayRaw(e)).join(" ")+" "; _hayCache[k]=h; return h; }
 function exMatches(e,q){ if(q==null||q==="") return true;
@@ -1005,19 +1375,381 @@ function exMatches(e,q){ if(q==null||q==="") return true;
     if(hay.indexOf(t)>=0) return true;                                           /* substring: "curl" finds "curls" */
     return words.some(function(w){ return t.length>=4 && w.length>=4 && t.indexOf(w)===0; }); /* "dumbbells" finds "dumbbell" */
   }); }
+/* ============================================================================================
+   v9 — CUSTOM EXERCISES + RECONCILIATION
+
+   MODEL. Three distinct things, deliberately kept separate:
+     canonical exercise   an entry in the seeded library (`EXERCISES`), stable id, never renamed
+     variation            a canonical exercise in its own right — materially different mechanics
+                          get their own id, they are NOT folded into a look-alike
+     user alias / label   the free text you actually typed, kept forever on the workout entry
+
+   STORAGE. Custom exercises live in `S.settings.customEx`, keyed by a persistent `cx-…` id — the
+   same trick v8 used for `exSetup`. That means they ride the existing `app_settings` JSON sync,
+   so there is NO SQL migration and no new backend dependency, and they survive both a
+   CONFIG_VERSION bump (settings are carried across) and a cloud rehydrate.
+
+   `S.exercises` is rebuilt from seed + customEx on every load, so the library always reflects the
+   store and a custom exercise can never be orphaned or duplicated.
+
+   STATUS. unmapped → in the review queue · promoted → a permanent library exercise, same id, so
+   nothing needs rewriting · mapped → its sets now live on a canonical exercise; the record stays
+   behind purely as an alias + audit trail.
+   ============================================================================================ */
+const CUSTOM_GROUP_SPEC = {
+  chest:     {type:"compound",  rest:90,  rl:6,  rh:12, sl:2, sh:3, fatigue:1.8, m:{chest:1, front_delts:.5, triceps:.5}},
+  back:      {type:"compound",  rest:120, rl:6,  rh:12, sl:2, sh:3, fatigue:2.2, m:{back_lats:1, upper_back:.5, biceps:.5}},
+  shoulders: {type:"isolation", rest:75,  rl:10, rh:15, sl:2, sh:3, fatigue:1.2, m:{side_delts:1, front_delts:.25}},
+  biceps:    {type:"isolation", rest:75,  rl:8,  rh:14, sl:2, sh:3, fatigue:1.1, m:{biceps:1, forearms:.25}},
+  triceps:   {type:"isolation", rest:75,  rl:8,  rh:14, sl:2, sh:3, fatigue:1.1, m:{triceps:1}},
+  quads:     {type:"compound",  rest:150, rl:6,  rh:12, sl:2, sh:3, fatigue:2.6, m:{quads:1, glutes:.5}},
+  hamstrings:{type:"isolation", rest:90,  rl:8,  rh:14, sl:2, sh:3, fatigue:1.6, m:{hamstrings:1, glutes:.25}},
+  glutes:    {type:"compound",  rest:90,  rl:8,  rh:15, sl:2, sh:3, fatigue:1.6, m:{glutes:1, hamstrings:.5}},
+  calves:    {type:"isolation", rest:60,  rl:10, rh:20, sl:2, sh:4, fatigue:1.0, m:{calves:1}},
+  core:      {type:"isolation", rest:60,  rl:10, rh:20, sl:2, sh:3, fatigue:1.1, m:{abs:1}}
+};
+const CUSTOM_GROUP_KEYS = MUSCLE_GROUPS.map(function(g){ return g.key; });
+function customSpec(g){ return CUSTOM_GROUP_SPEC[g]||CUSTOM_GROUP_SPEC.core; }
+
+function customStore(){ if(!S.settings) S.settings={}; if(!S.settings.customEx) S.settings.customEx={}; return S.settings.customEx; }
+function customRec(id){ return customStore()[id]||null; }
+function customList(){ return Object.keys(customStore()).map(function(k){ return customStore()[k]; })
+  .sort(function(a,b){ return new Date(b.createdAt||0)-new Date(a.createdAt||0); }); }
+function isCustomId(id){ return typeof id==="string" && id.indexOf("cx-")===0; }
+function isCustomEx(ex){ return !!(ex&&ex.custom); }
+/* the review queue — anything still awaiting a decision */
+function unmappedCustom(){ return customList().filter(function(c){ return c.status==="unmapped"; }); }
+function customNeedsReview(){ return unmappedCustom().length; }
+
+/* user-added search aliases, kept in settings so a library rebuild can never lose them */
+function aliasStore(){ if(!S.settings) S.settings={}; if(!S.settings.exAlias) S.settings.exAlias={}; return S.settings.exAlias; }
+function userAliases(exId){ var a=aliasStore()[exId]; return a&&a.length?a.join(" "):""; }
+function addUserAlias(exId,text){ if(!exId||!text) return; var st=aliasStore(); var arr=st[exId]||(st[exId]=[]);
+  var n=normSearch(text); if(!n) return;
+  if(!arr.some(function(x){ return normSearch(x)===n; })) arr.push(String(text).trim()); }
+
+/* turn a stored custom record into a full exercise object the rest of the app can treat normally */
+function customToExercise(c){ var sp=customSpec(c.group);
+  return { id:c.id, name:c.name, custom:true, customStatus:c.status, group:c.group,
+    type:c.type||sp.type, equip:c.equip||"other", pattern:c.pattern||("custom_"+c.group),
+    load:c.load||"ext", pref:c.pref||"neutral",
+    rec:(c.status==="promoted"&&!!c.rec), src:(c.status==="promoted"?"library":"custom"), avail:c.avail||"always",
+    rest:c.rest||sp.rest, rl:c.rl||sp.rl, rh:c.rh||sp.rh, sl:c.sl||sp.sl, sh:c.sh||sp.sh,
+    fatigue:c.fatigue||sp.fatigue, m:c.m?JSON.parse(JSON.stringify(c.m)):JSON.parse(JSON.stringify(sp.m)),
+    aliases:(c.aliases||"")+" custom user added "+c.name };
+}
+/* S.exercises = seeded library + every non-mapped custom record. Idempotent: safe to call as often
+   as you like, and it is the ONLY thing that puts custom exercises into the library. */
+function rebuildCustomExercises(){
+  if(!S||!S.exercises) return;
+  S.exercises=S.exercises.filter(function(e){ return !e.custom; });
+  customList().slice().reverse().forEach(function(c){
+    if(c.status==="mapped") return;                       /* its sets now live on the canonical exercise */
+    S.exercises.push(customToExercise(c));
+  });
+  _hayCache={};
+}
+/* Settings toggles mutate the exercise object in place; for a custom exercise that change has to be
+   written back to the store or the next rebuild would throw it away. */
+function syncCustomPrefs(ex){ if(!ex||!ex.custom) return; var c=customRec(ex.id); if(!c) return;
+  c.pref=ex.pref; c.rec=!!ex.rec; c.avail=ex.avail; }
+/* create + persist immediately, so nothing is lost if the app is closed mid-workout */
+function addCustomExercise(name,group,opts){
+  opts=opts||{}; name=String(name||"").trim(); if(!name) return null;
+  if(CUSTOM_GROUP_KEYS.indexOf(group)<0) group="core";
+  var id="cx-"+uid();
+  customStore()[id]={ id:id, name:name, group:group, status:"unmapped", custom:true,
+    createdAt:iso(new Date()), load:opts.load||"ext", equip:opts.equip||"other", origName:name };
+  rebuildCustomExercises(); save();
+  return id;
+}
+function renameCustomExercise(id,name){ var c=customRec(id); name=String(name||"").trim();
+  if(!c||!name) return false; c.name=name; rebuildCustomExercises(); save(); return true; }
+function setCustomGroup(id,group){ var c=customRec(id); if(!c||CUSTOM_GROUP_KEYS.indexOf(group)<0) return false;
+  c.group=group; delete c.m; rebuildCustomExercises(); save(); return true; }
+/* keep it as a first-class custom exercise, just stop nagging about it */
+function keepCustomExercise(id){ var c=customRec(id); if(!c) return false;
+  c.status="kept"; c.reviewedAt=iso(new Date()); rebuildCustomExercises(); save(); return true; }
+/* promote to a permanent library exercise. Same id, so every existing session already points at it
+   and NOTHING has to be rewritten or migrated. */
+function promoteCustomExercise(id,opts){ var c=customRec(id); if(!c) return false; opts=opts||{};
+  c.status="promoted"; c.reviewedAt=iso(new Date());
+  if(opts.name) c.name=String(opts.name).trim();
+  if(opts.group&&CUSTOM_GROUP_KEYS.indexOf(opts.group)>=0){ c.group=opts.group; delete c.m; }
+  if(opts.equip) c.equip=opts.equip;
+  c.rec=!!opts.rec;
+  addUserAlias(c.id,c.origName||c.name);
+  rebuildCustomExercises(); save(); return true;
+}
+/* Map a custom exercise onto a canonical one.
+   Every historical entry is rewritten IN PLACE on its existing session — the same workout record,
+   the same sets, the same dates — so nothing is duplicated and nothing is deleted. The text you
+   originally typed is preserved on the entry as `asName`, and is added to the canonical exercise's
+   search aliases so the name you know still finds it. */
+function mapCustomExercise(id,canonicalId){
+  var c=customRec(id); var canon=exById(canonicalId);
+  if(!c||!canon||canon.id===id||canon.custom&&canon.customStatus==="mapped") return {ok:false,moved:0};
+  var label=c.name, moved=0, touched=[];
+  (S.sessions||[]).forEach(function(sess){
+    (sess.entries||[]).forEach(function(en){
+      if(en.exId!==id) return;
+      en.exId=canonicalId;
+      if(!en.asName) en.asName=label;                 /* the name you actually entered, kept forever */
+      en.mappedFrom=id;
+      moved++;
+      if(touched.indexOf(sess)<0) touched.push(sess);
+    });
+  });
+  /* live session too, so mapping mid-workout cannot strand the current entries */
+  if(activeSession&&activeSession.entries) activeSession.entries.forEach(function(en){
+    if(en.exId===id){ en.exId=canonicalId; if(!en.asName) en.asName=label; en.mappedFrom=id; } });
+  c.status="mapped"; c.mappedTo=canonicalId; c.reviewedAt=iso(new Date());
+  addUserAlias(canonicalId,label);
+  if(c.origName&&c.origName!==label) addUserAlias(canonicalId,c.origName);
+  rebuildCustomExercises();
+  persistLocal(); save(); saveActive();
+  touched.forEach(function(sess){ sess.synced=false; pushWorkout(sess); });
+  return {ok:true,moved:moved,sessions:touched.length};
+}
+/* Suggested canonical matches — ranked, never applied automatically. Name and alias tokens only;
+   a shared muscle group is a tie-breaker, never a reason on its own. */
+function suggestMatches(id,limit){
+  var c=customRec(id); if(!c) return [];
+  var q=canonTokens(c.name); if(!q.length) return [];
+  var qs=q.join(" ");
+  return S.exercises.filter(function(e){ return e.id!==id && !e.custom; }).map(function(e){
+    var hay=exHay(e), score=0;
+    q.forEach(function(t){ if(hay.indexOf(" "+t+" ")>=0) score+=3; else if(hay.indexOf(t)>=0) score+=1; });
+    if(normSearch(e.name)===normSearch(c.name)) score+=12;
+    if(canonTokens(e.name).join(" ")===qs) score+=8;
+    if(exGroup(e)===c.group) score+=2;
+    return {ex:e, score:score};
+  }).filter(function(x){ return x.score>=4; })
+    .sort(function(a,b){ return b.score-a.score || a.ex.name.localeCompare(b.ex.name); })
+    .slice(0,limit||5);
+}
+try{ rebuildCustomExercises(); }catch(e){}
+/* the label to show for an entry: the text you typed if this was a custom capture, else the
+   library name. Used everywhere history is rendered. */
+function entryName(en){ var ex=exById(en.exId);
+  if(en.asName && ex && normSearch(en.asName)!==normSearch(ex.name)) return ex.name+" ("+en.asName+")";
+  return ex?ex.name:(en.asName||en.exId); }
+
 function escAttr(s){ return String(s==null?"":s).replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+/* ============================================================================================
+   v9 — REPORTING PRIMITIVES
+   Three rules the whole reporting layer follows:
+     1. Never call an exercise "declining" off one weaker session — verdicts come from
+        exerciseTrendData(), which compares blocks of sessions, not last-vs-previous.
+     2. Never show a delta without saying what it is a delta AGAINST.
+     3. "Not enough data" is a first-class, visible state, not a silent omission.
+   ============================================================================================ */
+const TB_CLASS={progressing:"up", regressing:"dn", stalled:"fl", stable:"st", early:"na", none:"na"};
+function pctStr(p){ const v=Math.round(Math.abs(p)); return (p>0?"+":p<0?"−":"")+v+"%"; }
+function trendBadge(exId){ const t=exerciseTrend(exId); const cls=TB_CLASS[t.state]||"na";
+  if(t.state==="none"||t.state==="early") return '<span class="tb na" title="needs 3+ sessions">○ '+(t.n||0)+'/3</span>';
+  const showPct=(t.state==="progressing"||t.state==="regressing");
+  return '<span class="tb '+cls+'">'+t.icon+(showPct?" "+pctStr(t.pct):"")+'</span>'; }
+/* inline 8-point sparkline on the exercise's own default metric (effective load for assisted) */
+function miniSpark(exId){ const ex=exById(exId); if(!ex) return "";
+  const ser=exerciseSeries(exId,defaultMetricFor(ex)).slice(-8).map(function(p){ return p.val; });
+  if(ser.length<2) return "";
+  const mn=Math.min.apply(null,ser), mx=Math.max.apply(null,ser), rng=(mx-mn)||1;
+  return '<span class="mspark">'+ser.map(function(v,i){
+    return '<i class="'+(i===ser.length-1?"hi":"")+'" style="height:'+Math.max(12,Math.round(((v-mn)/rng)*100))+'%"></i>'; }).join("")+'</span>'; }
+
+/* ---- session totals + comparisons (post-workout summary) ---- */
+function sessionTotals(sess){ let sets=0,reps=0,vol=0,exN=0;
+  (sess.entries||[]).forEach(function(en){ const ws=workingSets(en); if(!ws.length) return; exN++;
+    sets+=ws.length; reps+=sessionReps(ws); vol+=rawVolume(ws); });
+  return {sets:sets, reps:reps, vol:Math.round(vol), exN:exN}; }
+/* the most recent EARLIER session that trained roughly the same thing — same title first, then the
+   best exercise overlap. Comparing a back day against a leg day would be noise, not insight. */
+function previousComparable(sess){
+  const t=new Date(sess.completedAt).getTime();
+  const mine=new Set((sess.entries||[]).filter(function(en){ return workingSets(en).length; }).map(function(en){ return en.exId; }));
+  if(!mine.size) return null;
+  let best=null;
+  completedSessions().forEach(function(o){
+    if(o.id===sess.id||new Date(o.completedAt).getTime()>=t) return;
+    const ids=new Set((o.entries||[]).filter(function(en){ return workingSets(en).length; }).map(function(en){ return en.exId; }));
+    if(!ids.size) return;
+    let overlap=0; mine.forEach(function(id){ if(ids.has(id)) overlap++; });
+    const share=overlap/mine.size; if(share<0.4) return;
+    const score=share*100+(o.title===sess.title?25:0)+(new Date(o.completedAt).getTime()/1e13);
+    if(!best||score>best.score) best={sess:o, score:score, share:share, overlap:overlap};
+  });
+  return best; }
+/* rolling per-session averages over the N days before this session */
+function baselineAvg(sess,days,offsetDays){
+  const end=new Date(sess.completedAt).getTime()-(offsetDays||0)*864e5;
+  const start=end-days*864e5;
+  const list=completedSessions().filter(function(o){ if(o.id===sess.id) return false;
+    const t=new Date(o.completedAt).getTime(); return t>=start&&t<end; });
+  if(!list.length) return null;
+  const tot=list.reduce(function(a,o){ const x=sessionTotals(o); a.sets+=x.sets; a.reps+=x.reps; a.vol+=x.vol; return a; },{sets:0,reps:0,vol:0});
+  return {n:list.length, sets:tot.sets/list.length, reps:tot.reps/list.length, vol:tot.vol/list.length}; }
+function deltaPct(now,base){ if(base==null||base===0) return null; return ((now-base)/Math.abs(base))*100; }
+/* a delta chip: absolute change on top, percentage underneath, colour only when it is meaningful */
+function deltaChip(now,base,unit){
+  if(base==null) return '<em style="color:var(--faint)">no baseline</em>';
+  const d=now-base, p=deltaPct(now,base);
+  const c=(p==null||Math.abs(p)<3)?"var(--muted)":(p>0?"var(--green)":"var(--red)");
+  const sign=d>0?"+":(d<0?"−":"±");
+  const mag=Math.abs(d)>=100?Math.round(Math.abs(d)):Math.round(Math.abs(d)*10)/10;
+  return '<em style="color:'+c+'">'+sign+mag+(unit||"")+(p!=null?" · "+pctStr(p):"")+'</em>'; }
+
+/* ---- training dashboard ---- */
+const DASH_PERIODS=[["4w","4 weeks",28],["12w","12 weeks",84],["26w","6 months",182]];
+function dashDays(){ const p=DASH_PERIODS.find(function(x){ return x[0]===dashPeriod; }); return p?p[2]:28; }
+function dashLabel(){ const p=DASH_PERIODS.find(function(x){ return x[0]===dashPeriod; }); return p?p[1]:"4 weeks"; }
+function sessionsInWindow(days,offsetDays){
+  const end=Date.now()-(offsetDays||0)*864e5, start=end-days*864e5;
+  return completedSessions().filter(function(s){ const t=new Date(s.completedAt).getTime(); return t>=start&&t<=end; }); }
+function volumeByGroup(sessions){ const out={}; MUSCLE_GROUPS.forEach(function(g){ out[g.key]=0; });
+  const vol=weeklyVolume(sessions);
+  Object.keys(vol).forEach(function(mus){ const g=MUSCLE_TO_GROUP[mus]; if(g!=null&&out[g]!=null) out[g]+=vol[mus]; });
+  return out; }
+function prsInWindow(days,offsetDays){
+  const end=Date.now()-(offsetDays||0)*864e5, start=end-days*864e5;
+  return achievementTimeline(0).filter(function(a){ const t=new Date(a.date).getTime(); return t>=start&&t<=end; }); }
+/* consistency = share of the weeks in the window where you hit your own session target */
+function consistencyPct(days){
+  const weeks=Math.max(1,Math.round(days/7)); const target=Math.max(1,(S.settings&&S.settings.sessionsPerWeek)||4);
+  const counts=weeklyCounts(weeks);
+  const hit=counts.filter(function(w){ return w.count>=target; }).length;
+  return {pct:Math.round(hit/weeks*100), hit:hit, weeks:weeks, target:target}; }
+function dashboardStats(){
+  const d=dashDays();
+  const cur=sessionsInWindow(d), prev=sessionsInWindow(d,d);
+  const curVol=volumeByGroup(cur), prevVol=volumeByGroup(prev);
+  const totals=cur.reduce(function(a,s){ const x=sessionTotals(s); a.sets+=x.sets; a.reps+=x.reps; a.vol+=x.vol; return a; },{sets:0,reps:0,vol:0});
+  const prevTotals=prev.reduce(function(a,s){ const x=sessionTotals(s); a.sets+=x.sets; a.reps+=x.reps; a.vol+=x.vol; return a; },{sets:0,reps:0,vol:0});
+  return { days:d, workouts:cur.length, prevWorkouts:prev.length,
+    perWeek:Math.round(cur.length/(d/7)*10)/10, prevPerWeek:Math.round(prev.length/(d/7)*10)/10,
+    totals:totals, prevTotals:prevTotals, curVol:curVol, prevVol:prevVol,
+    prs:prsInWindow(d).length, prevPrs:prsInWindow(d,d).length,
+    consistency:consistencyPct(d) }; }
+/* compact calendar heatmap: one column per week, one cell per day, intensity = working sets */
+function heatmapWeeks(nWeeks){
+  const byDay={}; completedSessions().forEach(function(s){ const k=dayKey(s.completedAt); byDay[k]=(byDay[k]||0)+sessionSets(s); });
+  const out=[]; const base=startOfWeek();
+  for(let w=nWeeks-1;w>=0;w--){ const mon=new Date(base); mon.setDate(mon.getDate()-w*7);
+    const days=[]; for(let i=0;i<7;i++){ const dte=new Date(mon); dte.setDate(dte.getDate()+i);
+      days.push({date:dte, future:dte>new Date(), sets:byDay[dayKey(dte)]||0}); }
+    out.push({monday:mon, days:days}); }
+  return out; }
+function heatLevel(sets){ return sets<=0?0:sets<=6?1:sets<=12?2:3; }
+
+/* ---- ranked improvements / needs attention ---- */
+/* Only exercises with enough history get a verdict. Everything thinner is surfaced separately as
+   "not enough data" rather than being quietly dropped or, worse, called a decline. */
+function progressionBoard(){
+  const all=exerciseProgression();
+  const graded=all.filter(function(p){ return p.n>=3; });
+  const thin=all.filter(function(p){ return p.n<3; });
+  const improving=graded.filter(function(p){ return p.state==="progressing"; })
+    .sort(function(a,b){ return b.recentPct-a.recentPct; });
+  const attention=graded.filter(function(p){ return p.state==="regressing"||p.state==="stalled"; })
+    .sort(function(a,b){ return (a.state==="regressing"?0:1)-(b.state==="regressing"?0:1) || a.recentPct-b.recentPct; });
+  const steady=graded.filter(function(p){ return p.state==="stable"; });
+  return {improving:improving, attention:attention, steady:steady, thin:thin, graded:graded.length}; }
+/* the plain-English "what changed" line for one exercise */
+function progDeltaStr(p){
+  if(p.kind==="assist") return p.firstRaw+"kg → "+p.latestRaw+"kg assistance over "+p.n+" sessions";
+  if(p.kind==="bw") return (p.firstRaw>0?"+"+p.firstRaw+"kg":"bodyweight")+" → "+(p.latestRaw>0?"+"+p.latestRaw+"kg":"bodyweight")+" over "+p.n+" sessions";
+  return Math.round(p.first)+" → "+Math.round(p.latest)+"kg "+p.metric+" over "+p.n+" sessions"; }
+
+/* The three headline totals, each carrying its change against the last comparable workout, then the
+   same three against the rolling 4-week per-session average. Two references, clearly labelled. */
+function recapDeltas(r){
+  const t=r.totals; if(!t) return "";
+  const cell=function(val,unit,base){ return '<div class="dcell"><b>'+val+'</b><span>'+unit+'</span>'+deltaChip(val,base,"")+'</div>'; };
+  const c=r.cmpTotals;
+  let h='<div class="tiny" style="margin-top:16px">Totals</div>'
+    +'<div class="dgrid"><div class="dcell"><b>'+t.sets+'</b><span>sets</span></div>'
+    +'<div class="dcell"><b>'+t.reps+'</b><span>reps</span></div>'
+    +'<div class="dcell"><b>'+(t.vol>=1000?(Math.round(t.vol/100)/10)+'k':t.vol)+'</b><span>kg volume</span></div></div>';
+  if(c){ h+='<div class="tiny" style="margin-top:14px">vs '+fmtDate(r.cmp.sess.completedAt)+' · '+(r.cmp.sess.title||"last comparable")+'</div>'
+    +'<div class="dgrid">'+cell(t.sets,"sets",c.sets)+cell(t.reps,"reps",c.reps)+cell(t.vol,"kg",c.vol)+'</div>'; }
+  else { h+='<div class="histline" style="margin-top:10px">No comparable earlier workout yet — repeat this session type and the comparison appears.</div>'; }
+  if(r.base4){ const b=r.base4;
+    h+='<div class="tiny" style="margin-top:14px">vs 4-week average · '+b.n+' session'+(b.n===1?'':'s')+'</div>'
+      +'<div class="dgrid">'+cell(t.sets,"sets",Math.round(b.sets*10)/10)+cell(t.reps,"reps",Math.round(b.reps))+cell(t.vol,"kg",Math.round(b.vol))+'</div>';
+    if(r.prev4){ const pd=deltaPct(b.vol,r.prev4.vol);
+      h+='<div class="histline" style="margin-top:8px">Your 4-week average volume is '+(pd==null?'—':pctStr(pd))+' against the previous 4 weeks.</div>'; } }
+  return h; }
+
+/* ---- v9 training dashboard ---- */
+function dashboardCard(){
+  const d=dashboardStats();
+  const pBtns=DASH_PERIODS.map(function(x){ return '<button data-dashp="'+x[0]+'" class="'+(dashPeriod===x[0]?"on":"")+'">'+x[1]+'</button>'; }).join("");
+  const kpi=function(val,label,now,base){ return '<div class="dcell"><b>'+val+'</b><span>'+label+'</span>'+(base==null?'':deltaChip(now,base,""))+'</div>'; };
+  const groups=MUSCLE_GROUPS.map(function(g){ return {key:g.key, label:g.label, v:d.curVol[g.key]||0, p:d.prevVol[g.key]||0}; })
+    .filter(function(x){ return x.v>0||x.p>0; }).sort(function(a,b){ return b.v-a.v; });
+  const gmax=Math.max.apply(null,[1].concat(groups.map(function(x){ return x.v; })));
+  const volRows=groups.length?groups.map(function(x){ const p=deltaPct(x.v,x.p||null);
+    const c=(p==null||Math.abs(p)<10)?"var(--muted)":(p>0?"var(--green)":"var(--red)");
+    return '<div class="volrow" data-muscle-group="'+x.key+'"><span class="vnm">'+x.label+'</span><span class="vbar"><i style="width:'+Math.round(x.v/gmax*100)+'%"></i></span>'
+      +'<span class="mono" style="font-size:11.5px;min-width:34px;text-align:right">'+x.v.toFixed(1)+'</span>'
+      +'<span class="mono" style="font-size:10.5px;min-width:46px;text-align:right;color:'+c+'">'+(p==null?'new':pctStr(p))+'</span></div>'; }).join("")
+    :'<div class="empty" style="padding:14px">No sets logged in this window.</div>';
+  const cons=d.consistency;
+  return '<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><div class="tiny">Training dashboard</div><div class="seg mini" style="width:60%">'+pBtns+'</div></div>'
+    +'<div class="dgrid" style="grid-template-columns:repeat(4,1fr)">'
+    + kpi(d.workouts,"workouts",d.workouts,d.prevWorkouts||null)
+    + '<div class="dcell"><b>'+d.perWeek+'</b><span>per week</span><em style="color:var(--muted)">target '+cons.target+'</em></div>'
+    + kpi(d.prs,"records",d.prs,d.prevPrs||null)
+    + '<div class="dcell"><b style="color:'+(cons.pct>=75?"var(--green)":cons.pct>=50?"var(--amber)":"var(--red)")+'">'+cons.pct+'%</b><span>consistency</span><em style="color:var(--muted)">'+cons.hit+'/'+cons.weeks+' wks</em></div>'
+    + '</div>'
+    +'<div class="tiny" style="margin-top:16px">Volume by muscle group · effective sets · vs previous '+dashLabel()+'</div>'
+    +'<div style="margin-top:6px">'+volRows+'</div>'
+    +'<div class="tiny" style="margin-top:16px">Training calendar · last 16 weeks</div>'+heatmapHTML(16)
+    +'</div>'; }
+function heatmapHTML(nWeeks){
+  const weeks=heatmapWeeks(nWeeks);
+  const cols=weeks.map(function(w){ return '<div class="hmcol">'+w.days.map(function(dy){
+    if(dy.future) return '<span class="hmcell out"></span>';
+    const lv=heatLevel(dy.sets);
+    return '<span class="hmcell'+(lv?" l"+lv:"")+'" title="'+fmtDate(dy.date)+(dy.sets?" · "+dy.sets+" sets":" · rest")+'"></span>'; }).join("")+'</div>'; }).join("");
+  return '<div class="hmap">'+cols+'</div>'
+    +'<div class="hmleg"><span>less</span><span class="hmcell"></span><span class="hmcell l1"></span><span class="hmcell l2"></span><span class="hmcell l3"></span><span>more</span><span style="margin-left:auto">each column = 1 week · Mon→Sun</span></div>'; }
+
+/* ---- v9 biggest improvements / needs attention ---- */
+function boardRow(p,i,tone){
+  const t=exerciseTrend(p.ex.id);
+  return '<div class="rrow" data-exhist="'+p.ex.id+'"><span class="rk">'+(i+1)+'</span>'
+    +'<div class="rmain"><div class="rnm">'+p.ex.name+(isCustomEx(p.ex)?' <span class="tag" style="color:var(--gold)">custom</span>':'')+'</div>'
+    +'<div class="rsub">'+progDeltaStr(p)+'</div></div>'
+    +miniSpark(p.ex.id)
+    +'<span class="tb '+(TB_CLASS[p.state]||"na")+'" style="margin-left:8px">'+t.icon+' '+pctStr(p.recentPct)+'</span></div>'; }
+function progressionBoardCard(){
+  const b=progressionBoard();
+  const sec=function(title,note,list,empty,tone){
+    return '<div class="tiny" style="margin-top:14px;color:'+tone+'">'+title+'</div>'
+      +'<p class="muted" style="font-size:11px;margin:3px 0 2px">'+note+'</p>'
+      +(list.length?list.slice(0,4).map(function(p,i){ return boardRow(p,i,tone); }).join(""):'<div class="histline" style="padding:6px 0">'+empty+'</div>'); };
+  const thinNames=b.thin.slice(0,6).map(function(p){ return p.ex.name; }).join(", ");
+  return '<div class="card"><div class="tiny">Progression board</div>'
+    +'<p class="muted" style="font-size:11.5px;margin:6px 0 0">Verdicts need 3+ logged sessions and compare your two most recent against the three before them — so one off day never counts as a decline.</p>'
+    +sec("📈 Biggest improvements","Clearly ahead of your recent baseline.",b.improving,"Nothing has cleared the improvement threshold yet.","var(--green)")
+    +sec("⚠ Needs attention","Declining or flat across several sessions — worth a change.",b.attention,"Nothing stalled or declining. 🔥","var(--amber)")
+    +(b.steady.length?'<div class="tiny" style="margin-top:14px;color:var(--accent)">◼ Holding steady · '+b.steady.length+'</div><p class="muted" style="font-size:11px;margin:3px 0 0">Inside normal session-to-session variation — no action needed.</p>':'')
+    +(b.thin.length?'<div class="tiny" style="margin-top:14px;color:var(--faint)">○ Not enough data · '+b.thin.length+'</div><p class="muted" style="font-size:11px;margin:3px 0 0">'+thinNames+(b.thin.length>6?' and more':'')+' — log each of these a third time for a verdict.</p>':'')
+    +'</div>'; }
+
 /* ---- Reports tab cards ---- */
 function recentAchievementsCard(limit){ var evs=achievementTimeline(limit||8);
   if(!evs.length) return '<div class="card"><div class="tiny">Recent achievements 🏆</div><div class="empty" style="padding:14px">Log working sets to start earning 5RM, 10RM and weight PRs.</div></div>';
-  return '<div class="card"><div class="tiny">Recent achievements 🏆</div><div style="margin-top:6px">'+evs.map(function(a){ return '<div class="achrow" data-exhist="'+a.exId+'" style="cursor:pointer"><div><div class="am">'+a.name+'</div><div class="ad">'+a.weight+'kg × '+a.reps+' · '+fmtDate(a.date)+'</div></div><span class="badge '+achBadgeClass(a.type)+'">'+(a.first?"First ":"")+a.type+'</span></div>'; }).join("")+'</div></div>'; }
-function diagnoseCard(){ var prog=exerciseProgression();
-  var up=prog.filter(function(p){ return p.n>=2&&p.pct>=4; }).slice(0,3);
-  var flat=prog.filter(function(p){ return p.n>=3&&p.pct<=1.5; }).slice(0,3);
+  return '<div class="card"><div class="tiny">Recent achievements 🏆</div><div style="margin-top:6px">'+evs.map(function(a){ return '<div class="achrow" data-exhist="'+a.exId+'" style="cursor:pointer"><div><div class="am">'+a.name+'</div><div class="ad">'+achLoadStr(a)+' × '+a.reps+' · '+fmtDate(a.date)+'</div></div><span class="badge '+achBadgeClass(a.type)+'">'+(a.first?"First ":"")+achLabel(a)+'</span></div>'; }).join("")+'</div></div>'; }
+function diagnoseCard(){ var b=progressionBoard();
+  var up=b.improving.slice(0,3);
+  var flat=b.attention.filter(function(p){ return p.state==="stalled"; }).slice(0,3);
   var na=needsAttentionPrimary().map(function(m){ return S.muscles[m].label; });
   var vol=weeklyVolume(); var over=Object.entries(S.muscles).filter(function(pr){ return vol[pr[0]]>=pr[1].cap*0.85; }).map(function(pr){ return S.muscles[pr[0]].label+" ("+vol[pr[0]].toFixed(1)+"/"+pr[1].cap+")"; }).slice(0,3);
   function ln(c,label,items,empty){ return '<div style="margin-top:10px"><div class="tiny" style="color:'+c+'">'+label+'</div><div class="ibody" style="margin-top:2px">'+(items.length?items.join(" · "):empty)+'</div></div>'; }
   return '<div class="card"><div class="tiny">Coach diagnosis</div>'
-    +ln("var(--green)","Improving",up.map(function(p){ return p.ex.name+" +"+p.pct.toFixed(0)+"%"; }),"Not enough repeat data yet.")
+    +ln("var(--green)","Improving",up.map(function(p){ return p.ex.name+" "+pctStr(p.recentPct); }),"Not enough repeat data yet.")
     +ln("var(--amber)","Stalled",flat.map(function(p){ return p.ex.name+" (flat over "+p.n+")"; }),"Nothing clearly stalled.")
     +ln("var(--blue)","Needs direct work",na,"All primary muscles covered this week.")
     +ln("var(--red)","Near / over cap",over,"Nothing overloaded.")+'</div>'; }
@@ -1035,33 +1767,60 @@ function viewReports(){
   if(!repExId){ trendH='<div class="card"><div class="tiny">Progress trends</div><div class="empty" style="padding:18px">Log a few sessions to chart your progress.</div></div>'; }
   else { var fq=(repSearch||"").toLowerCase();
     var chips=histList.filter(function(x){ return !fq||exMatches(x.e,fq); }).slice(0,40).map(function(x){ return '<button data-repexid="'+x.e.id+'" class="'+(x.e.id===repExId?"on":"")+'">'+x.e.name+'</button>'; }).join("");
-    var metrics=[["top","Top kg"],["rm5","5RM"],["rm10","10RM"],["vol","Volume"],["sets","Sets"]];
+    var ex=exById(repExId); var rec=exerciseRecords(repExId);
+    var metrics=metricsFor(ex); if(!metricOK(ex,repMetric)) repMetric=defaultMetricFor(ex);
     var seg='<div class="seg mini" style="margin-top:8px">'+metrics.map(function(mn){ return '<button data-repmetric="'+mn[0]+'" class="'+(repMetric===mn[0]?"on":"")+'">'+mn[1]+'</button>'; }).join("")+'</div>';
-    var ex=exById(repExId); var rec=exerciseRecords(repExId); var chart=lineChartSVG(exerciseSeries(repExId,repMetric),{unit:metricUnit(repMetric)});
+    var chart=lineChartSVG(exerciseSeries(repExId,repMetric),{unit:metricUnit(repMetric),dirNote:dirNoteFor(ex,repMetric)});
     trendH='<div class="card"><div class="tiny">Progress trends</div>'
       +'<input class="inp srch" id="repSearch" placeholder="Search exercises..." value="'+escAttr(repSearch||"")+'" style="margin-top:8px">'
       +'<div class="chips" style="margin-top:8px">'+(chips||'<span class="muted" style="font-size:12px">No matches</span>')+'</div>'
-      +'<div style="font-weight:700;font-size:14px;margin-top:4px">'+ex.name+'</div><div class="histline">'+metricLabel(repMetric)+'</div>'
+      +'<div style="font-weight:700;font-size:14px;margin-top:4px">'+ex.name+trendBadge(ex.id)+'</div><div class="histline">'+metricLabel(repMetric,ex)+'</div>'
       +seg+'<div class="chartwrap">'+chart+'</div>'
-      +'<div class="histline" style="margin-top:8px">5RM '+(rec.rm5.w?rec.rm5.w+"kg×"+rec.rm5.reps:"—")+' · 10RM '+(rec.rm10.w?rec.rm10.w+"kg×"+rec.rm10.reps:"—")+' · Top '+(rec.top.w?rec.top.w+"kg":"—")+'</div></div>'; }
+      +'<div class="histline" style="margin-top:8px">'+(isAssisted(ex)
+          ? ('Lowest assistance '+(hasRec(rec.top)?rec.top.raw+"kg"+(rec.top.eff!=null?" · "+rec.top.eff+"kg effective":""):"—")+' · at 10+ reps '+(hasRec(rec.rm10)?rec.rm10.raw+"kg":"—"))
+          : ('5RM '+(hasRec(rec.rm5)?rec.rm5.raw+"kg×"+rec.rm5.reps:"—")+' · 10RM '+(hasRec(rec.rm10)?rec.rm10.raw+"kg×"+rec.rm10.reps:"—")+' · Top '+(hasRec(rec.top)?rec.top.raw+"kg":"—")))+'</div></div>'; }
   var ent=Object.keys(S.muscles).map(function(m){ var c=muscleContrib(m,weekSessions()); return {m:m,total:c.total,direct:c.direct,secondary:c.secondary}; }).filter(function(x){ return x.total>0; }).sort(function(a,b){ return b.total-a.total; });
   var mmax=Math.max.apply(null,[1].concat(ent.map(function(x){ return x.total; })));
   var mrows=ent.length?ent.map(function(x){ var dp=Math.round(x.direct/mmax*100), sp=Math.round(x.secondary/mmax*100);
     return '<div class="exline" data-muscle-stat="'+x.m+'" style="padding:7px 0;cursor:pointer"><div style="flex:1"><div class="nm" style="font-size:13px">'+S.muscles[x.m].label+'</div><div class="bar" style="margin-top:5px;display:flex"><i style="width:'+dp+'%;background:var(--accent)"></i><i style="width:'+sp+'%;background:var(--grey)"></i></div></div><span class="mono" style="margin-left:10px">'+x.total.toFixed(1)+'</span></div>'; }).join(""):'<div class="empty" style="padding:16px">No sets logged this week yet.</div>';
   var muscleH='<div class="card"><div class="tiny">Effective sets by muscle · this week</div><p class="muted" style="font-size:11px;margin:4px 0 0"><span style="color:var(--accent)">▮</span> direct · <span style="color:var(--grey)">▮</span> secondary</p><div style="margin-top:6px">'+mrows+'</div></div>';
   return '<div class="reportshd" style="margin:10px 2px 2px;display:flex;align-items:center;gap:8px"><span style="font-size:18px">📊</span><div class="tiny" style="font-size:13px;text-transform:none;color:var(--text);font-weight:700">Reports · experimental analysis</div></div>'
-    +weekH+trendH+muscleH+recentAchievementsCard(10)+diagnoseCard(); }
+    +weekH+dashboardCard()+progressionBoardCard()+trendH+muscleH+recentAchievementsCard(10)+diagnoseCard(); }
 
 function incrementFor(e){ return (e.m.quads||e.m.hamstrings||e.m.glutes||e.m.back_lats>=1)?5:2.5; }
+/* Next-session target. Direction comes from the exercise's own progression model, so an assisted
+   movement is NEVER told to add assistance - progress there means taking assistance away, and at
+   zero assistance it graduates to the bodyweight version of the movement. */
 function progressionFor(exId){ const e=exById(exId); const last=exerciseHistory(exId)[0];
-  if(!last||!last.sets.length) return {weight:"",reps:"",note:"Find a working weight in "+e.rl+"-"+e.rh+" reps.",add:false};
-  const ws=last.sets; const tw=Math.max(...ws.map(s=>+s.weight||0)); const tr=Math.max(...ws.map(s=>+s.reps||0));
-  const allTop=ws.length>=2&&ws.every(s=>(+s.reps||0)>=e.rh); const inc=incrementFor(e);
-  if(allTop) return {weight:tw+inc,reps:e.rl,note:"Maxed reps last time → up to "+(tw+inc)+"kg, aim "+e.rl+"+ reps.",add:true};
-  return {weight:tw,reps:"",note:"Match "+tw+"kg, beat "+tr+" reps on your top set.",add:false}; }
-function fatigueFlag(exId){ const h=exerciseHistory(exId).slice(0,3); if(h.length<3) return null;
-  const e1=h.map(x=>Math.max(0,...x.sets.map(s=>est1RM(+s.weight||0,+s.reps||0))));
-  if(e1[2]>0 && e1[0]<e1[1] && e1[1]<=e1[2]) return "Est. 1RM down two sessions — consider a lighter day or deload."; return null; }
+  if(!last||!last.sets.length) return {weight:"",reps:"",note:"Find a working "+loadNoun(e)+" in "+e.rl+"-"+e.rh+" reps.",add:false,dir:0};
+  const ws=last.sets; const tr=Math.max(...ws.map(s=>+s.reps||0));
+  const cur=bestRawLoad(e,ws);                       /* heaviest weight, or LOWEST assistance */
+  const allTop=ws.length>=2&&ws.every(s=>(+s.reps||0)>=e.rh);
+  let inc=incrementFor(e);
+  if(isAssisted(e)){
+    if(cur<=inc) inc=Math.min(inc,2.5);              /* ease the step down on the last stretch to zero */
+    if(cur<=0){ const nx=PROG_CHAINS[e.id];
+      return {weight:0,reps:e.rl,dir:1,graduate:nx?nx.next:null,add:true,
+        note:"Zero assistance \u2014 you are doing these unassisted. Time to move to the "+(nx?nx.label:"bodyweight version")+"."}; }
+    if(allTop){ const t=Math.max(0,Math.round((cur-inc)*10)/10);
+      return {weight:t,reps:e.rl,dir:-1,add:true,
+        note:"Maxed reps at "+cur+"kg assist \u2192 drop to "+t+"kg assistance, aim "+e.rl+"+ reps."+(t===0?" That is a full bodyweight rep.":"")}; }
+    return {weight:cur,reps:"",dir:0,add:false,note:"Hold "+cur+"kg assistance, beat "+tr+" reps on your best set."};
+  }
+  if(isBodyweightLoaded(e)){
+    if(allTop){ const t=Math.round((cur+inc)*10)/10;
+      return {weight:t,reps:e.rl,dir:1,add:true,
+        note:(cur<=0?"Maxed reps at bodyweight \u2192 add "+inc+"kg":"Maxed reps at +"+cur+"kg \u2192 go to +"+t+"kg")+", aim "+e.rl+"+ reps."}; }
+    return {weight:cur,reps:"",dir:0,add:false,
+      note:(cur>0?"Hold +"+cur+"kg":"Hold bodyweight")+", beat "+tr+" reps on your top set."};
+  }
+  if(allTop) return {weight:cur+inc,reps:e.rl,dir:1,add:true,note:"Maxed reps last time \u2192 up to "+(cur+inc)+"kg, aim "+e.rl+"+ reps."};
+  return {weight:cur,reps:"",dir:0,add:false,note:"Match "+cur+"kg, beat "+tr+" reps on your top set."}; }
+function fatigueFlag(exId){ const ex=exById(exId); const h=exerciseHistory(exId).slice(0,3); if(h.length<3) return null;
+  const e1=h.map(x=>sessionStrength(ex,x.sets,x.bw));
+  if(e1[2]>0 && e1[0]<e1[1] && e1[1]<=e1[2] && (e1[2]-e1[0])/Math.abs(e1[2])>=0.03)
+    return (isAssisted(ex)?"Needing more assistance two sessions running":"Est. 1RM down two sessions")+" \u2014 consider a lighter day or deload.";
+  return null; }
 
 /* RECOMMENDATION — recovery is the gate, weekly volume is the tie-breaker (P-bug fix).
    Recovering/overloaded muscles score a sentinel low and are never trainable today;
@@ -1187,6 +1946,8 @@ function filterChips(kind,curGroup,curEquip){
 let route="today", activeSession=null, viewingLogger=false, pendingRec=null, restTimer=null, sheet=null, statsPeriod="all", bodyDetail=null;
 let exChartMetric="top", addSearch="", swapSearch="", mgmtSearch="", repExId=null, repMetric="top", repSearch="";  /* v6 chart/search UI state */
 let addGroup="", addEquip="", swapGroup="", swapEquip="", mgmtGroup="", mgmtEquip="";  /* v8 library filter state */
+let customDraft={name:"",group:"",id:null};   /* v9 custom-exercise composer */
+let reconcileSearch="", reconcileFilter="review", dashPeriod="4w";   /* v9 reconciliation + dashboard */
 let loggerOpen={}, loggerClock=null;
 let rerollCounts={};   /* v7: exIds already proposed this cycle — each ↻ tap penalises them so the next proposal is genuinely different */
 let limDraft={rules:["foot_pressure"],dur:"1week",note:""};
@@ -1306,23 +2067,29 @@ function viewLogger(){ const isEdit=activeSession.mode==="edit"; const c=loggerC
   return head+dateBlock+entries
     +'<button class="btn ghost full" data-act="add-ex" style="margin:4px 0 12px;color:var(--accent)">+ Add exercise</button>'
     +'<button class="btn ghost full danger" data-act="'+(isEdit?'deleteedit':'discard')+'" style="margin:4px 0 100px">'+(isEdit?"Delete this workout":"Discard workout")+'</button>'; }
-function loggerEx(en,i){ const e=exById(en.exId); const cur=loggerCurrentIndex(); const done=entryDone(en);
+function loggerEx(en,i){ const e=exById(en.exId)||{id:en.exId,name:en.asName||"Unknown exercise",m:{},sl:2,rl:8,rh:12,rest:90,equip:"other",type:"isolation"};
+  const cur=loggerCurrentIndex(); const done=entryDone(en);
   const override=loggerOpen.hasOwnProperty(i)?loggerOpen[i]:null; const expanded = override!==null ? override : (!done || i===cur);
   const work=en.sets.filter(s=>s.type!=="warm"); const loggedN=work.filter(isLogged).length;
   if(!expanded){ const summary=en.sets.filter(isLogged).map(s=>fmtSet(s.weight,s.reps)).join(", ")||"—";
     const setupTag=hasSetup(en.exId)?' <span class="tag" style="color:var(--gold);border:1px solid rgba(212,175,55,.35)">⚙ setup</span>':'';
-    return '<div class="card logex" data-ex="'+i+'" style="padding:13px 16px"><div class="collapsed" data-expand="'+i+'"><div><div class="nm">'+e.name+setupTag+' <span class="muted" style="font-weight:500;font-size:12px">'+loggedN+' sets ✓</span></div><div class="smry">'+summary+'</div></div><span class="muted">▸</span></div></div>'; }
+    return '<div class="card logex" data-ex="'+i+'" style="padding:13px 16px"><div class="collapsed" data-expand="'+i+'"><div><div class="nm">'+entryName(en)+(isCustomEx(e)?' <span class="tag" style="color:var(--gold)">custom</span>':'')+setupTag+' <span class="muted" style="font-weight:500;font-size:12px">'+loggedN+' sets ✓</span></div><div class="smry">'+summary+'</div></div><span class="muted">▸</span></div></div>'; }
   const last=exerciseHistory(en.exId).filter(h=>h.sessionId!==activeSession.editingId)[0]; const bests=exerciseBests(en.exId); const prog=progressionFor(en.exId); const flag=fatigueFlag(en.exId);
   const lastStr=last?last.sets.map(s=>fmtSet(s.weight,s.reps)).join(", "):"—";
   const rows=en.sets.map((s,si)=>setRow(i,si,s)).join("");
   const wins=evalWins(en,bests); const winhtml=wins.length?'<div class="win">'+wins.map(w=>'<span class="badge '+w.c+'">'+w.t+'</span>').join("")+'</div>':"";
   const flaghtml=flag?'<div class="win"><span class="badge warnb">⚠ '+flag+'</span></div>':"";
   const pm=primaryMuscle(e); const rs=pm?recoveryStatus(pm):"ready"; const recwarn=(rs==="recovering"||rs==="overloaded")?'<div class="recwarn">⚠ '+S.muscles[pm].label+' was trained recently — still '+REC_META[rs].label.toLowerCase()+'. Training it hard again today may cut into recovery.</div>':"";
-  const tr=exerciseTrend(en.exId); const trendChip='<span class="tag" style="color:'+tr.c+';border:1px solid '+tr.c+'44">'+tr.label+'</span>';
-  return '<div class="card logex" data-ex="'+i+'"><div class="hd"><div style="flex:1" data-expand="'+i+'"><div class="nm">'+e.name+' '+trendChip+'</div><div class="histline">Last: <b>'+lastStr+'</b></div><div class="histline target">'+(prog.add?'↑ ':'')+'Next: '+prog.note+'</div><div class="histline" style="color:'+tr.c+'">'+tr.note+'</div></div><div class="exmenu"><button class="swap" data-tips="'+en.exId+'" style="color:var(--gold)">Form</button><button class="swap" data-swap="'+i+'">⇄ Swap</button><button class="more" data-more="'+i+'">⋯</button></div></div>'
+  const tr=exerciseTrend(en.exId); const trendChip='<span class="tag" style="color:'+tr.c+';border:1px solid '+tr.c+'44">'+tr.icon+' '+tr.label+'</span>';
+  const cxTag=isCustomEx(e)?' <span class="tag" style="color:var(--gold);border:1px solid rgba(224,165,60,.35)">custom</span>':'';
+  const arrow=prog.dir===1?'↑ ':(prog.dir===-1?'↓ ':'');
+  const gradEx=prog.graduate?exById(prog.graduate):null;
+  const gradCta=gradEx?'<button class="btn sm" data-graduate="'+i+'|'+gradEx.id+'" style="margin-top:6px;color:var(--green);border-color:rgba(52,199,89,.45)">↗ Switch to '+gradEx.name+'</button>':'';
+  const assistNote=isAssisted(e)?'<div class="histline" style="color:var(--gold)">Lower assistance = progress. '+(hasBodyweight()?'Effective load right now: '+(function(){var bwv=bodyweightAt(new Date()); var c=bestRawLoad(e,(last&&last.sets)||[]); return (bwv!=null&&last)?(Math.round((bwv-c)*10)/10)+'kg':'—';})():'Log your bodyweight to see effective load.')+'</div>'+gradCta:'';
+  return '<div class="card logex" data-ex="'+i+'"><div class="hd"><div style="flex:1" data-expand="'+i+'"><div class="nm">'+entryName(en)+cxTag+' '+trendChip+'</div><div class="histline">Last: <b>'+lastStr+'</b></div><div class="histline target">'+arrow+'Next: '+prog.note+'</div>'+assistNote+'<div class="histline" style="color:'+tr.c+'">'+tr.note+'</div></div><div class="exmenu"><button class="swap" data-tips="'+en.exId+'" style="color:var(--gold)">Form</button><button class="swap" data-swap="'+i+'">⇄ Swap</button><button class="more" data-more="'+i+'">⋯</button></div></div>'
     +recwarn
     +setupStrip(en.exId)
-    +'<div class="setgrid"><div class="sethead"><span>#</span><span>prev</span>'+(inputOrder()==="rw"?'<span>reps</span><span>kg</span>':'<span>kg</span><span>reps</span>')+'<span>log</span></div>'+rows+'</div>'
+    +'<div class="setgrid"><div class="sethead"><span>#</span><span>prev</span>'+(inputOrder()==="rw"?'<span>reps</span><span>'+loadColLabel(e)+'</span>':'<span>'+loadColLabel(e)+'</span><span>reps</span>')+'<span>log</span></div>'+rows+'</div>'
     +'<button class="btn ghost sm" data-addset="'+i+'" style="margin-top:4px">+ set</button>'+flaghtml+winhtml+'</div>'; }
 /* v8 — the tappable setup / machine-settings strip shown on every expanded logger card.
    Populated cards show the saved values as chips; empty ones show a dashed "add" prompt so the
@@ -1345,10 +2112,18 @@ function setRow(ei,si,s){ const en=activeSession.entries[ei]; const warm=s.type=
   const ro=inputOrder()==="rw"; const first=ro?rInp:wInp, second=ro?wInp:rInp;
   return '<div class="setrow '+(warm?'warm ':'')+(cur?'cur':'')+'"><span class="sn" data-snum="'+ei+'-'+si+'" title="long-press to mark warm-up">'+(warm?'W':si+1)+'</span><span class="prevc">'+(prev||"·")+'</span>'+first+second
     +'<button class="chk '+(isLogged(s)?'on':'')+'" data-log="'+ei+'-'+si+'" aria-label="log set">✓</button></div>'; }
-function evalWins(en,bests){ const ws=workingSets(en); if(!ws.length||bests.bestW<=0) return []; const out=[]; let mw=0,m1=0,vol=0;
-  ws.forEach(s=>{ const w=+s.weight||0,r=+s.reps||0; vol+=w*r; if(w>mw)mw=w; const e=est1RM(w,r); if(e>m1)m1=e; });
-  if(mw>bests.bestW) out.push({t:"WEIGHT PR",c:"pr"}); if(m1>bests.best1rm) out.push({t:"e1RM PR",c:"pr"}); if(vol>bests.bestVol) out.push({t:"VOLUME PR",c:"pr"});
-  if(!out.length&&(mw>=bests.bestW||vol>=bests.bestVol*0.98)) out.push({t:"Beat last time",c:"beat"}); return out; }
+function evalWins(en,bests){ const ex=exById(en.exId); const ws=workingSets(en); if(!ws.length||!ex||bests.bestRaw==null) return [];
+  const bw=bodyweightAt(new Date());
+  const out=[]; let mRaw=null,m1=0,vol=0,mScore=null;
+  ws.forEach(s=>{ const w=+s.weight||0,r=+s.reps||0; vol+=w*r;
+    if(betterLoad(ex,w,mRaw)) mRaw=w;
+    const e=exE1RM(ex,w,r,bw); if(e>m1)m1=e;
+    const sc=setLoadScore(ex,w,bw); if(mScore==null||sc>mScore) mScore=sc; });
+  if(betterLoad(ex,mRaw,bests.bestRaw)) out.push({t:isAssisted(ex)?"LOWEST ASSIST":"WEIGHT PR",c:"pr"});
+  if(m1>bests.best1rm&&bests.best1rm>0) out.push({t:"e1RM PR",c:"pr"});
+  if(loadKind(ex)==="ext"&&vol>bests.bestVol) out.push({t:"VOLUME PR",c:"pr"});
+  if(!out.length&&mScore!=null&&bests.bestScore!=null&&mScore>=bests.bestScore) out.push({t:"Beat last time",c:"beat"});
+  return out; }
 
 /* ---------------- HISTORY (P2) ---------------- */
 function viewHistory(){ const list=S.sessions.filter(s=>s.completedAt).sort((a,b)=>new Date(b.completedAt)-new Date(a.completedAt));
@@ -1363,7 +2138,7 @@ function viewHistory(){ const list=S.sessions.filter(s=>s.completedAt).sort((a,b
 function openSheet(type,data){ if(type==="add"){ addSearch=""; addGroup=""; addEquip=""; }
   if(type==="swap"){ swapSearch=""; swapEquip="";                              /* v8: swap defaults to the muscle you are already training */
     const _cur=(activeSession&&activeSession.entries[data])?exById(activeSession.entries[data].exId):null; swapGroup=""; void _cur; }
-  if(type==="exhist") exChartMetric="top"; sheet={type,data}; renderSheet(); }
+  if(type==="exhist") exChartMetric=defaultMetricFor(exById(data)); sheet={type,data}; renderSheet(); }
 function closeSheet(){ sheet=null; renderSheet(); }
 function renderSheet(){ const m=document.getElementById("sheetmount"); if(!sheet){ m.innerHTML=""; return; }
   let inner="";
@@ -1394,26 +2169,91 @@ function renderSheet(){ const m=document.getElementById("sheetmount"); if(!sheet
         if(!vis.length) return "";
         return '<div class="muted tiny" style="margin:12px 0 4px">'+(gk==="_other"?"Other":groupLabel(gk))+' \u00b7 '+vis.length+'</div>'+vis.map(row).join(""); }).join("");
       if(!listHtml) listHtml='<div class="empty">Nothing matches those filters.</div>'; }
+    /* v9 \u2014 always one tap away, whether you are browsing or mid-search. If the search found
+       nothing this is the obvious next move; if it found something it still sits above the list so
+       a near-miss never forces you to settle for the wrong exercise. */
+    var customBtn='<button class="opt customadd" data-addcustom="'+escAttr(q)+'" style="width:100%;text-align:left">'
+      +'<div><div class="nm" style="color:var(--gold)">+ Add custom exercise</div><div class="meta">'
+      +(q?('Create \u201c'+escAttr(q)+'\u201d and log it right now'):'Can\u2019t find it? Name it yourself and keep training')
+      +'</div></div><span class="sets" style="color:var(--gold)">new</span></button>';
     inner='<div class="tiny">Add exercise \u00b7 '+S.exercises.length+' in library</div><input class="inp srch" id="addSearch" placeholder="Search name, muscle, equipment, pattern..." value="'+escAttr(q)+'" style="margin-top:8px">'
       +filterChips("add",addGroup,addEquip)
-      +'<p class="muted" style="font-size:11px;margin:6px 0 0">Familiar gym options first, then manual-only variations. Filter by muscle group or kit to narrow it down.</p><div style="margin-top:6px">'+listHtml+'</div>'; }
+      +'<div style="margin-top:10px">'+customBtn+'</div>'
+      +'<p class="muted" style="font-size:11px;margin:8px 0 0">Familiar gym options first, then manual-only variations. Filter by muscle group or kit to narrow it down.</p><div style="margin-top:6px">'+listHtml+'</div>'; }
   else if(sheet.type==="exhist"){ const id=sheet.data; const ex=exById(id); const rec=exerciseRecords(id); const h=exerciseHistory(id); const _tr=exerciseTrend(id); var fd=function(d){ return d?fmtDate(d):""; };
+    var _asst=isAssisted(ex);
+    /* For an assisted movement the "best" mark is the LOWEST assistance, and the effective load sits
+       beside it so the number that actually matters is never hidden behind a machine setting. */
+    var recCell=function(lb,r){ return '<div class="rc"><span>'+lb+'</span><b>'+(hasRec(r)?(r.raw+(_asst?'<i>kg assist</i>':'<i>×'+r.reps+'</i>')):'—')+'</b><small>'
+      +(hasRec(r)?((_asst&&r.eff!=null?r.eff+'kg eff · ':'')+fd(r.date)):'not yet')+'</small></div>'; };
     var recGrid='<div class="recgrid">'
-      +'<div class="rc"><span>5RM</span><b>'+(rec.rm5.w?rec.rm5.w+'<i>×'+rec.rm5.reps+'</i>':'—')+'</b><small>'+(rec.rm5.w?fd(rec.rm5.date):'not yet')+'</small></div>'
-      +'<div class="rc"><span>10RM</span><b>'+(rec.rm10.w?rec.rm10.w+'<i>×'+rec.rm10.reps+'</i>':'—')+'</b><small>'+(rec.rm10.w?fd(rec.rm10.date):'not yet')+'</small></div>'
-      +'<div class="rc"><span>Top weight</span><b>'+(rec.top.w?rec.top.w+'<i>×'+rec.top.reps+'</i>':'—')+'</b><small>'+(rec.top.w?fd(rec.top.date):'not yet')+'</small></div>'
-      +'<div class="rc"><span>Best volume</span><b>'+(rec.vol.v?rec.vol.v+'<i>kg</i>':'—')+'</b><small>'+(rec.vol.v?fd(rec.vol.date):'not yet')+'</small></div>'
+      +(_asst?'':recCell("5RM",rec.rm5))
+      +recCell(_asst?"10RM · lowest assist":"10RM",rec.rm10)
+      +recCell(_asst?"Lowest assistance":"Top weight",rec.top)
+      +'<div class="rc"><span>Best volume'+(loadKind(ex)==="ext"?'':' · effective')+'</span><b>'+(rec.vol.v?rec.vol.v+'<i>kg</i>':'—')+'</b><small>'+(rec.vol.v?fd(rec.vol.date):(loadKind(ex)!=="ext"&&!hasBodyweight()?'needs bodyweight':'not yet'))+'</small></div>'
       +'</div>';
-    var metrics=[["top","Top kg"],["rm5","5RM"],["rm10","10RM"],["vol","Volume"],["sets","Sets"]];
+    var metrics=metricsFor(ex); if(!metricOK(ex,exChartMetric)) exChartMetric=defaultMetricFor(ex);
     var seg='<div class="seg mini" style="margin-top:10px">'+metrics.map(function(mn){ return '<button data-exmetric="'+mn[0]+'" class="'+(exChartMetric===mn[0]?"on":"")+'">'+mn[1]+'</button>'; }).join("")+'</div>';
-    var chart=lineChartSVG(exerciseSeries(id,exChartMetric),{unit:metricUnit(exChartMetric)});
+    var chart=lineChartSVG(exerciseSeries(id,exChartMetric),{unit:metricUnit(exChartMetric),dirNote:dirNoteFor(ex,exChartMetric)});
+    var _bwNote=(loadKind(ex)!=="ext"&&!hasBodyweight())?'<div class="ibody" style="margin-top:6px;color:var(--amber)">Log your bodyweight in Settings and this becomes an effective-load chart (bodyweight '+(_asst?"− assistance":"+ added")+'). Until then it shows '+(_asst?"assistance used":"added load")+' only — no figure is invented.</div>':'';
     inner='<div class="tiny">'+ex.name+'</div><div class="row" style="gap:6px;margin-top:8px;align-items:center"><span class="statuspill" style="background:'+_tr.c+'22;color:'+_tr.c+'">'+_tr.label+'</span>'+(TIPS[id]?'<button class="btn sm" data-tips="'+id+'" style="color:var(--gold)">Form tips</button>':'')+'<button class="btn sm" data-setup="'+id+'" style="color:var(--gold)">⚙ Setup</button></div><div class="ibody" style="margin-top:6px">'+_tr.note+'</div>'+setupStrip(id)
       +recGrid
-      +'<div class="tiny" style="margin-top:14px">Progress · '+metricLabel(exChartMetric)+'</div>'+seg+'<div class="chartwrap">'+chart+'</div>'
-      +'<div class="tiny" style="margin-top:12px">History</div><div style="margin-top:6px">'+(h.length?h.map(function(x){ return '<div class="contrib"><div><b>'+fmtDate(x.date)+'</b><div class="muted" style="font-size:12px;margin-top:2px">'+x.sets.map(function(s){ return fmtSet(s.weight,s.reps); }).join("  ")+'</div></div><span class="c-ef">'+x.sets.reduce(function(a,s){ return a+(+s.weight||0)*(+s.reps||0); },0)+'kg</span></div>'; }).join(""):'<div class="empty">No logged sessions.</div>')+'</div>'; }
+      +'<div class="tiny" style="margin-top:14px">Progress · '+metricLabel(exChartMetric,ex)+'</div>'+seg+'<div class="chartwrap">'+chart+'</div>'+_bwNote
+      +'<div class="tiny" style="margin-top:12px">History</div><div style="margin-top:6px">'+(h.length?h.map(function(x){ return '<div class="contrib"><div><b>'+fmtDate(x.date)+(x.asName&&normSearch(x.asName)!==normSearch(ex.name)?' <span class="tag">as “'+escAttr(x.asName)+'”</span>':'')+'</b><div class="muted" style="font-size:12px;margin-top:2px">'+x.sets.map(function(s){ return fmtSet(s.weight,s.reps); }).join("  ")+'</div></div><span class="c-ef">'+(function(){ if(loadKind(ex)==="ext") return rawVolume(x.sets)+'kg'; if(x.bw==null) return sessionReps(x.sets)+' reps'; return Math.round(sessionVolumeFor(ex,x.sets,x.bw))+'kg'; })()+'</span></div>'; }).join(""):'<div class="empty">No logged sessions.</div>')+'</div>'; }
+  else if(sheet.type==="custom"){ const d=customDraft; const editing=!!d.id; const c=editing?customRec(d.id):null;
+    const gchips=CUSTOM_GROUP_KEYS.map(function(k){ return '<button class="gchip'+(d.group===k?" on":"")+'" data-cxgroup="'+k+'">'+groupLabel(k)+'</button>'; }).join("");
+    const lchips=[["ext","Weight"],["assist","Assistance"],["bw","Bodyweight +"]].map(function(pr){
+      return '<button class="gchip'+((d.load||"ext")===pr[0]?" on":"")+'" data-cxload="'+pr[0]+'">'+pr[1]+'</button>'; }).join("");
+    const loadHelp={ext:"The number you log is the load. More is better.",
+      assist:"The number you log is machine assistance. LESS is better — charts, PRs and targets all flip direction.",
+      bw:"The number you log is load added on top of bodyweight. 0 = pure bodyweight."}[d.load||"ext"];
+    inner='<div class="tiny">'+(editing?"Edit custom exercise":"Add custom exercise")+'</div>'
+      +'<p class="muted" style="font-size:12px;margin:6px 0 10px">Logged the same way as anything in the library — sets, reps, load, rest timer, history and records. You can map it onto a library exercise later without losing a single set.</p>'
+      +'<div class="field"><label>Exercise name</label><input class="inp" id="cxName" value="'+escAttr(d.name||"")+'" placeholder="e.g. Close-Grip Lat Pulldown" style="text-align:left;padding:10px" autocomplete="off"></div>'
+      +'<div class="field"><label>Muscle group <span class="muted" style="font-weight:400">· so these sets count toward your weekly volume straight away</span></label><div class="gchips">'+gchips+'</div></div>'
+      +'<div class="field"><label>What does the weight column mean?</label><div class="gchips">'+lchips+'</div><div class="histline" style="margin-top:5px">'+loadHelp+'</div></div>'
+      +(editing&&c?'<div class="histline">Originally entered as “'+escAttr(c.origName||c.name)+'” · added '+fmtDate(c.createdAt)+'</div>':'')
+      +'<div class="row" style="margin-top:12px"><button class="btn accent full" data-cxsave="'+(d.id||"")+'">'+(editing?"Save changes":(activeSession&&viewingLogger?"Add to workout":"Create exercise"))+'</button></div>'
+      +'<div class="histline" style="margin-top:8px">Saved immediately — it survives a refresh, a reopen and a future app update.</div>'; }
+  else if(sheet.type==="reconcile"){ const c=customRec(sheet.data);
+    if(!c){ inner='<div class="empty">Not found.</div>'; }
+    else {
+      const h=exerciseHistory(c.id); const nSets=h.reduce(function(a,x){ return a+x.sets.length; },0);
+      const sugg=suggestMatches(c.id,5);
+      const q=reconcileSearch||"";
+      const searchRes=q?S.exercises.filter(function(e){ return e.id!==c.id&&!e.custom&&exMatches(e,q); })
+        .sort(function(a,b){ return a.name.localeCompare(b.name); }).slice(0,12):[];
+      const row=function(e,score){ return '<button class="opt" data-cxmap="'+c.id+'|'+e.id+'" style="width:100%;text-align:left">'
+        +'<div><div class="nm">'+e.name+'</div><div class="meta">'+equipLabel(e.equip)+' · '+groupLabel(exGroup(e))+(score?' · likely match':'')+'</div></div><span class="sets">map →</span></button>'; };
+      inner='<div class="tiny">Review custom exercise</div>'
+        +'<h2 style="font-size:18px;margin:6px 0 2px">'+escAttr(c.name)+'</h2>'
+        +'<div class="histline">'+groupLabel(c.group)+' · '+h.length+' session'+(h.length===1?"":"s")+' · '+nSets+' working set'+(nSets===1?"":"s")+' · added '+fmtDate(c.createdAt)+'</div>'
+        +(c.origName&&c.origName!==c.name?'<div class="histline">Originally entered as “'+escAttr(c.origName)+'”</div>':'')
+        +'<div class="card" style="margin:12px 0 0;padding:11px 13px;background:var(--panel2)"><div class="ibody" style="font-size:12px">Nothing is merged until you choose. Whatever you pick, every set and session above is kept.</div></div>'
+        +'<div class="tiny" style="margin-top:14px">1 · Map to an existing exercise</div>'
+        +'<p class="muted" style="font-size:11.5px;margin:4px 0 6px">Its history moves onto that exercise and starts counting toward its records and progression. Your original wording is kept on each workout. Don’t map a genuinely different variation just because the name looks similar — promote it instead.</p>'
+        +(sugg.length?sugg.map(function(x){ return row(x.ex,true); }).join(""):'<div class="empty" style="padding:12px">No confident suggestions — search below.</div>')
+        +'<input class="inp srch" id="reconSearch" placeholder="Search the whole library..." value="'+escAttr(q)+'" style="margin-top:8px">'
+        +(q?(searchRes.length?searchRes.map(function(e){ return row(e,false); }).join(""):'<div class="empty" style="padding:12px">No matches.</div>'):"")
+        +'<hr class="sub"><div class="tiny">2 · Add it to the library permanently</div>'
+        +'<p class="muted" style="font-size:11.5px;margin:4px 0 6px">Keeps its own identity and all of its history — nothing is rewritten. Use this when it really is a distinct exercise or variation.</p>'
+        +'<div class="row"><button class="btn accent full" data-cxpromote="'+c.id+'">Add to library</button><button class="btn" data-cxpromoterec="'+c.id+'" title="also allow the recommender to program it">+ recommendable</button></div>'
+        +'<hr class="sub"><div class="tiny">3 · Leave it as a custom exercise</div>'
+        +'<p class="muted" style="font-size:11.5px;margin:4px 0 6px">Stays exactly as it is, fully searchable and loggable — it just stops appearing in this review list.</p>'
+        +'<button class="btn full" data-cxkeep="'+c.id+'">Keep as custom</button>'
+        +'<hr class="sub"><div class="tiny">4 · Correct or rename it</div>'
+        +'<p class="muted" style="font-size:11.5px;margin:4px 0 6px">Renaming updates it everywhere at once — history follows the exercise, not the text.</p>'
+        +'<button class="btn full" data-cxedit="'+c.id+'">Edit name &amp; muscle group</button>'
+        +'<div class="row" style="margin-top:14px"><button class="btn ghost full danger" data-cxdelete="'+c.id+'">Delete exercise</button></div>'; } }
+  else if(sheet.type==="reconcileDone"){ const d=sheet.data;
+    inner='<div style="text-align:center;padding:4px 0"><div class="tiny" style="color:var(--green)">Mapped</div>'
+      +'<h2 style="font-size:19px;margin:6px 0">'+escAttr(d.name)+' \u2192 '+escAttr(d.canon)+'</h2></div>'
+      +'<div class="kpi" style="margin-top:6px"><div class="k"><b>'+d.moved+'</b><span>entries moved</span></div><div class="k"><b>'+d.sessions+'</b><span>sessions</span></div><div class="k"><b style="color:var(--green)">0</b><span>sets lost</span></div></div>'
+      +'<div class="ibody" style="margin-top:12px">Those sessions now feed '+escAttr(d.canon)+'\u2019s records, charts and progression. Your original wording is still shown on each workout, and searching \u201c'+escAttr(d.name)+'\u201d will keep finding it.</div>'
+      +'<button class="btn accent full" data-sheetclose2 style="margin-top:14px">Done</button>'; }
   else if(sheet.type==="exwk"){ const w=S.sessions.find(s=>s.id===sheet.data);
     inner=w?('<div class="tiny">'+fmtDate(w.completedAt)+'</div><h2 style="font-size:17px;margin:6px 0 12px">'+(w.title||"Workout")+'</h2>'+w.entries.map(en=>{ const ex=exById(en.exId); const ws=workingSets(en);
-      return '<div class="card" style="margin:8px 0;padding:12px"><div class="nm" style="font-weight:700">'+(ex?ex.name:en.exId)+'</div><div class="muted" style="font-size:12px;margin-top:4px">'+(en.sets.map(s=>(s.type==="warm"?"W ":"")+fmtSet(s.weight,s.reps)).join("   ")||"\u2014")+'</div><div class="histline">'+ws.length+' working sets · '+musLabels(ex||{m:{}})+'</div></div>'; }).join("")
+      return '<div class="card" style="margin:8px 0;padding:12px"><div class="nm" style="font-weight:700">'+entryName(en)+(isCustomEx(ex)?' <span class="tag" style="color:var(--gold)">custom</span>':'')+'</div><div class="muted" style="font-size:12px;margin-top:4px">'+(en.sets.map(s=>(s.type==="warm"?"W ":"")+fmtSet(s.weight,s.reps)).join("   ")||"\u2014")+'</div><div class="histline">'+ws.length+' working sets · '+musLabels(ex||{m:{}})+'</div></div>'; }).join("")
       +'<button class="btn full" data-editfromview="'+w.id+'" style="margin-top:6px">Edit this workout</button>'):'<div class="empty">Not found.</div>'; }
   else if(sheet.type==="momentum"){ const m=momentumScore(); const w=weekStatus();
     const rows=[["Sessions this week",w.sess+" / "+w.target],["Primary muscles met",m.primaryMet+" / "+m.primaryAll],["Weekly target streak",m.streak+" wk"],["Trained recently",m.consist>=0?"yes":"no"]];
@@ -1459,12 +2299,14 @@ function renderSheet(){ const m=document.getElementById("sheetmount"); if(!sheet
   else if(sheet.type==="recap"){ const r=sheet.data;
     inner='<div style="text-align:center;padding:2px 0 4px"><div class="tiny" style="color:var(--accent)">Session complete</div><h2 style="font-size:20px;margin:4px 0">'+r.title+'</h2></div>'
       +'<div class="kpi" style="margin-top:6px"><div class="k"><b>'+(r.dur||"—")+'</b><span>minutes</span></div><div class="k"><b>'+r.setsN+'</b><span>working sets</span></div><div class="k"><b>'+r.exN+'</b><span>exercises</span></div></div>'
+      +recapDeltas(r)
       +(r.coach?'<div class="card" style="margin:12px 0 0;border-color:rgba(59,130,246,.32);background:rgba(59,130,246,.07)"><div class="tiny" style="color:var(--accent)">Coach says</div><div class="ibody" style="margin-top:4px;color:#C6D0DC">'+r.coach+'</div></div>':"")
       +(r.muscles.length?'<div class="histline" style="margin-top:10px;text-align:center">Trained: '+r.muscles.join(" · ")+'</div>':"")
-      +((r.ach&&r.ach.length)?'<div class="tiny" style="margin-top:14px">Achievements 🏆</div><div style="margin-top:4px">'+r.ach.map(function(a){ return '<div class="achrow"><div><div class="am">'+a.name+'</div><div class="ad">'+a.weight+'kg × '+a.reps+'</div></div><span class="badge '+achBadgeClass(a.type)+'">'+(a.first?"First ":"")+a.type+'</span></div>'; }).join("")+'</div>':'<div class="histline" style="margin-top:12px;text-align:center;color:var(--muted)">No new 5RM / 10RM / PR this session — keep stacking reps.</div>')
+      +((r.ach&&r.ach.length)?'<div class="tiny" style="margin-top:14px">Achievements 🏆</div><div style="margin-top:4px">'+r.ach.map(function(a){ return '<div class="achrow"><div><div class="am">'+a.name+'</div><div class="ad">'+achLoadStr(a)+' × '+a.reps+'</div></div><span class="badge '+achBadgeClass(a.type)+'">'+(a.first?"First ":"")+achLabel(a)+'</span></div>'; }).join("")+'</div>':'<div class="histline" style="margin-top:12px;text-align:center;color:var(--muted)">No new 5RM / 10RM / PR this session — keep stacking reps.</div>')
       +'<div class="tiny" style="margin-top:14px">Volume added by muscle</div><div style="margin-top:6px">'+(r.parts.length?r.parts.map(function(p){ return '<div class="exline" style="padding:6px 0"><div class="nm" style="font-size:13px">'+p.label+'</div><span class="sets">'+p.v.toFixed(1)+' sets</span></div>'; }).join(""):'<div class="empty" style="padding:10px">No working sets logged.</div>')+'</div>'
+      +(r.customUsed?'<div class="card" style="margin:12px 0 0;padding:11px 13px;border-color:rgba(224,165,60,.35);background:rgba(224,165,60,.07)"><div class="ibody" style="font-size:12px;color:var(--gold)">'+r.customUsed+' custom exercise'+(r.customUsed===1?'':'s')+' recorded. Everything is saved — you can tidy them up any time in Settings → Custom exercises.</div></div>':'')
       +'<div class="row" style="margin-top:16px"><button class="btn accent full" data-recaphist="'+r.id+'">View in History</button><button class="btn full" data-sheetclose2>Done</button></div>'; }
-  const noClose=(sheet.type==="confirm"||sheet.type==="recap");
+  const noClose=(sheet.type==="confirm"||sheet.type==="recap"||sheet.type==="reconcileDone");
   m.innerHTML='<div class="sheet-wrap" data-sheetbg><div class="sheet" data-sheetbody><div class="grab"></div>'+inner+(noClose?"":'<button class="btn ghost full" data-sheetclose style="margin-top:8px">Close</button>')+'</div></div>';
   const efb=m.querySelector('[data-editfromview]'); if(efb) efb.onclick=()=>{ const id=efb.dataset.editfromview; closeSheet(); editWorkout(id); };
   m.querySelector('[data-sheetbg]').onclick=(e)=>{ if(e.target===m.querySelector('[data-sheetbg]')) closeSheet(); };
@@ -1491,7 +2333,48 @@ function renderSheet(){ const m=document.getElementById("sheetmount"); if(!sheet
   const _ls=m.querySelector('[data-limsave]'); if(_ls) _ls.onclick=()=>{ if(!limDraft.rules.length){ closeSheet(); return; } setLimitation(limDraft.rules.slice(),null,limDraft.note,limDraft.dur); closeSheet(); render(); };
   const _lr=m.querySelector('[data-limremove]'); if(_lr) _lr.onclick=()=>{ clearLimitation(); closeSheet(); render(); };
   m.querySelectorAll('[data-pick]').forEach(b=>b.onclick=()=>{ activeSession.entries[sheet.data].exId=b.dataset.pick; saveActive(); closeSheet(); render(); });
-  m.querySelectorAll('[data-add]').forEach(b=>b.onclick=()=>{ const ex=exById(b.dataset.add); activeSession.entries.push({exId:ex.id, sets:Array.from({length:ex.sl||2},()=>({weight:"",reps:"",type:"work",done:false}))}); saveActive(); closeSheet(); render(); });
+  m.querySelectorAll('[data-add]').forEach(b=>b.onclick=()=>{ const ex=exById(b.dataset.add); if(!ex) return; activeSession.entries.push({exId:ex.id, sets:Array.from({length:ex.sl||2},()=>({weight:"",reps:"",type:"work",done:false}))}); saveActive(); closeSheet(); render(); });
+  /* ---- v9 custom exercise composer ---- */
+  (function(){
+    var grab=function(){ var n=m.querySelector('#cxName'); if(n) customDraft.name=n.value; };
+    m.querySelectorAll('[data-addcustom]').forEach(function(b){ b.onclick=function(){
+      customDraft={name:b.dataset.addcustom||"", group:"", load:"ext", id:null}; openSheet("custom"); }; });
+    m.querySelectorAll('[data-cxgroup]').forEach(function(b){ b.onclick=function(){ grab(); customDraft.group=b.dataset.cxgroup; renderSheet();
+      var n=document.querySelector('#cxName'); if(n){ n.focus(); try{n.setSelectionRange(n.value.length,n.value.length);}catch(e){} } }; });
+    m.querySelectorAll('[data-cxload]').forEach(function(b){ b.onclick=function(){ grab(); customDraft.load=b.dataset.cxload; renderSheet(); }; });
+    var nm=m.querySelector('#cxName'); if(nm) nm.oninput=function(){ customDraft.name=nm.value; };
+    var sv=m.querySelector('[data-cxsave]'); if(sv) sv.onclick=function(){ grab();
+      var name=(customDraft.name||"").trim();
+      if(!name){ var n2=m.querySelector('#cxName'); if(n2){ n2.focus(); n2.style.borderColor="var(--red)"; } return; }
+      if(!customDraft.group){ var g=m.querySelector('[data-cxgroup]'); if(g) g.scrollIntoView({block:"center"}); customDraft.group="core"; }
+      var id=sv.dataset.cxsave;
+      if(id){ var c=customRec(id); if(c){ c.load=customDraft.load||"ext"; } renameCustomExercise(id,name); setCustomGroup(id,customDraft.group); closeSheet(); render(); return; }
+      var newId=addCustomExercise(name,customDraft.group,{load:customDraft.load});
+      if(newId&&activeSession){ var ex=exById(newId);
+        activeSession.entries.push({exId:newId, asName:name, custom:true, sets:Array.from({length:(ex&&ex.sl)||2},function(){ return {weight:"",reps:"",type:"work",done:false}; })});
+        saveActive(); }
+      customDraft={name:"",group:"",load:"ext",id:null}; closeSheet(); render(); };
+  })();
+  /* ---- v9 reconciliation ---- */
+  m.querySelectorAll('[data-cxreview]').forEach(function(b){ b.onclick=function(){ reconcileSearch=""; openSheet("reconcile",b.dataset.cxreview); }; });
+  m.querySelectorAll('[data-cxmap]').forEach(function(b){ b.onclick=function(){
+    var pr=b.dataset.cxmap.split("|"); var c=customRec(pr[0]); var canon=exById(pr[1]); if(!c||!canon) return;
+    var n=exerciseHistory(c.id).length;
+    confirmSheet('Move “'+c.name+'” onto '+canon.name+'? '+(n?('Its '+n+' logged session'+(n===1?"":"s")+' will start counting toward '+canon.name+'’s records and progression. '):'')+'Nothing is deleted and no workout is duplicated — your original wording is kept on each workout.',
+      "Map exercise", function(){ var r=mapCustomExercise(pr[0],pr[1]); closeSheet(); render();
+        if(r.ok) openSheet("reconcileDone",{name:c.name, canon:canon.name, moved:r.moved, sessions:r.sessions}); },
+      {title:"Map to "+canon.name+"?"}); }; });
+  m.querySelectorAll('[data-cxpromote]').forEach(function(b){ b.onclick=function(){ promoteCustomExercise(b.dataset.cxpromote,{rec:false}); closeSheet(); render(); }; });
+  m.querySelectorAll('[data-cxpromoterec]').forEach(function(b){ b.onclick=function(){ promoteCustomExercise(b.dataset.cxpromoterec,{rec:true}); closeSheet(); render(); }; });
+  m.querySelectorAll('[data-cxkeep]').forEach(function(b){ b.onclick=function(){ keepCustomExercise(b.dataset.cxkeep); closeSheet(); render(); }; });
+  m.querySelectorAll('[data-cxedit]').forEach(function(b){ b.onclick=function(){ var c=customRec(b.dataset.cxedit); if(!c) return;
+    customDraft={name:c.name, group:c.group, load:c.load||"ext", id:c.id}; openSheet("custom"); }; });
+  m.querySelectorAll('[data-cxdelete]').forEach(function(b){ b.onclick=function(){ var c=customRec(b.dataset.cxdelete); if(!c) return;
+    var n=exerciseHistory(c.id).length;
+    if(n){ confirmSheet('“'+c.name+'” has '+n+' logged session'+(n===1?"":"s")+'. Deleting it would throw that training away. Map it to a library exercise or keep it as a custom exercise instead — both preserve every set.',"Got it",function(){ openSheet("reconcile",c.id); },{title:"Can’t delete — it has history"}); return; }
+    confirmSheet('Delete “'+c.name+'”? It has no logged sets, so nothing is lost.',"Delete",function(){ delete customStore()[c.id]; rebuildCustomExercises(); save(); closeSheet(); render(); },{danger:true,title:"Delete custom exercise?"}); }; });
+  (function(){ var rs=m.querySelector('#reconSearch'); if(rs) rs.oninput=function(){ reconcileSearch=rs.value; renderSheet();
+    var n=document.querySelector('#reconSearch'); if(n){ n.focus(); try{n.setSelectionRange(n.value.length,n.value.length);}catch(e){} } }; })();
   m.querySelectorAll('[data-exmetric]').forEach(b=>b.onclick=()=>{ exChartMetric=b.dataset.exmetric; renderSheet(); });
   (function(){ var as=m.querySelector('#addSearch'); if(as) as.oninput=function(){ addSearch=as.value; renderSheet(); var n=document.querySelector('#addSearch'); if(n){ n.focus(); try{n.setSelectionRange(n.value.length,n.value.length);}catch(e){} } };
     var sw=m.querySelector('#swapSearch'); if(sw) sw.oninput=function(){ swapSearch=sw.value; renderSheet(); var n=document.querySelector('#swapSearch'); if(n){ n.focus(); try{n.setSelectionRange(n.value.length,n.value.length);}catch(e){} } }; })();
@@ -1512,12 +2395,19 @@ function weeklyCounts(n){ const out=[]; const base=startOfWeek(); for(let i=n-1;
   out.push({count:completedSessions().filter(x=>new Date(x.completedAt)>=s&&new Date(x.completedAt)<e).length, current:i===0}); } return out; }
 /* Progression metric: e1RM for low-rep work; top-set load or best-set volume for
    isolation / high-rep movements where e1RM would be misleading (P10). */
+/* First-vs-latest movement per exercise, always measured on the comparable (direction-aware)
+   strength number, so an assisted movement shedding assistance reads as a GAIN, not a loss. */
 function exerciseProgression(){ return S.exercises.map(e=>{ const h=exerciseHistory(e.id); if(h.length<2) return null;
-  const f=h[h.length-1].sets, l=h[0].sets;
-  let first=Math.max(0,...f.map(s=>est1RM(+s.weight||0,+s.reps||0))), latest=Math.max(0,...l.map(s=>est1RM(+s.weight||0,+s.reps||0))), metric="e1RM";
-  if(first<=0||latest<=0){ first=topSetLoad(f); latest=topSetLoad(l); metric="top set"; }
-  if(first<=0||latest<=0){ first=bestSetVol(f); latest=bestSetVol(l); metric="best vol"; }
-  if(first<=0) return null; return {ex:e,first,latest,n:h.length,metric,pct:(latest-first)/first*100}; }).filter(Boolean).sort((a,b)=>b.pct-a.pct); }
+  const fh=h[h.length-1], lh=h[0];
+  let first=sessionStrength(e,fh.sets,fh.bw), latest=sessionStrength(e,lh.sets,lh.bw);
+  let metric=(exE1RM(e,bestRawLoad(e,lh.sets),Math.max(...lh.sets.map(s=>+s.reps||0)),lh.bw)>0)?"e1RM":(loadKind(e)==="ext"?"top set":"effective load");
+  if(loadKind(e)==="ext"&&first<=0&&latest<=0){ first=bestSetVol(fh.sets); latest=bestSetVol(lh.sets); metric="best vol"; }
+  if(first===0) return null;
+  const td=exerciseTrendData(e.id);
+  return {ex:e, first, latest, n:h.length, metric, pct:(latest-first)/Math.abs(first)*100,
+          state:td.state, recentPct:td.pct, kind:loadKind(e),
+          firstRaw:bestRawLoad(e,fh.sets), latestRaw:bestRawLoad(e,lh.sets)}; })
+  .filter(Boolean).sort((a,b)=>b.pct-a.pct); }
 function calcStreak(){ let streak=0,cursor=startOfWeek(); for(let i=0;i<26;i++){ const s=new Date(cursor); const e=new Date(s); e.setDate(e.getDate()+7);
   const n=S.sessions.filter(x=>x.completedAt&&new Date(x.completedAt)>=s&&new Date(x.completedAt)<e).length;
   if(i===0&&n<S.settings.sessionsPerWeek){ cursor.setDate(cursor.getDate()-7); continue; } if(n>=S.settings.sessionsPerWeek) streak++; else break; cursor.setDate(cursor.getDate()-7); } return streak; }
@@ -1595,16 +2485,18 @@ function insightsBlock(){ let h=coachCard()+weeklyScorecard(); const cards=[]; c
   // best time window
   const tw=bestTimeWindow(); if(tw) cards.push(insightCard({tier:"info",badge:tw.early?"Early signal":"Pattern",title:(tw.early?"Early signal: you ":"You ")+"train most in the "+tw.window.toLowerCase(),body:tw.n+" of "+tw.total+" sessions"+(tw.early?" — based on limited data so far, keep logging to confirm.":".")}));
   // progression
-  const prog=progressionInsights(); const up=prog.filter(p=>p.pct>=5)[0]; const flat=prog.filter(p=>p.pct<=0.5)[0];
-  if(up) cards.push(insightCard({tier:"good",badge:"Trending up",metric:"▲ "+Math.round(up.pct)+"%",title:up.ex.name+" is climbing",body:up.first.toFixed(0)+" → "+up.latest.toFixed(0)+" "+up.metric+" across "+up.n+" sessions. Keep pushing."}));
-  if(flat) cards.push(insightCard({tier:"warn",badge:"Stalled",title:flat.ex.name+" has plateaued",body:"No "+flat.metric+" progress over "+flat.n+" sessions. Try a small load bump, an extra rep, or a fresh variation."}));
+  const board=progressionBoard(); const prog=board.graded?board.improving.concat(board.attention):[];
+  const up=board.improving[0]; const flat=board.attention[0];
+  if(up) cards.push(insightCard({tier:"good",badge:"Trending up",metric:"▲ "+pctStr(up.recentPct),title:up.ex.name+" is climbing",body:progDeltaStr(up)+". Keep pushing."}));
+  if(flat) cards.push(insightCard({tier:"warn",badge:flat.state==="regressing"?"Declining":"Stalled",title:flat.ex.name+(flat.state==="regressing"?" is going backwards":" has plateaued"),
+    body:progDeltaStr(flat)+". "+(flat.state==="regressing"?"Down across more than one session — check sleep, food and recovery before chasing the number.":"Try a small load change, an extra rep, or a fresh variation.")}));
   // best week
   const bw=bestWeekSoFar(); if(bw) cards.push(insightCard({tier:"good",badge:"Milestone",title:"Best week so far: "+bw.sessions+" sessions, "+bw.sets+" sets",body:bw.muscles+" muscle groups trained"+(bw.isThis?" — and it’s this week. 🔥":".")}));
   h+=cards.join("");
   // unlock hints for thresholded insights not yet available
   if(!bd) unlock.push("most consistent day (log ~6 sessions)");
   if(completedSessions().length<8) unlock.push("time-of-day patterns (8+ sessions)");
-  if(!prog.length) unlock.push("exercise progression (3+ logs of an exercise)");
+  if(!board.graded) unlock.push("exercise progression verdicts (3+ logs of an exercise)");
   if(unlock.length) h+='<div class="card" style="background:var(--panel2)"><div class="ibody">🔒 Keep logging to unlock: '+unlock.join("; ")+'.</div></div>';
   return h; }
 
@@ -1615,12 +2507,13 @@ function viewStats(){ const total=completedSessions().length; const streak=calcS
   const sbp=setsByBodyPartP(); const ent=Object.entries(sbp).filter(([m,v])=>v>0).sort((a,b)=>b[1]-a[1]); const smax=Math.max(1,...ent.map(e=>e[1]));
   const tierC={primary:"var(--gold)",secondary:"var(--accent)",maintenance:"var(--muted)"};
   const sbpRows=ent.length?ent.map(([m,v])=>'<div class="exline" data-muscle-stat="'+m+'" style="padding:7px 0;cursor:pointer"><div style="flex:1"><div class="nm" style="font-size:13px">'+S.muscles[m].label+'</div><div class="bar" style="margin-top:5px"><i style="width:'+Math.round(v/smax*100)+'%;background:'+tierC[S.muscles[m].tier]+'"></i></div></div><span class="mono" style="margin-left:10px">'+v.toFixed(1)+'</span><span class="muted" style="margin-left:8px">›</span></div>').join(""):'<div class="empty" style="padding:16px">No sets in this period.</div>';
-  const mu=mostUsedExercises(6); const muRows=mu.length?mu.map(x=>'<div class="exline" data-exhist="'+x.ex.id+'" style="padding:7px 0;cursor:pointer"><div class="nm" style="font-size:13px">'+(x.ex?x.ex.name:'?')+'</div><span class="sets">'+x.n+' '+(x.n===1?'session':'sessions')+'</span></div>').join(""):'<div class="empty" style="padding:16px">Nothing logged.</div>';
-  const prog=exerciseProgression().slice(0,6); const progRows=prog.length?prog.map(p=>{ const up=p.pct>=0,c=up?'var(--green)':'var(--red)';
-    return '<div class="exline" data-exhist="'+p.ex.id+'" style="padding:7px 0;cursor:pointer"><div><div class="nm" style="font-size:13px">'+p.ex.name+'</div><div class="histline">'+p.first.toFixed(0)+' → '+p.latest.toFixed(0)+'kg '+p.metric+' · '+p.n+' sessions</div></div><span class="statuspill" style="background:'+c+'22;color:'+c+'">'+(up?'▲':'▼')+' '+Math.abs(p.pct).toFixed(0)+'%</span></div>'; }).join(""):'<div class="empty" style="padding:16px">Log an exercise twice to see progression.</div>';
+  const mu=mostUsedExercises(6); const muRows=mu.length?mu.map(x=>'<div class="exline" data-exhist="'+x.ex.id+'" style="padding:7px 0;cursor:pointer"><div class="nm" style="font-size:13px;flex:1;min-width:0">'+(x.ex?x.ex.name:'?')+'</div>'+miniSpark(x.ex.id)+'<span class="sets" style="margin-left:8px">'+x.n+'</span><span style="margin-left:6px">'+trendBadge(x.ex.id)+'</span></div>').join(""):'<div class="empty" style="padding:16px">Nothing logged.</div>';
+  const prog=exerciseProgression().slice(0,6); const progRows=prog.length?prog.map(p=>
+    '<div class="exline" data-exhist="'+p.ex.id+'" style="padding:7px 0;cursor:pointer"><div style="flex:1;min-width:0"><div class="nm" style="font-size:13px">'+p.ex.name+'</div><div class="histline">'+progDeltaStr(p)+'</div></div>'
+    +miniSpark(p.ex.id)+'<span style="margin-left:8px">'+trendBadge(p.ex.id)+'</span></div>').join(""):'<div class="empty" style="padding:16px">Log an exercise twice to see progression.</div>';
   const weekTop=statsPeriod==="week"?weekSummaryCard():"";
   return '<div style="display:flex;align-items:center;gap:8px;margin:14px 2px 2px"><span style="font-size:18px">✨</span><div class="tiny" style="font-size:13px;letter-spacing:.02em;text-transform:none;color:var(--text);font-weight:700">Insights</div></div>'
-    +insightsBlock()+recentAchievementsCard(6)
+    +insightsBlock()+progressionBoardCard()+recentAchievementsCard(6)
     +'<div style="display:flex;align-items:center;gap:8px;margin:18px 2px 2px"><div class="tiny" style="font-size:13px;letter-spacing:.02em;text-transform:none;color:var(--text);font-weight:700">Charts & history</div></div>'
     +weekTop+'<div class="card"><div class="kpi"><div class="k" data-act="goto-history"><b>'+total+'</b><span>workouts</span></div><div class="k" data-act="goto-history"><b>'+streak+'</b><span>week streak</span></div><div class="k" data-act="goto-history"><b style="font-size:15px;line-height:2">'+(bm?monthLabel(bm.k):'\u2014')+'</b><span>best month'+(bm?' · '+bm.v:'')+'</span></div></div></div>'
     +'<div class="card"><div class="tiny">Workouts · last 10 weeks</div><div style="display:flex;gap:4px;margin-top:10px;align-items:flex-end">'+wbars+'</div></div>'
@@ -1689,10 +2582,38 @@ function viewSettings(){ const acct=authProfile?'<div class="card"><div class="t
     +'<div class="card"><div class="tiny">Injury / limitation</div>'+(activeLimitation()?'<div style="margin-top:8px;font-weight:600">'+activeLimitation().name+'</div><div class="histline">'+(activeLimitation().note||"")+(activeLimitation().until?' · expires '+fmtDate(activeLimitation().until):' · until removed')+'</div><div class="row" style="margin-top:10px"><button class="btn sm" data-act="editlim">Edit</button><button class="btn sm danger" data-act="removelim">Remove</button></div>':'<p class="muted" style="font-size:12.5px;margin:8px 0">Temporarily exclude exercises after an injury or when equipment is unavailable (e.g. broken toe → no foot-pressure exercises).</p><button class="btn full" data-act="addlim">Add limitation</button>')+'</div>'
     +'<div class="card"><div class="tiny">Readiness check-in</div><p class="muted" style="font-size:12.5px;margin:8px 0">Optional. It tunes <b>today\u2019s recommendation only</b> — it does not change muscle recovery colours. Low sleep/energy trims volume; high soreness leans toward isolation and caps sets at 2; muscles you flag to avoid are skipped today.</p><button class="btn full" data-act="readiness">Open readiness check-in</button></div>'
     +'<div class="card"><div class="tiny">Bodyweight</div><div class="row" style="margin-top:8px"><input class="inp" id="bwInput" inputmode="decimal" placeholder="'+(bw?bw.kg+" kg last":"kg")+'" style="flex:1"><button class="btn accent" data-act="logbw">Log</button></div></div>'
+    +customExercisesCard()
     +'<div class="card"><div class="tiny">Exercise management</div><p class="muted" style="font-size:12px;margin:6px 0">Tap <b>rec</b> to include/exclude from auto-recommendations (default vs manual-only). Tap <b>preference</b> to cycle love → like → neutral → avoid. Tap <b>availability</b> to mark if a machine is free / present at your gym.</p><div style="margin-top:6px">'+exList+'</div></div>'
     +'<div class="card"><div class="tiny">Approved users</div><p class="muted" style="font-size:12px;margin:6px 0">Each person has fully private data (row-level security). Sharing/leaderboards are not built yet.</p>'+approved+'</div>'
     +'<div class="card"><div class="tiny">Data</div><div class="row" style="margin-top:8px"><button class="btn full" data-act="export">Export backup</button><button class="btn full" data-act="import">Import</button></div><input type="file" id="importFile" accept="application/json" style="display:none"></div>'
     +'<div class="card"><div class="histline">Iron Arc v2 · '+(sb?(cloudReady()?"cloud synced":"cloud configured"):"local only")+' · '+completedSessions().length+' workouts</div></div>'; }
+
+/* v9 \u2014 the lightweight reconciliation queue. Everything you have ever typed in yourself, grouped
+   by whether it still needs a decision. Deliberately lives in Settings, not in the workout flow. */
+function customStatusMeta(st){ return {
+    unmapped:{label:"Needs review", c:"var(--amber)"},
+    kept:{label:"Custom", c:"var(--muted)"},
+    promoted:{label:"In library", c:"var(--green)"},
+    mapped:{label:"Mapped", c:"var(--accent)"} }[st]||{label:st,c:"var(--muted)"}; }
+function customExercisesCard(){
+  const all=customList(); if(!all.length) return '';
+  const review=all.filter(function(c){ return c.status==="unmapped"; });
+  const rest=all.filter(function(c){ return c.status!=="unmapped"; });
+  const row=function(c){ const meta=customStatusMeta(c.status); const h=exerciseHistory(c.id);
+    const n=(c.status==="mapped")?0:h.length;
+    const sub=(c.status==="mapped")
+      ? ('now logged as '+((exById(c.mappedTo)||{}).name||"a library exercise"))
+      : (groupLabel(c.group)+' \u00b7 '+n+' session'+(n===1?"":"s")+' \u00b7 added '+fmtDate(c.createdAt));
+    return '<div class="exline" style="padding:9px 0"><div style="flex:1"><div class="nm" style="font-size:13.5px">'+escAttr(c.name)+'</div><div class="histline">'+sub+'</div></div>'
+      +'<span class="statuspill" style="background:'+meta.c+'22;color:'+meta.c+';margin-right:8px">'+meta.label+'</span>'
+      +(c.status==="mapped"?'':'<button class="btn sm" data-cxreview="'+c.id+'">Review</button>')+'</div>'; };
+  return '<div class="card"'+(review.length?' style="border-color:rgba(255,183,3,.4)"':'')+'>'
+    +'<div style="display:flex;justify-content:space-between;align-items:center"><div class="tiny">Custom exercises</div>'
+    +(review.length?'<span class="statuspill" style="background:var(--amber)22;color:var(--amber)">'+review.length+' to review</span>':'')+'</div>'
+    +'<p class="muted" style="font-size:12px;margin:6px 0 4px">Exercises you added mid-workout. Reviewing one lets you map it onto a library exercise, add it to the library for good, rename it, or just leave it be \u2014 every set is kept either way.</p>'
+    +(review.length?'<div style="margin-top:6px">'+review.map(row).join("")+'</div>':'<div class="histline" style="margin-top:6px">Nothing waiting on you. \u2705</div>')
+    +(rest.length?'<hr class="sub"><div class="tiny">Reviewed \u00b7 '+rest.length+'</div><div style="margin-top:4px">'+rest.map(row).join("")+'</div>':'')
+    +'</div>'; }
 
 /* ---------------- READINESS ---------------- */
 function viewReadiness(){ const r=readinessDraft; const sc=(f,lo,hi)=>{ let h=""; for(let i=1;i<=5;i++) h+='<button class="'+(r[f]===i?'on':'')+'" data-rscale="'+f+'-'+i+'">'+i+'</button>'; return '<div class="field"><label>'+lo+' <span class="muted">('+hi+')</span></label><div class="scale">'+h+'</div></div>'; };
@@ -1826,14 +2747,28 @@ function doFinish(){ let saved=null;
   if(activeSession.mode==="edit"){ const d=activeSession.dateISO; const base=d?new Date(d+"T12:00:00"):new Date();   // edits keep their chosen date (noon if re-dated)
     const idx=S.sessions.findIndex(s=>s.id===activeSession.editingId); const orig=idx>=0?S.sessions[idx]:null;
     const completedAt=orig&&dayKey(orig.completedAt)===dayKey(base)?orig.completedAt:iso(base);
-    const updated={...activeSession, id:activeSession.editingId, completedAt, mode:"edit"}; delete updated.editingId; delete updated.dateISO;
-    if(idx>=0) S.sessions[idx]=updated; persistLocal(); pushWorkout(updated); saved=updated; }
+    /* v10: synced:false is set explicitly — an edit used to inherit an undefined flag, which the
+       old rehydrate filter (synced===false) did not rescue, so a failed edit push was lost too. */
+    const updated={...activeSession, id:activeSession.editingId, completedAt, mode:"edit", synced:false}; delete updated.editingId; delete updated.dateISO;
+    if(idx>=0) S.sessions[idx]=updated; else S.sessions.push(updated);   // v10: never drop an edit whose original went missing
+    journalPut(updated); persistLocal(); pushWorkout(updated); saved=updated; }
   else { if(!activeSession.title||activeSession.title==="Empty workout") activeSession.title=deriveTitle(activeSession.entries);
     /* v7: a live session finishes at the moment you hit Finish — never the noon placeholder */
     const sess={ id:activeSession.id, startedAt:activeSession.startedAt, completedAt:iso(new Date()), title:activeSession.title, mode:activeSession.mode, entries:activeSession.entries, synced:false };
-    S.sessions.push(sess); persistLocal(); pushWorkout(sess); if(readinessDraft&&route!=="settings") pushCheckin(readinessDraft,sess.id); saved=sess; }
+    /* v10 ordering matters: journal → local → cloud. The workout is durable on disk in two
+       independent places before a single network call is made. */
+    journalPut(sess); S.sessions.push(sess); persistLocal();
+    pushWorkout(sess); if(readinessDraft&&route!=="settings") pushCheckin(readinessDraft,sess.id); saved=sess; }
   const recap=buildRecap(saved); activeSession=null; viewingLogger=false; loggerOpen={}; saveActive(); stopClock(); go("today"); openSheet("recap",recap); }
+/* v9 - the recap now answers "was that session actually any good?" by putting the raw totals next
+   to two references: the last comparable workout, and your rolling 4-week per-session average. */
 function buildRecap(sess){ const setsN=sess.entries.reduce((a,en)=>a+workingSets(en).length,0);
+  const totals=sessionTotals(sess);
+  const cmp=previousComparable(sess);
+  const cmpTotals=cmp?sessionTotals(cmp.sess):null;
+  const base4=baselineAvg(sess,28,0);
+  const prev4=baselineAvg(sess,28,28);
+  const customUsed=(sess.entries||[]).filter(function(en){ const ex=exById(en.exId); return workingSets(en).length&&isCustomEx(ex)&&ex.customStatus==="unmapped"; }).length;
   const dur=sess.startedAt?Math.max(1,Math.round(hoursBetween(sess.startedAt,sess.completedAt)*60)):null;
   const muscles=[...new Set(sess.entries.flatMap(en=>{ const ex=exById(en.exId); const n=workingSets(en).length; return (ex&&n)?Object.entries(ex.m).filter(([m,c])=>c>=0.5).map(([m])=>m):[]; }))].map(m=>S.muscles[m]?S.muscles[m].label:m);
   const ach=sessionAchievements(sess); const prs=ach.map(achText);
@@ -1842,10 +2777,13 @@ function buildRecap(sess){ const setsN=sess.entries.reduce((a,en)=>a+workingSets
   if(prs.length) coach="🏆 "+prs.length+" new achievement"+(prs.length>1?"s":"")+" this session — momentum "+mom.score+"/100.";
   else if(na.length) coach="Momentum "+mom.score+"/100. Still needs direct work this week: "+na.slice(0,2).map(m=>S.muscles[m].label.toLowerCase()).join(", ")+".";
   else coach="Momentum "+mom.score+"/100 — every primary muscle is on track this week. 🔥";
-  return {id:sess.id, setsN, exN:sess.entries.filter(en=>workingSets(en).length).length, dur, muscles, prs, ach, parts, title:sess.title, coach}; }
+  return {id:sess.id, setsN, exN:sess.entries.filter(en=>workingSets(en).length).length, dur, muscles, prs, ach, parts, title:sess.title, coach,
+          totals, cmp, cmpTotals, base4, prev4, customUsed, date:sess.completedAt}; }
 function editWorkout(id){ const s=S.sessions.find(x=>x.id===id); if(!s) return; loggerOpen={}; activeSession={ id:uid(), editingId:id, startedAt:s.startedAt||s.completedAt, dateISO:new Date(s.completedAt).toISOString().slice(0,10), title:s.title, mode:"edit", entries:JSON.parse(JSON.stringify(s.entries)) }; viewingLogger=true; saveActive(); go("today"); }
 function duplicateWorkout(id){ const s=S.sessions.find(x=>x.id===id); if(!s) return; loggerOpen={}; activeSession={ id:uid(), startedAt:iso(new Date()), dateISO:new Date().toISOString().slice(0,10), title:s.title, mode:"manual", entries:s.entries.map(en=>({exId:en.exId, sets:en.sets.map(()=>({weight:"",reps:"",type:"work",done:false}))})) }; viewingLogger=true; saveActive(); try{ history.pushState({iron:"workout"},""); }catch(e){} go("today"); }
-function deleteWorkout(id){ confirmSheet("Delete this workout permanently? Stats, volume and muscle status will update.","Delete",()=>{ S.sessions=S.sessions.filter(x=>x.id!==id); persistLocal(); deleteWorkoutCloud(id); render(); },{danger:true,title:"Delete workout?"}); }
+/* v10: a deliberate delete is tombstoned, so neither the journal nor a cloud rehydrate
+   can bring it back — that is the one and only way a workout leaves the device. */
+function deleteWorkout(id){ confirmSheet("Delete this workout permanently? Stats, volume and muscle status will update.","Delete",()=>{ S.sessions=S.sessions.filter(x=>x.id!==id); journalForget(id); persistLocal(); pushSettings(); deleteWorkoutCloud(id); render(); },{danger:true,title:"Delete workout?"}); }
 function confirmSheet(msg,yesLabel,onYes,opts){ opts=opts||{}; openSheet("confirm",{msg,yesLabel,onYes,danger:opts.danger,title:opts.title}); }
 function openLimSheet(){ const al=activeLimitation(); limDraft=al?{rules:(al.rules||[]).slice(),dur:al.dur||"1week",note:al.note||""}:{rules:["foot_pressure"],dur:"1week",note:""}; openSheet("lim"); }
 
@@ -1905,6 +2843,10 @@ function wireScreen(){
   document.querySelectorAll("[data-addset]").forEach(b=>b.onclick=()=>{ const ei=+b.dataset.addset; activeSession.entries[ei].sets.push({weight:"",reps:"",type:"work",done:false}); saveActive(); render(); });
   document.querySelectorAll("[data-rest]").forEach(b=>b.onclick=()=>startRest(+b.dataset.rest,b.dataset.exname));
   document.querySelectorAll("[data-swap]").forEach(b=>b.onclick=()=>openSheet("swap",+b.dataset.swap));
+  /* assisted -> bodyweight graduation: swaps the entry in place, so the sets you have already
+     logged today stay exactly where they are. */
+  document.querySelectorAll("[data-graduate]").forEach(b=>b.onclick=()=>{ const pr=b.dataset.graduate.split("|"); const i=+pr[0]; const nx=exById(pr[1]); if(!nx||!activeSession) return;
+    confirmSheet("You're doing these with no assistance. Switch this exercise to "+nx.name+" for the rest of today's session? Anything already logged stays put.","Switch",()=>{ activeSession.entries[i].exId=nx.id; delete activeSession.entries[i].asName; saveActive(); render(); },{title:"Graduate to "+nx.name+"?"}); });
   // history
   document.querySelectorAll("[data-openw]").forEach(b=>b.onclick=()=>openSheet("exwk",b.dataset.openw));
   document.querySelectorAll("[data-editw]").forEach(b=>b.onclick=()=>editWorkout(b.dataset.editw));
@@ -1912,10 +2854,15 @@ function wireScreen(){
   document.querySelectorAll("[data-delw]").forEach(b=>b.onclick=()=>deleteWorkout(b.dataset.delw));
   // stats drilldowns
   document.querySelectorAll("[data-statsperiod]").forEach(b=>b.onclick=()=>{ statsPeriod=b.dataset.statsperiod; render(); });
+  document.querySelectorAll("[data-dashp]").forEach(b=>b.onclick=()=>{ dashPeriod=b.dataset.dashp; render(); });
+  document.querySelectorAll("[data-muscle-group]").forEach(b=>b.onclick=()=>{ const g=MUSCLE_GROUPS.find(x=>x.key===b.dataset.muscleGroup); go("body");
+    if(g&&g.muscles.length){ bodyDetail=g.muscles[0]; render(); setTimeout(()=>{ const el2=document.getElementById("bodydetail"); if(el2) el2.scrollIntoView({behavior:"smooth",block:"center"}); },60); } });
   document.querySelectorAll("[data-muscle]").forEach(b=>b.onclick=()=>{ bodyDetail=b.dataset.muscle; route="body"; render(); setTimeout(()=>{ const d=document.getElementById("bodydetail"); if(d) d.scrollIntoView({behavior:"smooth",block:"center"}); },60); });
   document.querySelectorAll("[data-muscle-stat]").forEach(b=>b.onclick=()=>openSheet("mperiod",b.dataset.muscleStat));
   document.querySelectorAll("[data-insight-muscle]").forEach(b=>b.onclick=()=>{ const cur=statsPeriod; statsPeriod="week"; openSheet("mperiod",b.dataset.insightMuscle); statsPeriod=cur; });
   document.querySelectorAll("[data-exhist]").forEach(b=>b.onclick=()=>openSheet("exhist",b.dataset.exhist));
+  document.querySelectorAll("[data-cxreview]").forEach(b=>b.onclick=()=>{ reconcileSearch=""; openSheet("reconcile",b.dataset.cxreview); });
+  document.querySelectorAll("[data-addcustom]").forEach(b=>b.onclick=()=>{ customDraft={name:b.dataset.addcustom||"",group:"",load:"ext",id:null}; openSheet("custom"); });
   document.querySelectorAll("[data-closedetail]").forEach(b=>b.onclick=()=>{ bodyDetail=null; render(); });
   // settings
   // per-user training profile
@@ -1923,9 +2870,9 @@ function wireScreen(){
   act("target-inc",()=>{ S.settings.sessionsPerWeek=Math.min(7,(S.settings.sessionsPerWeek||4)+1); save(); render(); });
   act("target-dec",()=>{ S.settings.sessionsPerWeek=Math.max(1,(S.settings.sessionsPerWeek||4)-1); save(); render(); });
   document.querySelectorAll("[data-inputorder]").forEach(b=>b.onclick=()=>{ S.settings.inputOrder=b.dataset.inputorder; save(); render(); });
-  document.querySelectorAll("[data-pref]").forEach(b=>b.onclick=()=>{ const e=exById(b.dataset.pref); const order=["love","like","neutral","avoid"]; e.pref=order[(order.indexOf(e.pref)+1)%4]; save(); pushExercisePref(e); render(); });
-  document.querySelectorAll("[data-avail]").forEach(b=>b.onclick=()=>{ const e=exById(b.dataset.avail); const order=["always","usually","sometimes","rarely","no"]; e.avail=order[(order.indexOf(e.avail)+1)%5]; save(); pushExercisePref(e); render(); });
-  document.querySelectorAll("[data-rec]").forEach(b=>b.onclick=()=>{ const e=exById(b.dataset.rec); e.rec=!e.rec; save(); render(); });
+  document.querySelectorAll("[data-pref]").forEach(b=>b.onclick=()=>{ const e=exById(b.dataset.pref); const order=["love","like","neutral","avoid"]; e.pref=order[(order.indexOf(e.pref)+1)%4]; syncCustomPrefs(e); save(); pushExercisePref(e); render(); });
+  document.querySelectorAll("[data-avail]").forEach(b=>b.onclick=()=>{ const e=exById(b.dataset.avail); const order=["always","usually","sometimes","rarely","no"]; e.avail=order[(order.indexOf(e.avail)+1)%5]; syncCustomPrefs(e); save(); pushExercisePref(e); render(); });
+  document.querySelectorAll("[data-rec]").forEach(b=>b.onclick=()=>{ const e=exById(b.dataset.rec); e.rec=!e.rec; syncCustomPrefs(e); save(); render(); });
   document.querySelectorAll("[data-repexid]").forEach(b=>b.onclick=()=>{ repExId=b.dataset.repexid; render(); });
   document.querySelectorAll("[data-repmetric]").forEach(b=>b.onclick=()=>{ repMetric=b.dataset.repmetric; render(); });
   (function(){ var ms=document.querySelector('#mgmtSearch'); if(ms) ms.oninput=function(){ mgmtSearch=ms.value; render(); var n=document.querySelector('#mgmtSearch'); if(n){ n.focus(); try{n.setSelectionRange(n.value.length,n.value.length);}catch(e){} } }; })();
@@ -1933,11 +2880,12 @@ function wireScreen(){
   act("logbw",()=>{ const v=+document.getElementById("bwInput").value; if(v>0){ const row={id:uid(),date:iso(new Date()),kg:v,synced:false}; S.bodyweight.push(row); save(); pushMeasurementRow(row.id,row.date,"bodyweight",v); render(); } });
   act("export",()=>{ const blob=new Blob([JSON.stringify(S,null,2)],{type:"application/json"}); const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="iron-arc-backup-"+dayKey(new Date())+".json"; a.click(); });
   act("import",()=>document.getElementById("importFile").click());
-  const imp=document.getElementById("importFile"); if(imp) imp.onchange=(e)=>{ const f=e.target.files[0]; if(!f) return; const r=new FileReader(); r.onload=()=>{ try{ const d=JSON.parse(r.result); if(d.sessions){ S=d; persistLocal(); migrateLocalToCloud(); render(); alert("Imported."); } }catch(err){ alert("Invalid backup file."); } }; r.readAsText(f); };
+  const imp=document.getElementById("importFile"); if(imp) imp.onchange=(e)=>{ const f=e.target.files[0]; if(!f) return; const r=new FileReader(); r.onload=()=>{ try{ const d=JSON.parse(r.result); if(d.sessions){ S=d; try{ ensureSetupDefaults(); rebuildCustomExercises(); }catch(err2){} persistLocal(); migrateLocalToCloud(); render(); alert("Imported."); } }catch(err){ alert("Invalid backup file."); } }; r.readAsText(f); };
 }
 
 /* ============================================================================ BOOT — autosave recovery + back-guard + session ============================================================================ */
 try{ document.title=APP_NAME+" — "+APP_TAGLINE; }catch(e){}
+try{ recoverFromJournal(); }catch(e){}                              // v10: rescue anything S lost before we render
 activeSession=loadActive(); if(activeSession) viewingLogger=false;   // P1: recover unfinished workout, show resume banner
 window.addEventListener("beforeunload",(e)=>{ if(activeSession && activeSession.entries.reduce((n,en)=>n+workingSets(en).length,0)>0){ e.preventDefault(); e.returnValue=""; } });
 window.addEventListener("popstate",()=>{ if(activeSession && viewingLogger){ try{ history.pushState({iron:"workout"},""); }catch(e){}
@@ -1951,6 +2899,21 @@ try{
   window.addEventListener("pageshow",resumeRest);
   window.addEventListener("online",resumeRest);
   document.addEventListener("resume",resumeRest);            /* Cordova / PWA wrappers */
+}catch(e){}
+/* v10 DURABILITY HOOKS. beforeunload alone is not enough — iOS Safari and Android Chrome
+   discard backgrounded tabs without ever firing it, which is exactly what "I closed the app
+   and my workout was gone" looks like. pagehide/visibilitychange are the reliable pair, and
+   both are cheap and idempotent. The same moments are used to drain the retry queue. */
+try{
+  const flush=()=>{ try{ saveActive(); persistLocal(); }catch(e){} };
+  window.addEventListener("pagehide",flush);
+  window.addEventListener("blur",flush);
+  document.addEventListener("visibilitychange",()=>{ if(document.hidden) flush(); else { flush(); try{ recoverFromJournal(); retryUnsynced(); }catch(e){} } });
+  window.addEventListener("online",()=>{ try{ retryDelay=RETRY_MIN; retryUnsynced(); }catch(e){} });
+  window.addEventListener("focus",()=>{ try{ retryUnsynced(); }catch(e){} });
+  document.addEventListener("resume",flush);
+  /* belt and braces: while a workout is open, force a snapshot every 10s even if no input fires */
+  setInterval(()=>{ try{ if(activeSession) saveActive(); }catch(e){} },10000);
 }catch(e){}
 try{ resumeRest(); }catch(e){}                                /* restore a timer left running before a reload */
 if(sb){ sb.auth.getSession().then(({data})=>{ authUser=data.session?data.session.user:null; if(authUser) afterAuth(); else render(); });
