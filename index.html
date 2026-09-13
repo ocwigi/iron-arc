@@ -327,7 +327,7 @@ const APP_TAGLINE = "Training Command";
    it must be bumped on every deploy. */
 const BUILD = "v14";
 const BUILD_DATE = "2026-09-13";
-const BUILD_NOTE = "rest timer docked at the top, scrolling week charts, muscles-worked credits";
+const BUILD_NOTE = "rest timer docked at the top, scrolling week charts, muscles-worked credits, duplicate-proof cloud sync";
 
 /* Approved users (client-side UX gate; the real gate is Supabase signup settings — see DEPLOY).
    To add a person: add one line below with their real email (lowercase), display name and role.
@@ -1032,6 +1032,20 @@ async function afterAuth(){
   await hydrateFromCloud();
 }
 
+/* v14 — a workout can only legitimately have ONE exercise row per order_index (pushWorkoutNow
+   writes 0..n-1 exactly once). Extra rows at the same position are copies left by racing pushes
+   on an older build. Keep the copy whose sets were written first, drop the rest, and report it so
+   the caller can rewrite the workout cleanly. Pure, so it is unit-tested directly. */
+function dedupeWorkoutExercises(rows,setByWe){
+  const byPos={}; let dropped=0;
+  const firstWrite=function(we){ const ss=(setByWe&&setByWe[we.id])||[]; let t=Infinity; ss.forEach(function(s){ const v=Date.parse(s.created_at||""); if(!isNaN(v)&&v<t) t=v; }); return t; };
+  (rows||[]).slice().sort((a,b)=>a.order_index-b.order_index).forEach(function(we){
+    const k=we.order_index+"|"+we.exercise_slug; const cur=byPos[k];
+    if(!cur){ byPos[k]=we; return; }
+    dropped++;
+    if(firstWrite(we)<firstWrite(cur)) byPos[k]=we; });
+  const out=Object.values(byPos).sort((a,b)=>a.order_index-b.order_index);
+  return {rows:out, dropped:dropped}; }
 async function hydrateFromCloud(){
   if(!cloudReady()||syncing) return; syncing=true;
   try{
@@ -1058,8 +1072,10 @@ async function hydrateFromCloud(){
       rb.exercises.forEach(e=>{ const r=byId[e.id]; if(r){ if(r.pref) e.pref=r.pref; if(r.muscles&&Object.keys(r.muscles).length) e.m=r.muscles; } }); }  // v6: avail+rec stay authoritative from seed
     const weByW={}; (weR.data||[]).forEach(we=>{(weByW[we.workout_id]=weByW[we.workout_id]||[]).push(we);});
     const setByWe={}; (setR.data||[]).forEach(s=>{(setByWe[s.workout_exercise_id]=setByWe[s.workout_exercise_id]||[]).push(s);});
-    rb.sessions=(wR.data||[]).map(w=>{ const wes=(weByW[w.id]||[]).sort((a,b)=>a.order_index-b.order_index);
-      return { id:w.id, completedAt:w.performed_at, startedAt:w.created_at||w.performed_at, title:w.title, mode:w.mode, synced:true,
+    const repaired=[];
+    rb.sessions=(wR.data||[]).map(w=>{ const dd=dedupeWorkoutExercises(weByW[w.id]||[],setByWe); const wes=dd.rows;
+      if(dd.dropped) repaired.push(w.id);
+      return { id:w.id, completedAt:w.performed_at, startedAt:w.created_at||w.performed_at, title:w.title, mode:w.mode, synced:!dd.dropped,
         entries:wes.map(we=>({ exId:we.exercise_slug, sets:(setByWe[we.id]||[]).sort((a,b)=>a.set_index-b.set_index).map(s=>({weight:s.weight==null?"":Number(s.weight),reps:s.reps==null?"":s.reps,type:s.is_warmup?"warm":"work",done:!!s.completed})) })) }; });
     rb.bodyweight=[]; const snaps={};
     (mR.data||[]).forEach(r=>{ if(r.metric==="bodyweight") rb.bodyweight.push({id:r.id,date:r.taken_at,kg:Number(r.value),synced:true});
@@ -1085,7 +1101,7 @@ async function hydrateFromCloud(){
       if(tomb[cs.id]) return;                                  // deleted on purpose elsewhere
       const ls=localById[cs.id];
       if(ls && ls.synced===false){ merged.push(ls); needPush.push(ls); }  // unpushed local edit wins
-      else merged.push(cs);
+      else { merged.push(cs); if(cs.synced===false) needPush.push(cs); }   // v14: a de-duplicated cloud copy is rewritten cleanly
     });
     (S.sessions||[]).forEach(ls=>{
       if(!ls||!ls.id||!ls.completedAt) return;
@@ -1140,24 +1156,44 @@ async function pushExercisePref(ex){ if(!cloudReady()) return; try{ await sb.fro
    Every call is error-checked (see sbq). The device copy and the journal are the source
    of truth until the server confirms; a failure marks the session unsynced and queues a
    retry instead of pretending the write worked. */
-async function pushWorkout(session){
-  if(!session||!session.completedAt) return false;
+/* v14 — DUPLICATE-PROOF PUSH. On 13 Sep 2026 one finished workout landed in Supabase three times
+   over: the finish push, a focus-triggered retryUnsynced() and the post-hydrate needPush all ran
+   pushWorkout() for the same session inside ~300 ms. Each did delete → insert with FRESH uuids, so
+   the interleaving left three identical copies of every exercise and set, and the next hydrate
+   brought the triplicated workout back onto the phone (cloud wins for a synced session).
+   Three independent guards now make that impossible:
+     1. concurrent pushes of the same workout are coalesced into the one in-flight promise;
+     2. child rows get ids DERIVED from the workout id + position (childUuid), so the same set
+        can only ever have one primary key however many times it is written;
+     3. children are upserted, not inserted — a racing duplicate becomes a no-op update.
+   hydrateFromCloud() additionally collapses any copies that already exist and re-pushes the
+   clean workout, so an affected account repairs itself on the next launch. */
+function childUuid(base,tag,n){ base=String(base||"");
+  if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(base)) return uid();
+  return base.slice(0,24)+(tag+Math.max(0,n|0).toString(16).padStart(11,"0")).slice(-12); }
+const pushInFlight={};
+function pushWorkout(session){
+  if(!session||!session.completedAt) return Promise.resolve(false);
   if(!session.id) session.id=uid();
+  if(pushInFlight[session.id]) return pushInFlight[session.id];
+  const p=pushWorkoutNow(session).then(function(r){ delete pushInFlight[session.id]; return r; },function(e){ delete pushInFlight[session.id]; throw e; });
+  pushInFlight[session.id]=p; return p; }
+async function pushWorkoutNow(session){
   journalPut(session);                                    // write-ahead: on disk before we touch the network
   if(!cloudReady()){ if(session.synced!==false){ session.synced=false; persistLocal(); } return false; }
   try{
     await sbq(sb.from("workouts").upsert({ id:session.id, user_id:authUser.id, performed_at:session.completedAt||iso(new Date()), title:session.title||null, mode:session.mode||null },{onConflict:"id"}));
     const weRows=[], setRows=[];
-    (session.entries||[]).forEach((en,i)=>{ const ex=exById(en.exId); const weId=uid();
+    (session.entries||[]).forEach((en,i)=>{ const ex=exById(en.exId); const weId=childUuid(session.id,"e",i);
       weRows.push({ id:weId, user_id:authUser.id, workout_id:session.id, exercise_slug:en.exId, order_index:i, target_sets:en.sets.length, rep_low:ex?ex.rl:null, rep_high:ex?ex.rh:null });
-      en.sets.forEach((s,j)=>setRows.push({ id:uid(), user_id:authUser.id, workout_id:session.id, workout_exercise_id:weId, set_index:j,
+      en.sets.forEach((s,j)=>setRows.push({ id:childUuid(session.id,"f",i*4096+j), user_id:authUser.id, workout_id:session.id, workout_exercise_id:weId, set_index:j,
         weight:(s.weight===""||s.weight==null)?null:Number(s.weight), reps:(s.reps===""||s.reps==null)?null:parseInt(s.reps,10), rpe:null, is_warmup:s.type==="warm", completed:isLogged(s) })); });
     /* children before parents-of-children: deleting sets first is correct whether or not
        the FK cascades, and avoids leaving orphan set rows behind on a rewrite */
     await sbq(sb.from("sets").delete().eq("workout_id",session.id));
     await sbq(sb.from("workout_exercises").delete().eq("workout_id",session.id));
-    if(weRows.length) await sbq(sb.from("workout_exercises").insert(weRows));
-    if(setRows.length) await sbq(sb.from("sets").insert(setRows));
+    if(weRows.length) await sbq(sb.from("workout_exercises").upsert(weRows,{onConflict:"id"}));
+    if(setRows.length) await sbq(sb.from("sets").upsert(setRows,{onConflict:"id"}));
     session.synced=true; delete session.syncError; delete session.recovered;
     persistLocal(); journalPut(session);
     return true;
