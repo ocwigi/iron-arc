@@ -84,10 +84,19 @@ button{font-family:inherit; cursor:pointer; border:none; color:inherit;}
 .badge{font-size:10.5px; padding:4px 9px; border-radius:999px; font-weight:700;}
 .badge.pr{background:var(--gold); color:#241B02;} .badge.beat{background:rgba(47,210,122,.16); color:var(--green); border:1px solid rgba(47,210,122,.4);}
 .badge.warnb{background:rgba(255,77,109,.14); color:var(--red); border:1px solid rgba(255,77,109,.35);}
-.rest{position:fixed; left:0; right:0; bottom:86px; z-index:40; display:flex; justify-content:center; pointer-events:none;}
+/* v14 — the rest timer is DOCKED TO THE TOP of the screen, always above the fold.
+   It used to be a card fixed at bottom:86px — the same slot as the Finish button (z-index 45 over
+   the timer's 40, so Finish covered the controls once a set was logged) and the slot the iOS
+   keyboard sits over while you type a weight. Either way the countdown vanished exactly when it
+   mattered. The top edge is never covered by the keyboard, the tab bar or the Finish button.
+   --resttop is the bar's measured height; .app is padded by it so nothing hides underneath, and
+   the sticky logger header sticks just below it. */
+:root{--resttop:0px;}
+.rest{position:fixed; left:0; right:0; top:0; z-index:55; display:flex; justify-content:center; pointer-events:none; padding-top:env(safe-area-inset-top,0px); will-change:transform; background:linear-gradient(var(--bg),var(--bg)) no-repeat top / 100% env(safe-area-inset-top,0px);}
 .rest .pill{pointer-events:auto; background:var(--panel2); border:1px solid var(--accent); border-radius:999px; padding:10px 14px; display:flex; align-items:center; gap:12px; box-shadow:0 10px 30px rgba(0,0,0,.5);}
 .rest .t{font-family:'JetBrains Mono',monospace; font-size:20px; font-weight:700; color:var(--accent); min-width:62px; text-align:center;}
 .rest button{background:transparent; color:var(--muted); font-size:13px; padding:4px 8px;}
+.app{padding-top:var(--resttop);}
 .sheet-wrap{position:fixed; inset:0; z-index:60; background:rgba(2,4,7,.7); display:flex; align-items:flex-end; justify-content:center;}
 .sheet{background:var(--panel); border:1px solid var(--line); border-radius:20px 20px 0 0; width:100%; max-width:520px; max-height:85vh; overflow-y:auto; padding:18px 16px calc(20px + env(safe-area-inset-bottom));}
 .sheet .grab{width:40px; height:4px; border-radius:2px; background:var(--line); margin:0 auto 12px;}
@@ -138,7 +147,7 @@ button{font-family:inherit; cursor:pointer; border:none; color:inherit;}
 .achrow:first-child{border-top:none;}
 .achrow .am{font-size:12.5px; font-weight:600;} .achrow .ad{font-size:11px; color:var(--muted); margin-top:2px;}
 /* --- live logger v3 (Fable polish) --- */
-.lhead{position:sticky; top:0; z-index:30; background:linear-gradient(180deg,var(--panel),rgba(14,18,24,.94)); border:1px solid var(--line); border-radius:var(--r); padding:13px 16px; margin:12px 0; display:flex; justify-content:space-between; align-items:center; gap:10px; backdrop-filter:blur(8px);}
+.lhead{position:sticky; top:var(--resttop); z-index:30; background:linear-gradient(180deg,var(--panel),rgba(14,18,24,.94)); border:1px solid var(--line); border-radius:var(--r); padding:13px 16px; margin:12px 0; display:flex; justify-content:space-between; align-items:center; gap:10px; backdrop-filter:blur(8px);}
 .lhead .ttl{font-weight:700; font-size:16px; letter-spacing:-.01em;}
 .lhead .meta{font-size:12px; color:var(--muted); margin-top:2px;}
 .lhead .clk{font-family:'JetBrains Mono',monospace; font-size:22px; font-weight:700; color:var(--accent); text-align:right; line-height:1;}
@@ -168,6 +177,25 @@ button{font-family:inherit; cursor:pointer; border:none; color:inherit;}
 .spark{display:flex; align-items:flex-end; gap:3px; height:30px; margin-top:8px;}
 .spark i{flex:1; min-height:2px; background:var(--grey); border-radius:2px 2px 0 0; display:block;}
 .spark i.cur{background:var(--accent);}
+/* v14 — scrollable weekly chart. Ten weeks fill the card; everything older sits to the LEFT and
+   is reached by swiping. Column width is a share of the card so the visible window is always
+   exactly ten weeks, whatever the screen width. */
+.wscroll{overflow-x:auto; overflow-y:hidden; margin:10px 0 0; padding:0 0 4px; -webkit-overflow-scrolling:touch; scrollbar-width:none; scroll-snap-type:x proximity; overscroll-behavior-x:contain;}
+.wscroll::-webkit-scrollbar{display:none;}
+.wgrid{display:grid; grid-auto-flow:column; grid-auto-columns:calc((100% - 9*4px)/10); gap:4px; align-items:end; width:100%;}
+.wcol{display:flex; flex-direction:column; align-items:center; gap:3px; min-width:0; scroll-snap-align:end;}
+.wcol .wb{height:56px; width:100%; display:flex; align-items:flex-end;}
+.wcol .wb i{width:100%; min-height:3px; background:var(--grey); border-radius:4px 4px 0 0; display:block;}
+.wcol.cur .wb i{background:var(--accent);}
+.wcol.zero .wb i{background:transparent; border-top:2px dashed var(--line2); min-height:0;}
+.wcol .wv{font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--muted); line-height:1.2;}
+.wcol.cur .wv{color:var(--accent); font-weight:700;}
+.wcol .wd{font-family:'JetBrains Mono',monospace; font-size:8.5px; color:var(--faint); line-height:1.2; white-space:nowrap; letter-spacing:-.02em;}
+.wcol.cur .wd{color:var(--accent);}
+.wcol.mstart .wd{color:var(--muted);}
+.wavg{position:relative;}
+.wfoot{display:flex; justify-content:space-between; gap:8px; margin-top:8px; font-size:11px; color:var(--muted);}
+.wfoot b{color:#AEB9C7; font-weight:600;}
 .scorechips{display:flex; gap:8px; margin-top:10px;}
 .scorechips .sc{flex:1; background:var(--panel2); border:1px solid var(--line); border-radius:10px; padding:9px 6px; text-align:center;}
 .scorechips .sc b{display:block; font-family:'JetBrains Mono',monospace; font-size:18px;}
@@ -184,25 +212,42 @@ button{font-family:inherit; cursor:pointer; border:none; color:inherit;}
   background:rgba(212,175,55,.07); border:1px solid rgba(212,175,55,.28); color:var(--gold); cursor:pointer;}
 .setupline .ic{font-size:13px; line-height:1.35;}
 .setupline .bd{flex:1; min-width:0;}
-.setupline .lb{font-size:10.5px; letter-spacing:.09em; text-transform:uppercase; color:var(--gold); font-weight:700;}
-.setupline .vl{font-size:12.5px; color:#D8D2C0; margin-top:2px; word-break:break-word; line-height:1.4;}
+.setupline .lb{display:block; font-size:10.5px; letter-spacing:.09em; text-transform:uppercase; color:var(--gold); font-weight:700;}
+.setupline .vl{display:block; font-size:12.5px; color:#D8D2C0; margin-top:2px; word-break:break-word; line-height:1.4;}
 .setupline .ed{font-size:11px; color:var(--muted); flex:none; align-self:center;}
 .setupline.empty2{background:transparent; border-style:dashed; border-color:var(--line);}
 .setupline.empty2 .lb, .setupline.empty2 .ic{color:var(--muted);}
 .setupchips{display:flex; flex-wrap:wrap; gap:4px; margin-top:3px;}
 .setupchips span{font-size:11px; padding:2px 7px; border-radius:999px; background:rgba(212,175,55,.13); color:#E2D9BE;}
-/* prominent rest timer (item 2) */
-.restcard{pointer-events:auto; width:100%; max-width:488px; margin:0 16px; background:var(--panel2); border:1px solid var(--accent); border-radius:14px; padding:12px 14px; box-shadow:0 14px 40px rgba(0,0,0,.6);}
-.rest.done .restcard{border-color:var(--green); background:linear-gradient(135deg,rgba(47,210,122,.24),rgba(47,210,122,.06)); animation:restpulse .6s ease-in-out 3;}
+/* v14 — muscles worked, with the credit each working set earns (1.0 primary · 0.5 secondary ·
+   0.25 minor). The same coefficients the volume engine uses, so what you read here is exactly
+   what lands in your weekly effective sets. */
+.mcred{display:flex; flex-wrap:wrap; gap:4px; margin-top:6px;}
+.mcred>span{display:inline-flex; align-items:center; gap:5px; font-size:11px; padding:3px 8px; border-radius:999px; border:1px solid var(--line); background:var(--panel2); color:var(--muted); white-space:nowrap;}
+.mcred>span>b{font-family:'JetBrains Mono',monospace; font-weight:700; font-size:10.5px;}
+.mcred>span.c1{border-color:rgba(59,130,246,.55); background:rgba(59,130,246,.14); color:var(--text);} .mcred>span.c1>b{color:var(--accent);}
+.mcred>span.c2{border-color:rgba(59,130,246,.28); color:#C6D0DC;} .mcred>span.c2>b{color:#8FB8F8;}
+.mcred>span.c3{color:var(--muted); border-style:dashed;} .mcred>span.c3>b{color:var(--muted);}
+.mcredline{font-size:11.5px; color:var(--muted); margin-top:3px; line-height:1.45;}
+.mcredline b{font-family:'JetBrains Mono',monospace; font-weight:700; color:#8FB8F8;} .mcredline b.p{color:var(--accent);}
+.mcredkey{font-size:10.5px; color:var(--faint); margin-top:6px; line-height:1.4;}
+/* prominent rest timer (item 2) — v14: one compact bar, docked at the top (see .rest above).
+   Progress runs along the bar's top edge; name · countdown · controls sit on a single row so the
+   whole thing costs ~60px of the screen and is visible on every tab, at every scroll position. */
+.restcard{pointer-events:auto; width:100%; max-width:520px; margin:0; background:rgba(30,39,51,.97); -webkit-backdrop-filter:blur(14px); backdrop-filter:blur(14px); border:1px solid var(--accent); border-top:none; border-radius:0 0 16px 16px; padding:0 12px 9px; box-shadow:0 14px 40px rgba(0,0,0,.6);}
+.rest.done .restcard{border-color:var(--green); background:linear-gradient(135deg,rgba(47,210,122,.30),rgba(47,210,122,.06)),var(--panel2); animation:restpulse .6s ease-in-out 3;}
 @keyframes restpulse{0%,100%{box-shadow:0 0 0 0 rgba(47,210,122,.55);}50%{box-shadow:0 0 0 7px rgba(47,210,122,0);}}
-.restbar{height:6px; border-radius:3px; background:var(--panel); overflow:hidden; margin-bottom:9px;}
-.restbar i{display:block; height:100%; background:var(--accent); border-radius:3px; transition:width 1s linear;}
+.restbar{height:4px; border-radius:0; background:var(--panel); overflow:hidden; margin:0 -12px 8px;}
+.restbar i{display:block; height:100%; background:var(--accent); border-radius:0 2px 2px 0; transition:width 1s linear;}
 .rest.done .restbar i{background:var(--green);}
 .restrow{display:flex; justify-content:space-between; align-items:center; gap:10px;}
-.resttitle{font-weight:700; font-size:14.5px;} .restmeta{font-size:12px; color:var(--muted); margin-top:2px;}
-.restt{font-family:'JetBrains Mono',monospace; font-size:27px; font-weight:700; color:var(--accent); min-width:76px; text-align:right; line-height:1;}
-.restctl{display:flex; gap:8px; margin-top:10px;}
-.restctl button{flex:1; padding:8px; border-radius:9px; background:var(--panel); border:1px solid var(--line); color:var(--muted); font-size:12px; font-weight:600;}
+.resttitle{font-weight:700; font-size:13.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.restmeta{font-size:11px; color:var(--muted); margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.restt{font-family:'JetBrains Mono',monospace; font-size:26px; font-weight:700; color:var(--accent); min-width:66px; text-align:right; line-height:1; font-variant-numeric:tabular-nums;}
+.restctl{display:flex; gap:5px; margin:0; flex:none;}
+.restctl button{padding:8px 9px; border-radius:9px; background:var(--panel); border:1px solid var(--line); color:var(--muted); font-size:11.5px; font-weight:700; font-family:'JetBrains Mono',monospace; white-space:nowrap; min-height:34px;}
+.restctl button[data-restskip]{color:var(--text);}
+@media (max-width:379px){ .restt{font-size:22px; min-width:56px;} .restctl button{padding:8px 7px; font-size:11px;} }
 
 /* ===== v9 additions ===== */
 .gchips{display:flex; flex-wrap:wrap; gap:6px; margin-top:6px;}
@@ -280,9 +325,9 @@ const APP_TAGLINE = "Training Command";
    recover.html on a v10 build is expected and correct.
    BUILD is shown in Settings and is what the deployed-version check compares against, so
    it must be bumped on every deploy. */
-const BUILD = "v13";
-const BUILD_DATE = "2026-08-08";
-const BUILD_NOTE = "assisted workout builder, one-tap add, canonical volume labels";
+const BUILD = "v14";
+const BUILD_DATE = "2026-09-13";
+const BUILD_NOTE = "rest timer docked at the top, scrolling week charts, muscles-worked credits";
 
 /* Approved users (client-side UX gate; the real gate is Supabase signup settings — see DEPLOY).
    To add a person: add one line below with their real email (lowercase), display name and role.
@@ -2897,7 +2942,26 @@ function recCard(rec){ const N=rec.exercises.length; const ex=rec.exercises.map(
   return '<div class="card glow"><div class="tiny" style="color:var(--accent)">Recommended for today · '+rec.exercises.length+' exercises · '+tot+' sets · ~'+rec.time+'min</div><h2 style="margin:8px 0 4px;font-size:20px">'+rec.title+'</h2>'
     +(rec.reason?'<div class="ibody" style="margin:6px 0 2px;color:#C6D0DC">'+rec.reason+'</div>':'')
     +(rec.orderNote?'<div class="histline" style="margin:6px 0 2px;color:var(--accent)">↕ '+rec.orderNote+'</div>':'')+'<div style="margin-top:10px">'+ex+'</div><ul style="margin:12px 0 0;padding:0;list-style:none">'+why+'</ul><button class="cta" data-act="start-rec" style="margin-top:14px">Start this session<span class="sub">'+tot+' sets · ~'+rec.time+' min</span></button></div>'; }
-function musLabels(e){ return Object.entries(e.m).filter(([m,c])=>c>=0.5&&S.muscles[m]).map(([m])=>S.muscles[m].label).join(" / "); }
+/* v14 — every muscle an exercise credits, heaviest first, with the coefficient. These are the
+   numbers effectiveSetsByMuscle() multiplies by, so the chips are the volume maths made visible. */
+function creditTier(c){ return c>=1?"Primary":c>=0.5?"Secondary":"Minor"; }
+function fmtCredit(c){ const v=Math.round(c*100)/100; return v.toFixed((v*100)%10?2:1); }
+function muscleCredits(ex){ if(!ex||!ex.m) return [];
+  return Object.entries(ex.m).filter(function(pr){ return S.muscles[pr[0]]&&pr[1]>0; })
+    .sort(function(a,b){ return b[1]-a[1]||a[0].localeCompare(b[0]); })
+    .map(function(pr){ return {m:pr[0], c:pr[1], label:S.muscles[pr[0]].label, tier:creditTier(pr[1])}; }); }
+/* compact, single line: "Rear delts 1.0 · Upper back 0.5" — for picker rows and recap lines */
+function musLabels(e){ return muscleCredits(e).map(function(x){ return x.label+' <b'+(x.c>=1?' class="p"':'')+'>'+fmtCredit(x.c)+'</b>'; }).join(" · "); }
+/* chips + a worked example, for the exercise detail and form sheets and the open logger card */
+function muscleCreditChips(ex,sets){ const list=muscleCredits(ex); if(!list.length) return "";
+  const n=Math.max(1,sets||3);
+  const chips=list.map(function(x){ return '<span class="'+(x.c>=1?'c1':x.c>=0.5?'c2':'c3')+'" title="'+x.tier+'">'+x.label+'<b>'+fmtCredit(x.c)+'</b></span>'; }).join("");
+  const eg=list.map(function(x){ return '<b'+(x.c>=1?' class="p"':'')+'>'+fmtCredit(x.c*n)+'</b> '+x.label.toLowerCase(); }).join(" · ");
+  return '<div class="mcred">'+chips+'</div>'
+    +'<div class="mcredline">'+n+' working set'+(n===1?'':'s')+' here count as '+eg+'.</div>'
+    +'<div class="mcredkey">1.0 primary · 0.5 secondary · 0.25 minor — the same credit the weekly volume totals use.</div>'; }
+function muscleCreditBlock(ex,sets,title){ const ch=muscleCreditChips(ex,sets); if(!ch) return "";
+  return '<div class="card" style="margin:8px 0 0;padding:10px 12px;background:var(--panel2)"><div class="tiny">'+(title||"Muscles worked · credit per working set")+'</div>'+ch+'</div>'; }
 function weekStatus(){ const sess=weekSessions(); const vol=weeklyVolume(sess); const target=S.settings.sessionsPerWeek;
   const primaryBelow=[], otherBelow=[], trained=[];
   Object.entries(S.muscles).forEach(([m,cfg])=>{ const v=vol[m]; if(v>=0.5) trained.push(m); if(v<cfg.min){ (cfg.tier==="primary"?primaryBelow:otherBelow).push(m); } });
@@ -3141,7 +3205,8 @@ function builderRow(c,added){
   const prefTag=c.ex.pref==="love"?' <span class="tag love">★</span>':'';
   return '<div class="exline" style="padding:8px 0"><div style="flex:1;min-width:0">'
     +'<div class="nm" style="font-size:13.5px">'+c.ex.name+prefTag+famTag+'</div>'
-    +'<div class="histline">'+c.label+' · '+need+' · <span style="color:'+rm.c+'">'+rm.t+'</span></div></div>'
+    +'<div class="histline">'+c.label+' · '+need+' · <span style="color:'+rm.c+'">'+rm.t+'</span></div>'
+    +'<div class="mcredline" style="margin-top:2px">'+musLabels(c.ex)+'</div></div>'
     +(added?'<span class="tag" style="color:var(--green);border:1px solid rgba(46,204,113,.35);white-space:nowrap">Added ✓</span>'
            :'<button class="btn sm accent" data-bldadd="'+c.exId+'" style="white-space:nowrap">+ Add</button>')+'</div>'; }
 function loggerEx(en,i){ const e=exById(en.exId)||{id:en.exId,name:en.asName||"Unknown exercise",m:{},sl:2,rl:8,rh:12,rest:90,equip:"other",type:"isolation"};
@@ -3166,7 +3231,7 @@ function loggerEx(en,i){ const e=exById(en.exId)||{id:en.exId,name:en.asName||"U
   const gradEx=prog.graduate?exById(prog.graduate):null;
   const gradCta=gradEx?'<button class="btn sm" data-graduate="'+i+'|'+gradEx.id+'" style="margin-top:6px;color:var(--green);border-color:rgba(52,199,89,.45)">↗ Switch to '+gradEx.name+'</button>':'';
   const assistNote=isAssisted(e)?'<div class="histline" style="color:var(--gold)">Lower assistance = progress. '+(hasBodyweight()?'Effective load right now: '+(function(){var bwv=bodyweightAt(new Date()); var c=bestRawLoad(e,(last&&last.sets)||[]); return (bwv!=null&&last)?(Math.round((bwv-c)*10)/10)+'kg':'—';})():'Log your bodyweight to see effective load.')+'</div>'+gradCta:'';
-  return '<div class="card logex" data-ex="'+i+'"><div class="hd"><div style="flex:1" data-expand="'+i+'"><div class="nm">'+entryName(en)+cxTag+' '+trendChip+'</div><div class="histline">Last: <b>'+lastStr+'</b></div><div class="histline target">'+arrow+'Next: '+prog.note+'</div>'+assistNote+'<div class="histline" style="color:'+tr.c+'">'+tr.note+'</div></div><div class="exmenu"><button class="swap" data-tips="'+en.exId+'" style="color:var(--gold)">Form</button><button class="swap" data-swap="'+i+'">⇄ Swap</button><button class="more" data-more="'+i+'">⋯</button></div></div>'
+  return '<div class="card logex" data-ex="'+i+'"><div class="hd"><div style="flex:1" data-expand="'+i+'"><div class="nm">'+entryName(en)+cxTag+' '+trendChip+'</div><div class="histline">Last: <b>'+lastStr+'</b></div><div class="histline target">'+arrow+'Next: '+prog.note+'</div>'+assistNote+'<div class="histline" style="color:'+tr.c+'">'+tr.note+'</div><div class="mcredline" data-tips="'+en.exId+'" style="cursor:pointer">'+musLabels(e)+'</div></div><div class="exmenu"><button class="swap" data-tips="'+en.exId+'" style="color:var(--gold)">Form</button><button class="swap" data-swap="'+i+'">⇄ Swap</button><button class="more" data-more="'+i+'">⋯</button></div></div>'
     +recwarn
     +setupStrip(en.exId)
     +'<div class="setgrid"><div class="sethead"><span>#</span><span>prev</span>'+(inputOrder()==="rw"?'<span>reps</span><span>'+loadColLabel(e)+'</span>':'<span>'+loadColLabel(e)+'</span><span>reps</span>')+'<span>log</span></div>'+rows+'</div>'
@@ -3232,11 +3297,11 @@ function renderSheet(){ const m=document.getElementById("sheetmount"); if(!sheet
     inner='<div class="tiny">Swap '+cur.name+'</div><p class="muted" style="font-size:12px;margin:6px 0 8px">Same primary muscle ('+S.muscles[primaryMuscle(cur)].label+') keeps your volume counting. Search or filter to reach any exercise.</p>'
       +'<input class="inp srch" id="swapSearch" placeholder="Search name, muscle, equipment..." value="'+escAttr(q)+'">'
       +filterChips("swap",swapGroup,swapEquip)
-      +'<div style="margin-top:10px">'+(subs.length?subs.map(function(e){ return '<button class="opt" data-pick="'+e.id+'" style="width:100%;text-align:left"><div><div class="nm">'+e.name+(e.pref==="love"?' <span class="tag love">\u2605</span>':'')+(e.rec?'':' <span class="tag">manual</span>')+(hasSetup(e.id)?' <span class="tag" style="color:var(--gold)">\u2699</span>':'')+'</div><div class="meta">'+equipLabel(e.equip)+' \u00b7 '+groupLabel(exGroup(e))+' \u00b7 '+(e.pattern||"").replace(/_/g," ")+'</div></div><span class="sets">pick</span></button>'; }).join(""):'<div class="empty">No matches in the library.</div>')+'</div>'; }
+      +'<div style="margin-top:10px">'+(subs.length?subs.map(function(e){ return '<button class="opt" data-pick="'+e.id+'" style="width:100%;text-align:left"><div><div class="nm">'+e.name+(e.pref==="love"?' <span class="tag love">\u2605</span>':'')+(e.rec?'':' <span class="tag">manual</span>')+(hasSetup(e.id)?' <span class="tag" style="color:var(--gold)">\u2699</span>':'')+'</div><div class="meta">'+equipLabel(e.equip)+' \u00b7 '+groupLabel(exGroup(e))+' \u00b7 '+(e.pattern||"").replace(/_/g," ")+'</div><div class="mcredline">'+musLabels(e)+'</div></div><span class="sets">pick</span></button>'; }).join(""):'<div class="empty">No matches in the library.</div>')+'</div>'; }
   else if(sheet.type==="add"){ const q=addSearch||""; const inWk=new Set((activeSession?activeSession.entries:[]).map(function(en){return en.exId;}));
     var rank=function(e){ return !AVAIL_OK[e.avail]?2:(e.rec?0:1); };
     var tg=function(e){ return !AVAIL_OK[e.avail]?' <span class="tag" style="color:var(--faint)">off</span>':(e.rec?'':' <span class="tag">manual</span>'); };
-    var row=function(e){ return '<button class="opt" data-add="'+e.id+'" style="width:100%;text-align:left"><div><div class="nm">'+e.name+tg(e)+(hasSetup(e.id)?' <span class="tag" style="color:var(--gold)">\u2699</span>':'')+(inWk.has(e.id)?' <span class="tag" style="color:var(--amber)">in workout</span>':'')+'</div><div class="meta">'+equipLabel(e.equip)+' \u00b7 '+groupLabel(exGroup(e))+' \u00b7 '+(e.pattern||"").replace(/_/g," ")+' \u00b7 '+e.rl+'-'+e.rh+' reps</div></div><span class="sets">+ add</span></button>'; };
+    var row=function(e){ return '<button class="opt" data-add="'+e.id+'" style="width:100%;text-align:left"><div><div class="nm">'+e.name+tg(e)+(hasSetup(e.id)?' <span class="tag" style="color:var(--gold)">\u2699</span>':'')+(inWk.has(e.id)?' <span class="tag" style="color:var(--amber)">in workout</span>':'')+'</div><div class="meta">'+equipLabel(e.equip)+' \u00b7 '+groupLabel(exGroup(e))+' \u00b7 '+(e.pattern||"").replace(/_/g," ")+' \u00b7 '+e.rl+'-'+e.rh+' reps</div><div class="mcredline">'+musLabels(e)+'</div></div><span class="sets">+ add</span></button>'; };
     var listHtml;
     if(q){ var res=S.exercises.filter(function(e){ return exPassesFilters(e,addGroup,addEquip)&&exMatches(e,q); }).sort(function(a,b){ return rank(a)-rank(b)||(PREF_SCORE[b.pref]-PREF_SCORE[a.pref])||a.name.localeCompare(b.name); });
       listHtml=res.length?res.map(row).join(""):'<div class="empty">No matches. Try a broader term or clear the filters.</div>'; }
@@ -3281,6 +3346,7 @@ function renderSheet(){ const m=document.getElementById("sheetmount"); if(!sheet
       +'<div class="card" style="margin:8px 0 0;padding:10px 12px;background:var(--panel2)"><div class="tiny">Why this verdict</div>'
       +'<div class="histline" style="margin-top:3px">'+((trendEvidence(id)||{}).text||'Not enough history yet.')+'</div>'
       +(trendAction(id)?'<div class="histline" style="margin-top:5px;color:var(--accent)">\u2192 '+trendAction(id)+'</div>':'')+'</div>'
+      +muscleCreditBlock(ex,DEFAULT_WORK_SETS)
       +setupStrip(id)
       +recGrid
       +'<div class="tiny" style="margin-top:14px">Progress · '+metricLabel(exChartMetric,ex)+'</div>'+seg+'<div class="chartwrap">'+chart+'</div>'+_bwNote
@@ -3348,7 +3414,7 @@ function renderSheet(){ const m=document.getElementById("sheetmount"); if(!sheet
     inner='<div class="tiny">'+cfg.label+' · '+plabel+'</div><div class="kpi" style="margin-top:10px"><div class="k"><b>'+con.total.toFixed(1)+'</b><span>effective sets</span></div><div class="k"><b>'+con.direct.toFixed(1)+'</b><span>direct</span></div><div class="k"><b>'+con.secondary.toFixed(1)+'</b><span>secondary</span></div></div>'
       +'<div class="tiny" style="margin-top:14px">What made this number</div><div style="margin-top:6px">'+(con.rows.length?con.rows.map(r=>'<div class="contrib"><div><b>'+r.name+'</b><div class="muted" style="font-size:11px">'+r.sets+' sets × '+r.credit+' credit · '+(r.credit>=1?"direct":"secondary")+' · last '+fmtAgo(r.dates.sort().slice(-1)[0])+'</div></div><span class="c-ef">'+r.effective.toFixed(1)+'</span></div>').join(""):'<div class="empty" style="padding:10px">No sets in this period.</div>')+'</div>'; }
   else if(sheet.type==="tips"){ const id=sheet.data; const ex=exById(id); const t=TIPS[id];
-    inner='<div class="tiny">'+(ex?ex.name:id)+' · form & coaching</div>'+(t?
+    inner='<div class="tiny">'+(ex?ex.name:id)+' · form & coaching</div>'+(ex?muscleCreditBlock(ex,DEFAULT_WORK_SETS):'')+(t?
       '<div class="field" style="margin-top:10px"><label style="color:var(--green)">✅ Should feel</label><div class="ibody">'+t.feel+'</div></div>'
       +'<div class="field"><label style="color:var(--red)">⛔ Should NOT mainly feel</label><div class="ibody">'+t.avoid+'</div></div>'
       +'<div class="field"><label>Cues</label><ul style="margin:4px 0 0;padding-left:18px">'+t.cues.map(c=>'<li class="ibody" style="margin:3px 0">'+c+'</li>').join("")+'</ul></div>'
@@ -3596,6 +3662,37 @@ function barChartCard(title,sub,series,valKey,labelFn){
   return '<div class="card"><div class="tiny">'+title+'</div>'
     +(sub?'<div class="histline" style="margin-top:2px">'+sub+'</div>':'')
     +'<div style="display:flex;gap:4px;margin-top:10px;align-items:flex-end">'+bars+'</div></div>'; }
+/* v14 — the whole logged history, one column per week, in a horizontal scroller that opens on
+   the latest ten. Both training-pattern charts read from this one series so they scroll in step
+   with each other. Capped at WEEK_SCROLL_MAX columns (two years) so an old account can't render
+   thousands of divs; below WEEK_SCROLL_MIN it pads back with empty weeks so the window is still
+   ten wide. Bars are scaled to the max of EVERYTHING logged, not just what is in view, so a
+   column looks the same before and after you swipe. */
+const WEEK_SCROLL_MIN=10, WEEK_SCROLL_MAX=104, WEEK_SCROLL_VIEW=10;
+function weeksLogged(){ const list=completedSessions(); if(!list.length) return 0;
+  let first=null; list.forEach(function(x){ const t=new Date(x.completedAt); if(!first||t<first) first=t; });
+  const a=startOfWeek(first), b=startOfWeek();
+  return Math.max(1,Math.round((b-a)/(7*86400000))+1); }
+function weekSeriesAll(){ const n=Math.max(WEEK_SCROLL_MIN,Math.min(WEEK_SCROLL_MAX,weeksLogged())); return weeklySetsSeries(n); }
+function fmtWeekLabel(d){ const x=new Date(d); return x.getDate()+"/"+(x.getMonth()+1); }
+function weekScrollChartCard(title,series,valKey,unit){
+  const n=series.length, logged=weeksLogged();
+  const max=Math.max.apply(null,[1].concat(series.map(function(x){ return x[valKey]; })));
+  const cols=series.map(function(x,i){
+    const v=x[valKey]||0; const prev=i>0?series[i-1].start:null;
+    const mstart=!prev||new Date(prev).getMonth()!==new Date(x.start).getMonth();
+    return '<div class="wcol'+(x.current?' cur':'')+(v?'':' zero')+(mstart?' mstart':'')+'" title="Week of '+fmtDate(x.start)+'">'
+      +'<div class="wb"><i style="height:'+(v?Math.max(4,Math.round(v/max*100)):0)+'%"></i></div>'
+      +'<span class="wv">'+v+'</span><span class="wd">'+fmtWeekLabel(x.start)+'</span></div>'; }).join("");
+  const view=series.slice(-WEEK_SCROLL_VIEW), avgView=view.reduce(function(a,x){ return a+(x[valKey]||0); },0)/Math.max(1,view.length);
+  const all=series.filter(function(x){ return x[valKey]>0; }), avgAll=all.length?all.reduce(function(a,x){ return a+x[valKey]; },0)/all.length:0;
+  const r1=function(v){ return Math.round(v*10)/10; };
+  const more=n>WEEK_SCROLL_VIEW;
+  return '<div class="card"><div class="tiny">'+title+'</div>'
+    +'<div class="histline" style="margin-top:2px">'+(more?('Last '+WEEK_SCROLL_VIEW+' of '+Math.min(logged,n)+' weeks in view · swipe left for older'):(logged+' week'+(logged===1?'':'s')+' logged · scrolls once there are more than '+WEEK_SCROLL_VIEW))+'</div>'
+    +'<div class="wscroll" data-wscroll><div class="wgrid">'+cols+'</div></div>'
+    +'<div class="wfoot"><span>'+WEEK_SCROLL_VIEW+'-wk avg <b>'+r1(avgView)+' '+unit+'</b></span><span>All-time avg <b>'+r1(avgAll)+' '+unit+'/wk</b></span></div>'
+    +'</div>'; }
 /* Weekday distribution — most AND least common, stated neutrally. */
 function weekdayCard(){
   const w=weekdayPattern();
@@ -3685,8 +3782,9 @@ function viewStats(){
     +'<div class="card"><div class="tiny">Most-used exercises · tap for records and trend</div><div style="margin-top:6px">'+muRows+'</div></div>'
     +exerciseTrendsCard()
     +hdr("Training pattern")
-    +barChartCard("Working sets · last 10 weeks","",weeklySetsSeries(10),"sets")
-    +barChartCard("Workouts · last 10 weeks","",weeklyCounts(10).map(function(w){ return {count:w.count,current:w.current}; }),"count")
+    +(function(){ const ser=weekSeriesAll();
+        return weekScrollChartCard("Working sets per week",ser,"sets","sets")
+             + weekScrollChartCard("Workouts per week",ser,"sessions","workouts"); })()
     +consistencyCard()
     +weekdayCard()
     +timeOfDayCard(); }
@@ -3922,7 +4020,21 @@ function restMount(){ return document.getElementById("restmount"); }
    actually changes — half the churn of the old build, and taps on the controls never get eaten. */
 let restPaintKey="";
 function restPaintKeyFor(st,now){ if(!st) return ""; return (restExpired(st,now)?"done":restRemaining(st,now))+"|"+st.endsAt; }
-function clearRest(){ if(restTimer){ clearInterval(restTimer); restTimer=null; } restState=null; restAnnounced=false; restPaintKey=""; saveRest(); const m=restMount(); if(m) m.innerHTML=""; }
+function clearRest(){ if(restTimer){ clearInterval(restTimer); restTimer=null; } restState=null; restAnnounced=false; restPaintKey=""; saveRest(); const m=restMount(); if(m) m.innerHTML=""; restReserve(0); }
+/* v14 — the bar is docked to the top, so the page is padded by the bar's real height (a CSS
+   variable read by .app and the sticky logger header). The scroll position is compensated by the
+   same amount, so the set you just ticked does not jump under your thumb when the bar appears
+   or disappears. Pure DOM/CSS; no layout numbers are hard-coded. */
+let restReservedPx=0;
+function restReserve(px){ px=Math.max(0,Math.round(px||0)); if(px===restReservedPx) return; const delta=px-restReservedPx; restReservedPx=px;
+  try{ document.documentElement.style.setProperty("--resttop",px+"px"); }catch(e){}
+  try{ if(delta&&window.scrollY>0) window.scrollBy(0,delta); }catch(e){} }
+function restMeasure(){ const m=restMount(); const el=m&&m.firstElementChild; if(!el){ restReserve(0); return; } const h=el.offsetHeight||0; if(h>0) restReserve(h); }
+/* iOS keeps position:fixed relative to the LAYOUT viewport; when the keyboard is up the visual
+   viewport can scroll inside it and a top-fixed bar would drift off screen. Track it. */
+function restViewportSync(){ const m=restMount(); const el=m&&m.firstElementChild; if(!el) return; const vv=window.visualViewport; if(!vv) return;
+  const y=Math.max(0,Math.round(vv.offsetTop||0)); el.style.transform=y?("translateY("+y+"px)"):""; }
+try{ if(window.visualViewport){ window.visualViewport.addEventListener("resize",restViewportSync); window.visualViewport.addEventListener("scroll",restViewportSync); } }catch(e){}
 function restBar(st,now){ const left=restRemaining(st,now); const total=Math.max(1,st.total||1); return Math.max(0,Math.min(100,Math.round((1-left/total)*100))); }
 /* single render pass — reads the clock, never mutates it */
 function paintRest(force){ const m=restMount(); if(!m) return; const st=restState;
@@ -3933,16 +4045,21 @@ function paintRest(force){ const m=restMount(); if(!m) return; const st=restStat
   if(!force && key===restPaintKey && m.innerHTML) return;                      /* nothing visibly changed */
   restPaintKey=key;
   const left=restRemaining(st,now); const mm=Math.floor(left/60), ss=String(left%60).padStart(2,"0");
-  m.innerHTML='<div class="rest'+(done?' done':'')+'"><div class="restcard">'
+  /* v14 layout: [progress along the top edge] then ONE row — name/next · countdown · controls.
+     Done state keeps the same footprint: the message plus a Go button. */
+  const title=done?"✅ Rest done — next set ready":escAttr(st.name||"Resting");
+  const meta=done?escAttr(st.name||""):("Rest"+(st.next?" · "+escAttr(st.next):""));
+  m.innerHTML='<div class="rest'+(done?' done':'')+'" role="status" aria-live="polite"><div class="restcard">'
     +'<div class="restbar"><i style="width:'+(done?100:restBar(st,now))+'%"></i></div>'
-    +'<div class="restrow"><div style="flex:1"><div class="resttitle">'+(done?"✅ Rest done — next set ready":"Resting")+'</div><div class="restmeta">'+(st.name||"")+(st.next?" · "+st.next:"")+'</div></div>'
-    +(done?'<button data-restgo class="btn accent sm">Go</button>':'<div class="restt">'+mm+":"+ss+'</div>')+'</div>'
-    +(done?'':'<div class="restctl"><button data-restsub>−15s</button><button data-restadd>+30s</button><button data-restskip>Skip rest</button></div>')
-    +'</div></div>';
+    +'<div class="restrow"><div style="flex:1;min-width:0"><div class="resttitle">'+title+'</div><div class="restmeta">'+meta+'</div></div>'
+    +(done?'<button data-restgo class="btn accent sm" style="flex:none;padding:9px 18px;font-weight:800">Go</button>'
+          :'<div class="restt">'+mm+":"+ss+'</div><div class="restctl"><button data-restsub aria-label="15 seconds less">−15</button><button data-restadd aria-label="30 seconds more">+30</button><button data-restskip>Skip</button></div>')
+    +'</div></div></div>';
   if(done){ const g=m.querySelector("[data-restgo]"); if(g) g.onclick=clearRest; }
   else { const ad=m.querySelector("[data-restadd]"); if(ad) ad.onclick=()=>restAdjust(30);
          const sb=m.querySelector("[data-restsub]"); if(sb) sb.onclick=()=>restAdjust(-15);
-         const sk=m.querySelector("[data-restskip]"); if(sk) sk.onclick=clearRest; } }
+         const sk=m.querySelector("[data-restskip]"); if(sk) sk.onclick=clearRest; }
+  restMeasure(); restViewportSync(); }
 /* ±seconds shifts the DEADLINE, so accuracy is preserved across backgrounding */
 function restAdjust(delta){ if(!restState) return; const now=Date.now();
   const left=Math.max(0,restState.endsAt-now); const nl=Math.max(1000,left+delta*1000);
@@ -4046,6 +4163,8 @@ function openLimSheet(){ const al=activeLimitation(); limDraft=al?{rules:(al.rul
 
 
 function wireScreen(){
+  /* v14 — week charts open on the most recent ten weeks; older weeks are off to the left */
+  document.querySelectorAll("[data-wscroll]").forEach(function(el){ try{ el.scrollLeft=el.scrollWidth; }catch(e){} });
   const act=(name,fn)=>document.querySelectorAll('[data-act="'+name+'"]').forEach(b=>b.onclick=fn);
   act("recommend",()=>{ let opts=null;
     if(pendingRec){ pendingRec.exercises.forEach(c=>{ rerollCounts[c.exId]=(rerollCounts[c.exId]||0)+1; }); opts={reroll:true, avoidIds:{...rerollCounts}}; }
