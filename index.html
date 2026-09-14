@@ -325,9 +325,9 @@ const APP_TAGLINE = "Training Command";
    recover.html on a v10 build is expected and correct.
    BUILD is shown in Settings and is what the deployed-version check compares against, so
    it must be bumped on every deploy. */
-const BUILD = "v14";
-const BUILD_DATE = "2026-09-13";
-const BUILD_NOTE = "rest timer docked at the top, scrolling week charts, muscles-worked credits, duplicate-proof cloud sync";
+const BUILD = "v15";
+const BUILD_DATE = "2026-09-14";
+const BUILD_NOTE = "bullet-proof workout saving: atomic cloud writes, verified finish, draft recovery, integrity checks, diagnostics";
 
 /* Approved users (client-side UX gate; the real gate is Supabase signup settings — see DEPLOY).
    To add a person: add one line below with their real email (lowercase), display name and role.
@@ -890,8 +890,8 @@ function load(){
       const pref={}; (d.exercises||[]).forEach(e=>pref[e.id]={pref:e.pref,avail:e.avail});
       /* v6: gym inventory (avail + rec) is authoritative from seed; only user love/like preference is carried over */
       fresh.exercises.forEach(e=>{ if(pref[e.id]&&pref[e.id].pref) e.pref=pref[e.id].pref; });
-      return fresh; }
-    d.measurements=d.measurements||[]; d.photos=d.photos||[]; d.bodyweight=d.bodyweight||[]; return d;
+      fresh.sessions=normaliseSessions(fresh.sessions,"load-migrate"); return fresh; }
+    d.measurements=d.measurements||[]; d.photos=d.photos||[]; d.bodyweight=d.bodyweight||[]; d.sessions=normaliseSessions(d.sessions||[],"load"); return d;
   }catch(e){ return seed(); }
 }
 /* v10 — persistLocal now REPORTS failure instead of swallowing it. A silent
@@ -925,12 +925,12 @@ function journalWrite(list){
 }
 const JOURNAL_MAX=500;
 function journalPut(sess){
-  if(!sess||!sess.id||!sess.completedAt) return;
-  let rec; try{ rec=JSON.parse(JSON.stringify(sess)); }catch(e){ return; }
+  if(!sess||!sess.id||!sess.completedAt) return false;
+  let rec; try{ rec=JSON.parse(JSON.stringify(sess)); }catch(e){ return false; }
   const list=journalRead(); const i=list.findIndex(x=>x&&x.id===rec.id);
   if(i>=0) list[i]=rec; else list.push(rec);
   while(list.length>JOURNAL_MAX) list.shift();
-  journalWrite(list);
+  return journalWrite(list);
 }
 function tombRead(){ const t=(S.settings&&S.settings.deletedWorkouts)||{}; return t; }
 function tombAdd(id){ if(!id) return; if(!S.settings) S.settings={};
@@ -962,9 +962,48 @@ function recoverFromJournal(){
     if(have.has(j.id)||isTombstoned(j.id)) return;
     S.sessions.push({...j, synced:false, recovered:true}); have.add(j.id); n++;
   });
-  if(n){ S.sessions.sort((a,b)=>new Date(a.completedAt)-new Date(b.completedAt)); persistLocal(); }
+  if(n){ S.sessions=normaliseSessions(S.sessions,"journal").sort((a,b)=>new Date(a.completedAt)-new Date(b.completedAt)); persistLocal(); }
   return n;
 }
+/* ---------------------------------------------------------------- INTEGRITY (v15)
+   Runs before any stat, recovery or progression calculation can see the data. Two checks:
+     · duplicate session ids in one list (two finishes of the same draft, a journal + cloud overlap)
+       — collapsed to one record, keeping the copy that carries unpushed changes or more content;
+     · k-fold repeated entries inside one session — the exact shape the 13 Sep corruption took after a
+       hydrate (every exercise present k times, grouped, with identical sets). Collapsed to one copy.
+       Deliberately strict: ≥2 distinct exercises, every one repeated exactly k times, consecutively,
+       byte-identical sets. A genuine workout cannot look like that. This never writes to the cloud;
+       cloud copies are repaired by dedupeWorkoutExercises() on hydrate, which keys on order_index. */
+function setSig(s){ return (s.type==="warm"?"w":"")+((s.weight===""||s.weight==null)?"":String(+s.weight))+"x"+((s.reps===""||s.reps==null)?"":String(+s.reps))+(s.done?"!":""); }
+function entrySig(en){ return (en.exId||"?")+"["+(en.sets||[]).map(setSig).join(",")+"]"; }
+function sessionFingerprint(sess){ return (sess&&sess.completedAt?dayKey(sess.completedAt):"")+"|"+((sess&&sess.entries)||[]).map(entrySig).join(";"); }
+function collapseRepeatedEntries(entries){
+  entries=entries||[]; const n=entries.length; if(n<4) return {entries:entries, k:1};
+  const sigs=entries.map(entrySig); const counts={}; sigs.forEach(x=>{ counts[x]=(counts[x]||0)+1; });
+  const uniq=Object.keys(counts); if(uniq.length<2||uniq.length===n) return {entries:entries, k:1};
+  const k=n/uniq.length; if(k<2||k!==Math.floor(k)) return {entries:entries, k:1};
+  if(!uniq.every(x=>counts[x]===k)) return {entries:entries, k:1};
+  for(let i=0;i<n;i++){ if(sigs[i]!==sigs[Math.floor(i/k)*k]) return {entries:entries, k:1}; }   /* grouped: A,A,A,B,B,B */
+  const out=[]; for(let i=0;i<n;i+=k) out.push(entries[i]);
+  return {entries:out, k:k};
+}
+function normaliseSessions(list,where){
+  const byId={}, order=[]; let dupIds=0, collapsed=0;
+  const score=x=>(x.synced===false?1e9:0)+((x.entries||[]).reduce((a,en)=>a+(en.sets||[]).length,0));
+  (list||[]).forEach(s=>{ if(!s||typeof s!=="object") return;
+    if(!s.id) s.id=uid();
+    const prev=byId[s.id];
+    if(!prev){ byId[s.id]=s; order.push(s.id); return; }
+    dupIds++; if(score(s)>score(prev)) byId[s.id]=s; });
+  const out=order.map(id=>byId[id]);
+  out.forEach(s=>{ if(!s.completedAt||!Array.isArray(s.entries)) return; const c=collapseRepeatedEntries(s.entries);
+    if(c.k>1){ s.entries=c.entries; s.integrity={collapsed:c.k, at:iso(new Date())}; collapsed++; } });
+  if(dupIds||collapsed) plog("integrity",{where:where||"?", dupIds:dupIds, collapsed:collapsed});
+  return out;
+}
+/* Replace-by-id, never append-by-position: the one way a finished session enters S. */
+function upsertLocalSession(sess){ if(!sess||!sess.id) return; const i=(S.sessions||[]).findIndex(x=>x&&x.id===sess.id);
+  if(i>=0) S.sessions[i]=sess; else S.sessions.push(sess); S.sessions=normaliseSessions(S.sessions,"upsert"); }
 function exById(id){ return S.exercises.find(e=>e.id===id); }
 function inputOrder(){ return (S.settings&&S.settings.inputOrder)==="rw"?"rw":"wr"; }
 /* v7: every "previous / last" pair is shown in YOUR logging order (Settings → Set logging order).
@@ -974,9 +1013,23 @@ function fmtSet(w,r){ const a=(w==null||w==="")?0:w, b=(r==null||r==="")?0:r; re
 function workIndex(en,si){ let n=0; for(let k=0;k<si&&k<en.sets.length;k++){ if(en.sets[k].type!=="warm") n++; } return n; }
 function uid(){ try{ if(crypto&&crypto.randomUUID) return crypto.randomUUID(); }catch(e){} return "id-"+Date.now()+"-"+Math.random().toString(16).slice(2); }
 
-/* active-workout autosave (P1) — separate key, written on EVERY change */
-function saveActive(){ try{ if(activeSession) localStorage.setItem(ACTIVE_KEY, JSON.stringify(activeSession)); else localStorage.removeItem(ACTIVE_KEY); }catch(e){} }
+/* active-workout autosave (P1) — separate key, written on EVERY change.
+   v15: saveActive() only ever WRITES. It no longer removes the draft when activeSession happens to
+   be null — a background tab's blur/visibilitychange flush used to delete the draft the foreground
+   tab was still logging into. Removal is explicit (clearActive) and only follows a verified finish
+   or a deliberate discard. A write failure (quota) is recorded instead of swallowed. */
+let lastDraftError=null, draftSavedAt=0;
+function saveActive(){ if(!activeSession) return true;
+  try{ localStorage.setItem(ACTIVE_KEY, JSON.stringify(activeSession)); lastDraftError=null; draftSavedAt=Date.now(); return true; }
+  catch(e){ const err=String((e&&e.name)||e); if(lastDraftError!==err) plog("draft.fail",{id:activeSession.id, err:err}); lastDraftError=err; return false; } }
+function clearActive(reason){ try{ localStorage.removeItem(ACTIVE_KEY); }catch(e){} plog("draft.clear",{why:reason||"?"}); }
 function loadActive(){ try{ const r=localStorage.getItem(ACTIVE_KEY); return r?JSON.parse(r):null; }catch(e){ return null; } }
+/* v15 — the draft is adopted back into memory if this tab has none (another tab wrote it, or the
+   page was restored from the back-forward cache after a sign-out wiped memory). */
+function adoptDraft(){ if(activeSession) return false; const d=loadActive(); if(!d||!d.id) return false; activeSession=d; viewingLogger=false; plog("draft.adopt",{id:d.id}); return true; }
+/* v15 — ask the browser not to evict this origin's storage under pressure (Chromium honours it for
+   engaged/installed sites; Safari ignores it). Best effort, never awaited on the critical path. */
+try{ if(navigator.storage&&navigator.storage.persist) navigator.storage.persist().then(function(g){ if(!g) plog("storage.persist",{granted:false}); }).catch(function(){}); }catch(e){}
 /* ============================================================================ SUPABASE ============================================================================ */
 let sb=null, authUser=null, authProfile=null, pushTimer=null, syncing=false, authMode="magic", authMsg="";
 function cloudReady(){ return !!(sb && authUser); }
@@ -1003,14 +1056,37 @@ async function signInPassword(email,password){ if(!sb) throw new Error("offline"
   const { error }=await sb.auth.signInWithPassword({ email, password }); if(error) throw error; }
 async function signUpPassword(email,password){ if(!sb) throw new Error("offline");
   const { error }=await sb.auth.signUp({ email, password, options:{ emailRedirectTo:redirectURL() } }); if(error) throw error; }
-async function signOut(){ if(sb){ try{ await sb.auth.signOut(); }catch(e){} } authUser=null; authProfile=null;
-  /* wipe in-memory state + rescope so the next sign-in on this device sees nothing of this account */
+async function signOut(){ if(sb){ try{ await sb.auth.signOut(); }catch(e){} } authUser=null; authProfile=null; afterAuthFor=null;
+  /* wipe in-memory state + rescope so the next sign-in on this device sees nothing of this account.
+     The user-scoped keys on disk (history, journal, open draft) are left exactly as they are. */
   try{ clearRest(); }catch(e){}
   setStorageScope(null); S=seed(); activeSession=null; viewingLogger=false; render(); }
 
+/* v15 — workouts finished while the sync library had not loaded (sb null) were written under the
+   UNSCOPED keys and became invisible once the user-scoped store took over. Adopt any such completed
+   session the scoped store has never seen, provided it was finished AFTER this device was scoped
+   (older unscoped entries are the legacy pre-multi-user snapshot and are already in the cloud). */
+function scopedSinceKey(){ return "iron_arc_scoped_since:"+(authUser&&authUser.id); }
+function adoptUnscopedJournal(){
+  if(!authUser||!authUser.id) return 0;
+  let sinceRaw=null; try{ sinceRaw=localStorage.getItem(scopedSinceKey()); }catch(e){} if(!sinceRaw) return 0;
+  let list=[]; try{ const r=localStorage.getItem("iron_arc_journal_v1"); list=r?JSON.parse(r):[]; }catch(e){ return 0; }
+  if(!Array.isArray(list)||!list.length) return 0;
+  const since=new Date(sinceRaw).getTime();
+  const have=new Set((S.sessions||[]).map(s=>s&&s.id).filter(Boolean)); let n=0;
+  list.forEach(j=>{ if(!j||!j.id||!j.completedAt||have.has(j.id)||isTombstoned(j.id)) return;
+    if(!(new Date(j.completedAt).getTime()>since)) return;
+    S.sessions.push({...j, synced:false, recovered:true, adopted:"unscoped"}); have.add(j.id); n++; journalPut(j); });
+  if(n){ S.sessions=normaliseSessions(S.sessions,"adopt").sort((a,b)=>new Date(a.completedAt)-new Date(b.completedAt)); persistLocal(); plog("journal.adopt-unscoped",{n:n}); }
+  return n;
+}
+let afterAuthFor=null;
 async function afterAuth(){
   if(!authUser) return;
-  if(!isApproved(authUser.email)){ authMsg="not_approved"; await sb.auth.signOut(); authUser=null; render(); return; }
+  /* v15 — getSession() and onAuthStateChange(INITIAL_SESSION) both resolve at boot and both used to
+     run this whole routine concurrently (two profile upserts per launch in the server logs). Once. */
+  if(afterAuthFor===authUser.id) return; afterAuthFor=authUser.id;
+  if(!isApproved(authUser.email)){ authMsg="not_approved"; afterAuthFor=null; await sb.auth.signOut(); authUser=null; render(); return; }
   const meta=ALLOWED_USERS[authUser.email.toLowerCase()];
   authProfile={ email:authUser.email, name:meta.name, role:meta.role };
   /* Scope local data to this user id. One-time: the admin (original single-user install)
@@ -1021,6 +1097,8 @@ async function afterAuth(){
     try{ localStorage.setItem(KEY, legacyRaw); const la=localStorage.getItem("iron_arc_active_v2"); if(la) localStorage.setItem(ACTIVE_KEY, la); }catch(e){}
   }
   S=load(); try{ ensureSetupDefaults(); }catch(e){} try{ recoverFromJournal(); journalBackfill(); }catch(e){}
+  /* v15: remember when this device was first scoped to this user (device-local, never synced) */
+  try{ if(!localStorage.getItem(scopedSinceKey())) localStorage.setItem(scopedSinceKey(), iso(new Date())); adoptUnscopedJournal(); }catch(e){}
   /* v10: auth resolves asynchronously at boot. A workout already open under the pre-auth
      (unscoped) key must be carried into the user's scope, not silently replaced by null. */
   const preAuthActive=activeSession;
@@ -1108,14 +1186,15 @@ async function hydrateFromCloud(){
       if(cloudById[ls.id]||tomb[ls.id]) return;
       ls.synced=false; merged.push(ls); needPush.push(ls);      // cloud never had it — keep it and push it
     });
-    rb.sessions=merged.sort((a,b)=>new Date(a.completedAt)-new Date(b.completedAt));
+    rb.sessions=normaliseSessions(merged,"hydrate").sort((a,b)=>new Date(a.completedAt)-new Date(b.completedAt));
+    if(repaired.length) plog("hydrate.repaired",{ids:repaired.slice(0,10), n:repaired.length});
 
     S=rb; try{ ensureSetupDefaults(); }catch(e){}   /* v8: keeps cloud-hydrated accounts' machine settings intact */
     try{ rebuildCustomExercises(); }catch(e){}     /* v9: custom exercises ride app_settings, so re-apply them after a rehydrate */
     /* last line of defence: anything the journal has and S does not comes back here */
-    try{ const n=recoverFromJournal(); if(n) (S.sessions||[]).forEach(s=>{ if(s.recovered&&needPush.indexOf(s)<0) needPush.push(s); }); journalBackfill(); }catch(e){}
+    try{ const n=recoverFromJournal()+adoptUnscopedJournal(); if(n) (S.sessions||[]).forEach(s=>{ if(s.recovered&&needPush.indexOf(s)<0) needPush.push(s); }); journalBackfill(); }catch(e){}
     persistLocal();
-    for(const s of needPush){ await pushWorkout(s); }
+    for(const s of needPush){ await pushWorkout(s,"hydrate"); }
     if(needPush.length) pushSettings();             // tombstones + settings back up
   }catch(e){}
   syncing=false; render();
@@ -1125,25 +1204,32 @@ async function hydrateFromCloud(){
    The "N workouts not yet synced · Retry" banner already existed but was unreachable,
    because synced was never left false. Now that failures are honest, back the banner
    with an automatic exponential retry that also fires when connectivity or focus returns. */
-let retryTimer=null, retryDelay=8000;
+let retryTimer=null, retryDelay=8000, retrying=false;
 const RETRY_MIN=8000, RETRY_MAX=300000;
 function scheduleRetry(){
   if(retryTimer||!cloudReady()) return;
-  retryTimer=setTimeout(()=>{ retryTimer=null; retryUnsynced(); }, retryDelay);
+  retryTimer=setTimeout(()=>{ retryTimer=null; retryUnsynced("timer"); }, retryDelay);
   retryDelay=Math.min(retryDelay*2, RETRY_MAX);
 }
-async function retryUnsynced(){
+/* v15 — retryUnsynced() is itself single-flight. It is fired by visibilitychange, focus, online,
+   the retry timer and the Retry button, and on a phone several of those fire in the same tick.
+   Before v15 each call started its own pushWorkout() pipeline for every unsynced session. */
+async function retryUnsynced(source){
   if(!cloudReady()||syncing) return;
+  if(retrying){ plog("retry.coalesced",{source:source||"?"}); return; }
   const list=(S.sessions||[]).filter(s=>s&&s.completedAt&&s.synced===false);
   if(!list.length){ retryDelay=RETRY_MIN; return; }
-  let allOk=true;
-  for(const s of list){ const done=await pushWorkout(s); if(!done) allOk=false; }
-  if(allOk) retryDelay=RETRY_MIN;
+  retrying=true;
+  try{
+    let allOk=true;
+    for(const s of list){ const done=await pushWorkout(s,"retry:"+(source||"?")); if(!done) allOk=false; }
+    if(allOk) retryDelay=RETRY_MIN;
+  }finally{ retrying=false; }
   render();
 }
 async function migrateLocalToCloud(){ if(!cloudReady()) return;
   try{ await pushSettings(); await pushAllExercises();
-    for(const s of (S.sessions||[])){ if(s.completedAt){ if(!s.id) s.id=uid(); await pushWorkout(s); } }
+    for(const s of (S.sessions||[])){ if(s.completedAt){ if(!s.id) s.id=uid(); await pushWorkout(s,"migrate"); } }
     await pushAllMeasurements(); persistLocal(); }catch(e){}
   render();
 }
@@ -1152,61 +1238,141 @@ async function pushSettings(){ if(!cloudReady()) return; try{ await sb.from("app
 function exRow(e){ return { user_id:authUser.id, slug:e.id, name:e.name, type:e.type, equip:e.equip, pref:e.pref, avail:e.avail, rest:e.rest, rep_low:e.rl, rep_high:e.rh, set_low:e.sl, set_high:e.sh, fatigue:e.fatigue, muscles:e.m }; }
 async function pushAllExercises(){ if(!cloudReady()) return; try{ await sb.from("exercises").upsert(S.exercises.map(exRow),{onConflict:"user_id,slug"}); }catch(e){} }
 async function pushExercisePref(ex){ if(!cloudReady()) return; try{ await sb.from("exercises").upsert(exRow(ex),{onConflict:"user_id,slug"}); }catch(e){} }
-/* v10 — returns true only when the workout is provably in the cloud, in full.
-   Every call is error-checked (see sbq). The device copy and the journal are the source
-   of truth until the server confirms; a failure marks the session unsynced and queues a
-   retry instead of pretending the write worked. */
-/* v14 — DUPLICATE-PROOF PUSH. On 13 Sep 2026 one finished workout landed in Supabase three times
-   over: the finish push, a focus-triggered retryUnsynced() and the post-hydrate needPush all ran
-   pushWorkout() for the same session inside ~300 ms. Each did delete → insert with FRESH uuids, so
-   the interleaving left three identical copies of every exercise and set, and the next hydrate
-   brought the triplicated workout back onto the phone (cloud wins for a synced session).
-   Three independent guards now make that impossible:
-     1. concurrent pushes of the same workout are coalesced into the one in-flight promise;
-     2. child rows get ids DERIVED from the workout id + position (childUuid), so the same set
-        can only ever have one primary key however many times it is written;
-     3. children are upserted, not inserted — a racing duplicate becomes a no-op update.
-   hydrateFromCloud() additionally collapses any copies that already exist and re-pushes the
-   clean workout, so an affected account repairs itself on the next launch. */
+
+/* ============================================================================ PERSISTENCE CORE (v15)
+   Incident, 13 Sep 2026: one finished workout reached Supabase with THREE copies of every exercise
+   and set. Server logs show three pushWorkout() pipelines starting in the same tick (the Finish push
+   had never reached the server from the gym; when the phone came back, visibilitychange + focus +
+   the retry timer each called retryUnsynced() for the still-unsynced session). Each pipeline did
+   delete → insert with fresh uuids across five HTTP round trips, so the interleaving
+   (3× delete, then 3× insert) left three identical copies under one workout id.
+
+   v15 closes the whole class of bug, in layers:
+     1. ONE STABLE ID. activeSession.id is minted when the workout starts and is the workout's id
+        for life (an edit keeps editingId). Every save of that id is an upsert, never an append.
+     2. SINGLE-FLIGHT + DIRTY RE-RUN. Concurrent pushes of the same id coalesce into the one in-flight
+        promise; a push requested mid-flight runs once more afterwards with the latest local copy.
+     3. ATOMIC SERVER WRITE. save_workout(jsonb) is a Postgres function: advisory-locked per workout
+        id, parent upsert + full child replace in ONE transaction, deterministic child ids. It either
+        commits the whole workout or nothing. Legacy table writes remain only as a fallback (upsert
+        by deterministic id, so still idempotent) if the RPC is ever missing.
+     4. DATABASE UNIQUENESS. unique(workout_id, order_index) and unique(workout_exercise_id, set_index)
+        mean a duplicate child row cannot exist, whatever any client sends.
+     5. FINISH ORDER. journal → local → read-back verification → only then clear the draft → cloud.
+        The draft is never deleted before the completed workout is provably on disk.
+     6. INTEGRITY ON READ. Sessions are de-duplicated by id and k-fold repeated entries are collapsed
+        before any stat is computed (normaliseSessions / dedupeWorkoutExercises).
+     7. DIAGNOSTICS. Every attempt is logged (id, attempt, source, insert/update, ms, ok/err, retry)
+        to a small ring buffer — Settings › build card › Diagnostics, or IronArcDiag.log(). */
+
+/* ---------------------------------------------------------------- diagnostics ring buffer */
+const PLOG_MAX=250;
+function plogKey(){ let u=null; try{ u=authUser&&authUser.id; }catch(e){ /* called during boot, before the auth bindings exist */ } return u ? "iron_arc_plog_v1:"+u : "iron_arc_plog_v1"; }
+function plogRead(){ try{ const r=localStorage.getItem(plogKey()); const a=r?JSON.parse(r):[]; return Array.isArray(a)?a:[]; }catch(e){ return []; } }
+function plogDebug(){ try{ return localStorage.getItem("iron_arc_debug")==="1"; }catch(e){ return false; } }
+function plog(evt,fields){
+  const rec=Object.assign({t:iso(new Date()), evt:evt}, fields||{});
+  try{ const list=plogRead(); list.push(rec); while(list.length>PLOG_MAX) list.shift(); localStorage.setItem(plogKey(), JSON.stringify(list)); }catch(e){}
+  if(plogDebug()){ try{ console.debug("[persist] "+evt, rec); }catch(e){} }
+  return rec;
+}
+function plogClear(){ try{ localStorage.removeItem(plogKey()); }catch(e){} }
+/* console access without touching the UI: IronArcDiag.log(), .tail(20), .enable(), .clear() */
+try{ window.IronArcDiag={ log:plogRead, tail:function(n){ return plogRead().slice(-(n||20)); }, clear:plogClear,
+  enable:function(){ try{ localStorage.setItem("iron_arc_debug","1"); }catch(e){} }, disable:function(){ try{ localStorage.removeItem("iron_arc_debug"); }catch(e){} },
+  inflight:function(){ return Object.keys(pushInFlight); }, attempts:function(){ return Object.assign({},saveAttempts); } }; }catch(e){}
+
+/* ---------------------------------------------------------------- stable ids for child rows
+   Child rows get ids DERIVED from the workout id + position, so the same exercise/set row can only
+   ever have one primary key however many times it is written. Kept byte-compatible with the 14 Sep
+   hotfix build so already-repaired rows keep their ids. */
 function childUuid(base,tag,n){ base=String(base||"");
   if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(base)) return uid();
   return base.slice(0,24)+(tag+Math.max(0,n|0).toString(16).padStart(11,"0")).slice(-12); }
-const pushInFlight={};
-function pushWorkout(session){
+/* The one payload both write paths use. Pure: unit-tested directly. */
+function workoutPayload(session){
+  const exercises=(session.entries||[]).map((en,i)=>{ const ex=exById(en.exId); const weId=childUuid(session.id,"e",i);
+    return { id:weId, slug:en.exId, order_index:i, target_sets:(en.sets||[]).length, rep_low:ex?ex.rl:null, rep_high:ex?ex.rh:null,
+      sets:(en.sets||[]).map((s,j)=>({ id:childUuid(session.id,"f",i*4096+j), set_index:j,
+        weight:(s.weight===""||s.weight==null)?null:Number(s.weight), reps:(s.reps===""||s.reps==null)?null:parseInt(s.reps,10),
+        rpe:null, is_warmup:s.type==="warm", completed:isLogged(s) })) }; });
+  return { id:session.id, performed_at:session.completedAt||iso(new Date()), title:session.title||null, mode:session.mode||null, client_build:BUILD, exercises:exercises };
+}
+
+/* ---------------------------------------------------------------- single-flight push */
+const pushInFlight={}, pushDirty={}, pushedSig={}, saveAttempts={};
+function pushSig(session){ return sessionFingerprint(session)+"|"+(session.title||"")+"|"+(session.mode||"")+"|"+(session.completedAt||""); }
+let rpcUnavailable=false;
+function rpcMissing(err){ const m=String((err&&err.message)||""); const c=String((err&&err.code)||"");
+  return c==="PGRST202"||c==="42883"||/could not find the function|schema cache|function [^ ]* does not exist/i.test(m); }
+function pushWorkout(session,source){
   if(!session||!session.completedAt) return Promise.resolve(false);
   if(!session.id) session.id=uid();
-  if(pushInFlight[session.id]) return pushInFlight[session.id];
-  const p=pushWorkoutNow(session).then(function(r){ delete pushInFlight[session.id]; return r; },function(e){ delete pushInFlight[session.id]; throw e; });
-  pushInFlight[session.id]=p; return p; }
-async function pushWorkoutNow(session){
+  const id=session.id; source=source||"unspecified";
+  if(pushInFlight[id]){
+    /* a retry trigger (focus / visible / online / timer / button) carries no new data — it simply joins
+       the in-flight push. Only a real save (finish, edit, hydrate repair) schedules the one re-run. */
+    if(!/^retry:/.test(source)) pushDirty[id]=source;
+    plog("push.coalesced",{id:id,source:source}); return pushInFlight[id]; }
+  const run=async function(){
+    let r=await pushWorkoutNow(session,source);
+    /* a save requested while we were in flight runs once more ONLY if the latest local copy differs
+       from what was just written (an edit landed mid-flight) — never a second concurrent pipeline,
+       and never a pointless rewrite of identical data */
+    let guard=0;
+    while(pushDirty[id]&&guard++<3){ const src=pushDirty[id]; delete pushDirty[id];
+      const latest=(S.sessions||[]).find(s=>s&&s.id===id)||session;
+      if(pushSig(latest)===pushedSig[id]) break;
+      r=await pushWorkoutNow(latest,src+"(rerun)"); }
+    delete pushDirty[id]; return r; };
+  const p=run().then(function(r){ delete pushInFlight[id]; return r; },function(e){ delete pushInFlight[id]; throw e; });
+  pushInFlight[id]=p; return p; }
+/* v10 contract kept: resolves true only when the workout is provably in the cloud, in full. */
+async function pushWorkoutNow(session,source){
+  const id=session.id; const attempt=saveAttempts[id]=(saveAttempts[id]||0)+1; const t0=Date.now();
   journalPut(session);                                    // write-ahead: on disk before we touch the network
-  if(!cloudReady()){ if(session.synced!==false){ session.synced=false; persistLocal(); } return false; }
+  if(!cloudReady()){ if(session.synced!==false){ session.synced=false; persistLocal(); } plog("push.skip",{id:id,attempt:attempt,source:source,why:sb?"signed-out":"no-cloud"}); return false; }
+  const payload=workoutPayload(session); pushedSig[id]=pushSig(session);
+  const base={ id:id, attempt:attempt, retry:attempt-1, source:source, ex:payload.exercises.length, sets:payload.exercises.reduce((n,e)=>n+e.sets.length,0) };
+  plog("push.start",base);
   try{
-    await sbq(sb.from("workouts").upsert({ id:session.id, user_id:authUser.id, performed_at:session.completedAt||iso(new Date()), title:session.title||null, mode:session.mode||null },{onConflict:"id"}));
-    const weRows=[], setRows=[];
-    (session.entries||[]).forEach((en,i)=>{ const ex=exById(en.exId); const weId=childUuid(session.id,"e",i);
-      weRows.push({ id:weId, user_id:authUser.id, workout_id:session.id, exercise_slug:en.exId, order_index:i, target_sets:en.sets.length, rep_low:ex?ex.rl:null, rep_high:ex?ex.rh:null });
-      en.sets.forEach((s,j)=>setRows.push({ id:childUuid(session.id,"f",i*4096+j), user_id:authUser.id, workout_id:session.id, workout_exercise_id:weId, set_index:j,
-        weight:(s.weight===""||s.weight==null)?null:Number(s.weight), reps:(s.reps===""||s.reps==null)?null:parseInt(s.reps,10), rpe:null, is_warmup:s.type==="warm", completed:isLogged(s) })); });
-    /* children before parents-of-children: deleting sets first is correct whether or not
-       the FK cascades, and avoids leaving orphan set rows behind on a rewrite */
-    await sbq(sb.from("sets").delete().eq("workout_id",session.id));
-    await sbq(sb.from("workout_exercises").delete().eq("workout_id",session.id));
-    if(weRows.length) await sbq(sb.from("workout_exercises").upsert(weRows,{onConflict:"id"}));
-    if(setRows.length) await sbq(sb.from("sets").upsert(setRows,{onConflict:"id"}));
-    session.synced=true; delete session.syncError; delete session.recovered;
+    let op="rpc", info=null;
+    if(!rpcUnavailable && sb && typeof sb.rpc==="function"){
+      const r=await sb.rpc("save_workout",{ p:payload });
+      if(r&&r.error){
+        if(rpcMissing(r.error)){ rpcUnavailable=true; plog("push.rpc-missing",{id:id,err:String(r.error.message||r.error.code)}); }
+        else throw new Error(r.error.message||r.error.details||"save_workout failed");
+      } else { info=(r&&r.data)||null; op=(info&&info.op)?info.op:"rpc"; }
+    }
+    if(rpcUnavailable || !sb || typeof sb.rpc!=="function"){ op=await pushWorkoutLegacy(payload); }
+    session.synced=true; session.syncedAt=iso(new Date()); delete session.syncError; delete session.recovered;
     persistLocal(); journalPut(session);
+    plog("push.ok",Object.assign({},base,{op:op, ms:Date.now()-t0, saves:info&&info.save_count}));
     return true;
   }catch(e){
     session.synced=false; session.syncError=String((e&&e.message)||e);
-    persistLocal(); scheduleRetry();
+    persistLocal(); plog("push.fail",Object.assign({},base,{err:session.syncError, ms:Date.now()-t0}));
+    scheduleRetry();
     return false;
   }
+}
+/* Fallback only (RPC absent). Still idempotent: deterministic ids + upsert, and this path is only
+   ever entered from the single-flight wrapper, so two pipelines cannot interleave on one client. */
+async function pushWorkoutLegacy(p){
+  await sbq(sb.from("workouts").upsert({ id:p.id, user_id:authUser.id, performed_at:p.performed_at, title:p.title, mode:p.mode },{onConflict:"id"}));
+  const weRows=[], setRows=[];
+  p.exercises.forEach(e=>{ weRows.push({ id:e.id, user_id:authUser.id, workout_id:p.id, exercise_slug:e.slug, order_index:e.order_index, target_sets:e.target_sets, rep_low:e.rep_low, rep_high:e.rep_high });
+    e.sets.forEach(s=>setRows.push({ id:s.id, user_id:authUser.id, workout_id:p.id, workout_exercise_id:e.id, set_index:s.set_index, weight:s.weight, reps:s.reps, rpe:null, is_warmup:s.is_warmup, completed:s.completed })); });
+  await sbq(sb.from("sets").delete().eq("workout_id",p.id));
+  await sbq(sb.from("workout_exercises").delete().eq("workout_id",p.id));
+  if(weRows.length) await sbq(sb.from("workout_exercises").upsert(weRows,{onConflict:"id"}));
+  if(setRows.length) await sbq(sb.from("sets").upsert(setRows,{onConflict:"id"}));
+  return "legacy";
 }
 async function deleteWorkoutCloud(id){ if(!cloudReady()) return false;
   try{ await sbq(sb.from("sets").delete().eq("workout_id",id));
        await sbq(sb.from("workout_exercises").delete().eq("workout_id",id));
-       await sbq(sb.from("workouts").delete().eq("id",id)); return true; }catch(e){ return false; } }
+       await sbq(sb.from("workouts").delete().eq("id",id)); plog("delete.ok",{id:id}); return true; }catch(e){ plog("delete.fail",{id:id,err:String(e&&e.message||e)}); return false; } }
 async function pushCheckin(r,wid){ if(!cloudReady()||!r) return; try{ await sb.from("daily_checkins").insert({ user_id:authUser.id, workout_id:wid||null, sleep:r.sleep, energy:r.energy, soreness:r.soreness, motivation:r.motivation, time_available:r.time, avoid:r.avoid||[] }); }catch(e){} }
 async function pushMeasurementRow(id,t,metric,value){ if(!cloudReady()) return; try{ await sb.from("measurements").upsert({ id, user_id:authUser.id, taken_at:t, metric, value },{onConflict:"id"}); }catch(e){} }
 async function pushAllMeasurements(){ if(!cloudReady()) return;
@@ -1230,7 +1396,7 @@ function recoveryDisplay(m){ const st=recoveryStatus(m); const lt=lastTrainedMap
   if(st==="caution") return {label:"Caution · nearly ready", c:REC_META.caution.c, st};
   const h=hoursBetween(lt.date,new Date()); if(h<72) return {label:"Ready · recently trained", c:REC_META.ready.c, st};
   return {label:"Fresh · ready", c:REC_META.ready.c, st}; }
-function weekSessions(){ const s=startOfWeek(); const e=new Date(s); e.setDate(e.getDate()+7); return S.sessions.filter(x=>x.completedAt&&new Date(x.completedAt)>=s&&new Date(x.completedAt)<e); }
+function weekSessions(){ const s=startOfWeek(); const e=new Date(s); e.setDate(e.getDate()+7); return completedSessions().filter(x=>new Date(x.completedAt)>=s&&new Date(x.completedAt)<e); }
 /* ============================================================================ DERIVED ENGINE ============================================================================ */
 /* A set counts when it has weight + reps and isn't a warm-up. No RPE, no separate tick required (P4/P5). */
 function isLogged(s){ return s.type!=="warm" && s.weight!=="" && s.weight!=null && s.reps!=="" && s.reps!=null && !isNaN(+s.weight) && !isNaN(+s.reps); }
@@ -1277,7 +1443,7 @@ function muscleContrib(muscle, sessions){ const list=sessions||weekSessions(); c
 /* Most-recent hard exposure per muscle: keeps date, max credit, and total working sets
    (volume lengthens recovery a little). Only direct/secondary credit (>=0.5) counts. */
 function lastTrainedMap(){ const map={};
-  S.sessions.filter(s=>s.completedAt).sort((a,b)=>new Date(a.completedAt)-new Date(b.completedAt)).forEach(sess=>{
+  completedSessions().sort((a,b)=>new Date(a.completedAt)-new Date(b.completedAt)).forEach(sess=>{
     const per={};
     (sess.entries||[]).forEach(en=>{ const ex=exById(en.exId); if(!ex) return; const n=workingSets(en).length; if(!n) return;
       for(const [m,c] of Object.entries(ex.m)){ if(c<0.5) continue; const p=per[m]||(per[m]={credit:0,sets:0}); p.credit=Math.max(p.credit,c); p.sets+=n; } });
@@ -1285,10 +1451,10 @@ function lastTrainedMap(){ const map={};
   return map; }
 /* Exact-exercise and movement-pattern recency — drive cooldowns in the recommender. */
 function lastExerciseMap(){ const map={};
-  S.sessions.filter(s=>s.completedAt).forEach(sess=>{ (sess.entries||[]).forEach(en=>{ if(!workingSets(en).length) return;
+  completedSessions().forEach(sess=>{ (sess.entries||[]).forEach(en=>{ if(!workingSets(en).length) return;
     const d=sess.completedAt; if(!map[en.exId]||new Date(d)>new Date(map[en.exId].date)) map[en.exId]={date:d}; }); }); return map; }
 function lastPatternMap(){ const map={};
-  S.sessions.filter(s=>s.completedAt).forEach(sess=>{ (sess.entries||[]).forEach(en=>{ const ex=exById(en.exId); if(!ex||!workingSets(en).length) return;
+  completedSessions().forEach(sess=>{ (sess.entries||[]).forEach(en=>{ const ex=exById(en.exId); if(!ex||!workingSets(en).length) return;
     const d=sess.completedAt; if(!map[ex.pattern]||new Date(d)>new Date(map[ex.pattern].date)) map[ex.pattern]={date:d}; }); }); return map; }
 
 /* LAYER 1 — recovery/training status (drives colour). No RPE: working sets assumed hard.
@@ -1629,7 +1795,7 @@ function exerciseTrend(exId){ const d=exerciseTrendData(exId);
   if(key==="below"&&isAssisted(d.ex)) note="More assistance than your baseline block. Order, fatigue and recovery all move this number.";
   return {label:m.label, c:m.c, icon:m.icon, note, state:key, raw:d.state, pct:d.pct, n:d.n, days:d.days, stale:d.stale}; }
 function exerciseHistory(exId){ const out=[];
-  S.sessions.filter(s=>s.completedAt).forEach(sess=>{ (sess.entries||[]).forEach(en=>{ if(en.exId===exId){ const ws=workingSets(en); if(ws.length) out.push({date:sess.completedAt, sessionId:sess.id, sets:ws, bw:bodyweightAt(sess.completedAt), asName:en.asName||null}); } }); });
+  completedSessions().forEach(sess=>{ (sess.entries||[]).forEach(en=>{ if(en.exId===exId){ const ws=workingSets(en); if(ws.length) out.push({date:sess.completedAt, sessionId:sess.id, sets:ws, bw:bodyweightAt(sess.completedAt), asName:en.asName||null}); } }); });
   out.sort((a,b)=>new Date(b.date)-new Date(a.date)); return out; }
 /* Best-ever marks. bestW is the best RAW number in the exercise's own direction (heaviest weight,
    or LOWEST assistance) and bestScore is the comparable effective-load figure PRs are judged on. */
@@ -2969,7 +3135,7 @@ function viewToday(){
   return resume+banner+actions+snapshotCard()+quote;
 }
 function unsyncedCount(){ return (S.sessions||[]).filter(s=>s.completedAt&&s.synced===false).length; }
-function resyncAll(){ (S.sessions||[]).filter(s=>s.completedAt&&s.synced===false).forEach(s=>pushWorkout(s)); setTimeout(render,1400); }
+function resyncAll(){ retryDelay=RETRY_MIN; retryUnsynced("button"); setTimeout(render,1400); }
 function recCard(rec){ const N=rec.exercises.length; const ex=rec.exercises.map((c,i)=>{ const e=exById(c.exId); const tag=e.pref==="love"?' <span class="tag love">★</span>':e.pref==="avoid"?' <span class="tag avoid">avoid</span>':''; const ct=c.caution?' <span class="tag" style="color:var(--amber)">caution</span>':'';
     const pos=positionTag(e,i,N); const pt=pos?' <span class="tag" style="color:'+(pos==="First"?"var(--accent)":"var(--muted)")+'">'+pos+'</span>':'';
     return '<div class="exline"><div><div style="font-family:\'JetBrains Mono\',monospace;font-size:11px;color:var(--faint)">'+(i+1)+'</div></div><div style="flex:1"><div class="nm">'+e.name+tag+ct+pt+'</div><div class="meta">'+musLabels(e)+' · '+e.rest+'s rest</div></div><div class="sets">'+c.sets+'×'+e.rl+'-'+e.rh+'</div></div>'; }).join("");
@@ -3307,7 +3473,7 @@ function evalWins(en,bests){ const ex=exById(en.exId); const ws=workingSets(en);
   return out; }
 
 /* ---------------- HISTORY (P2) ---------------- */
-function viewHistory(){ const list=S.sessions.filter(s=>s.completedAt).sort((a,b)=>new Date(b.completedAt)-new Date(a.completedAt));
+function viewHistory(){ const list=completedSessions().sort((a,b)=>new Date(b.completedAt)-new Date(a.completedAt));
   if(!list.length) return '<div class="card"><div class="empty">No saved workouts yet.</div></div>';
   const rows=list.map(s=>{ const setsN=s.entries.reduce((a,en)=>a+workingSets(en).length,0); const exN=s.entries.length;
     const muscles=[...new Set(s.entries.flatMap(en=>{ const ex=exById(en.exId); return ex?[primaryMuscle(ex)]:[]; }))].map(m=>S.muscles[m]?S.muscles[m].label:m).slice(0,4).join(" · ");
@@ -3483,9 +3649,16 @@ function renderSheet(){ const m=document.getElementById("sheetmount"); if(!sheet
       +'<button class="opt" data-rmex2="'+i+'" style="width:100%;text-align:left"><div class="nm" style="color:var(--red)">Remove exercise</div><span class="sets" style="color:var(--red)">✕</span></button></div>'):'<div class="empty">Not found.</div>'; }
   else if(sheet.type==="confirm"){ const d=sheet.data;
     inner='<h2 style="font-size:18px;margin:2px 0 8px">'+(d.title||"Are you sure?")+'</h2><p class="muted" style="font-size:13.5px;margin:0 0 16px">'+d.msg+'</p><div class="row"><button class="btn '+(d.danger?"danger":"accent")+' full" data-confirmyes>'+(d.yesLabel||"Confirm")+'</button><button class="btn full" data-sheetclose2>Cancel</button></div>'; }
+  else if(sheet.type==="diag"){ const rows=plogRead().slice().reverse().slice(0,60);
+    const line=function(e){ const extra=Object.keys(e).filter(k=>["t","evt","id"].indexOf(k)<0).map(k=>k+"="+(typeof e[k]==="object"?JSON.stringify(e[k]):String(e[k]))).join(" ");
+      return '<div style="font-family:\'JetBrains Mono\',monospace;font-size:10.5px;line-height:1.5;color:'+(/fail|error|missing/.test(e.evt)?'var(--red)':/ok|verified/.test(e.evt)?'var(--accent)':'var(--muted)')+'">'+escAttr(String(e.t||"").slice(5,19).replace("T"," "))+' <b>'+escAttr(String(e.evt))+'</b> '+(e.id?escAttr(String(e.id).slice(0,8))+' ':'')+escAttr(extra)+'</div>'; };
+    inner='<h2 style="font-size:17px;margin:2px 0 4px">Persistence diagnostics</h2><p class="muted" style="font-size:12.5px;margin:0 0 10px">Every save attempt on this device, newest first: workout id, attempt, trigger, insert/update, result, retries. Build '+BUILD+' · '+(rpcUnavailable?'legacy table writes':'atomic RPC writes')+' · '+Object.keys(pushInFlight).length+' in flight.</p>'
+      +'<div class="card" style="padding:10px 12px;max-height:46vh;overflow:auto">'+(rows.length?rows.map(line).join(""):'<div class="empty">No events yet.</div>')+'</div>'
+      +'<div class="row" style="margin-top:12px"><button class="btn full" data-diagcopy>Copy log</button><button class="btn full" data-diagclear>Clear</button></div>'; }
   else if(sheet.type==="recap"){ const r=sheet.data;
     inner='<div style="text-align:center;padding:2px 0 4px"><div class="tiny" style="color:var(--accent)">Session complete</div><h2 style="font-size:20px;margin:4px 0">'+r.title+'</h2></div>'
       +'<div class="kpi" style="margin-top:6px"><div class="k"><b>'+(r.dur||"—")+'</b><span>minutes</span></div><div class="k"><b>'+r.setsN+'</b><span>working sets</span></div><div class="k"><b>'+r.exN+'</b><span>exercises</span></div></div>'
+      +syncStatusLine(r.id)
       +recapDeltas(r)
       +(r.coach?'<div class="card" style="margin:12px 0 0;border-color:rgba(59,130,246,.32);background:rgba(59,130,246,.07)"><div class="tiny" style="color:var(--accent)">Coach says</div><div class="ibody" style="margin-top:4px;color:#C6D0DC">'+r.coach+'</div></div>':"")
       +(r.muscles.length?'<div class="histline" style="margin-top:10px;text-align:center">Trained: '+r.muscles.join(" · ")+'</div>':"")
@@ -3501,6 +3674,8 @@ function renderSheet(){ const m=document.getElementById("sheetmount"); if(!sheet
   const cl2=m.querySelector('[data-sheetclose2]'); if(cl2) cl2.onclick=closeSheet;
   const cy=m.querySelector('[data-confirmyes]'); if(cy) cy.onclick=()=>{ const fn=sheet.data&&sheet.data.onYes; closeSheet(); if(fn) fn(); };
   const rh=m.querySelector('[data-recaphist]'); if(rh) rh.onclick=()=>{ closeSheet(); go("history"); };
+  const dc=m.querySelector('[data-diagcopy]'); if(dc) dc.onclick=()=>{ const txt=JSON.stringify({build:BUILD, user:authUser&&authUser.id, at:iso(new Date()), inflight:Object.keys(pushInFlight), log:plogRead()},null,1); try{ navigator.clipboard.writeText(txt).then(()=>{ dc.textContent="Copied ✓"; }); }catch(e){ dc.textContent="Copy failed"; } };
+  const dx=m.querySelector('[data-diagclear]'); if(dx) dx.onclick=()=>{ plogClear(); renderSheet(); };
   m.querySelectorAll('[data-tips]').forEach(b=>b.onclick=()=>openSheet("tips",b.dataset.tips));
   m.querySelectorAll('[data-setup]').forEach(b=>b.onclick=()=>openSheet("setup",b.dataset.setup));
   m.querySelectorAll('[data-faddg]').forEach(b=>b.onclick=()=>{ addGroup=b.dataset.faddg||""; renderSheet(); });
@@ -3568,7 +3743,8 @@ function renderSheet(){ const m=document.getElementById("sheetmount"); if(!sheet
     var sw=m.querySelector('#swapSearch'); if(sw) sw.oninput=function(){ swapSearch=sw.value; renderSheet(); var n=document.querySelector('#swapSearch'); if(n){ n.focus(); try{n.setSelectionRange(n.value.length,n.value.length);}catch(e){} } }; })();
 }
 /* ============================================================================ ANALYTICS ============================================================================ */
-function completedSessions(){ return S.sessions.filter(s=>s.completedAt); }
+/* v15 — the ONE accessor every stat should use: completed, one record per id. */
+function completedSessions(){ const seen={}; return (S.sessions||[]).filter(s=>{ if(!s||!s.completedAt) return false; if(s.id){ if(seen[s.id]) return false; seen[s.id]=1; } return true; }); }
 function monthKey(d){ const x=new Date(d); return x.getFullYear()+"-"+String(x.getMonth()+1).padStart(2,"0"); }
 function monthLabel(k){ const [y,m]=k.split("-"); return ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][+m-1]+" "+y.slice(2); }
 function periodRange(){ if(statsPeriod==="all") return null; if(statsPeriod==="week"){ const from=startOfWeek(); const to=new Date(from); to.setDate(to.getDate()+7); return {from,to}; } const to=new Date(); const from=new Date(); from.setDate(from.getDate()-(+statsPeriod)); return {from,to}; }
@@ -3597,7 +3773,7 @@ function exerciseProgression(){ return S.exercises.map(e=>{ const h=exerciseHist
           firstRaw:bestRawLoad(e,fh.sets), latestRaw:bestRawLoad(e,lh.sets)}; })
   .filter(Boolean).sort((a,b)=>b.pct-a.pct); }
 function calcStreak(){ let streak=0,cursor=startOfWeek(); for(let i=0;i<26;i++){ const s=new Date(cursor); const e=new Date(s); e.setDate(e.getDate()+7);
-  const n=S.sessions.filter(x=>x.completedAt&&new Date(x.completedAt)>=s&&new Date(x.completedAt)<e).length;
+  const n=completedSessions().filter(x=>new Date(x.completedAt)>=s&&new Date(x.completedAt)<e).length;
   if(i===0&&n<S.settings.sessionsPerWeek){ cursor.setDate(cursor.getDate()-7); continue; } if(n>=S.settings.sessionsPerWeek) streak++; else break; cursor.setDate(cursor.getDate()-7); } return streak; }
 
 /* ============================================================================ INSIGHTS ENGINE (v5)
@@ -3970,7 +4146,15 @@ function buildCard(){
   return '<div class="card"><div class="histline">'+APP_NAME+' <b style="color:var(--accent)">'+BUILD+'</b> · '+BUILD_DATE+' · '+BUILD_NOTE+'</div>'
     +'<div class="histline" style="margin-top:4px">'+cloud+' · '+completedSessions().length+' workouts · '+jn+' journalled'
     +(un?' · <span style="color:var(--amber)">'+un+' unsynced</span>':'')+'</div>'
-    +'<div class="histline" style="margin-top:4px;opacity:.65">data format cfgVersion '+CONFIG_VERSION+(deployedBuild?' · <span style="color:var(--blue)">'+deployedBuild+' available</span>':'')+'</div></div>'; }
+    +'<div class="histline" style="margin-top:4px;opacity:.65">data format cfgVersion '+CONFIG_VERSION+(deployedBuild?' · <span style="color:var(--blue)">'+deployedBuild+' available</span>':'')+'</div>'
+    +'<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:8px"><div class="histline" style="opacity:.65">'+plogRead().length+' persistence events logged'+(lastDraftError?' · <span style="color:var(--red)">draft autosave failing ('+escAttr(lastDraftError)+')</span>':'')+'</div><button class="btn sm" data-act="diag">Diagnostics</button></div></div>'; }
+function syncStatusLine(id){ const s=(S.sessions||[]).find(x=>x&&x.id===id); if(!s) return "";
+  let txt, col;
+  if(s.synced===true){ txt="Saved on this device · backed up to the cloud ✓"; col="var(--accent)"; }
+  else if(pushInFlight[id]){ txt="Saved on this device · backing up to the cloud…"; col="var(--muted)"; }
+  else if(!cloudReady()){ txt="Saved on this device · cloud backup runs once you’re signed in and online"; col="var(--amber)"; }
+  else { txt="Saved on this device · cloud backup pending — retrying automatically"+(s.syncError?" ("+escAttr(String(s.syncError)).slice(0,90)+")":""); col="var(--amber)"; }
+  return '<div class="histline" data-syncstatus style="margin-top:8px;text-align:center;color:'+col+'">'+txt+'</div>'; }
 
 /* v9 \u2014 the lightweight reconciliation queue. Everything you have ever typed in yourself, grouped
    by whether it still needs a decision. Deliberately lives in Settings, not in the workout flow. */
@@ -4134,7 +4318,7 @@ function startClock(){ stopClock(); tickClock(); loggerClock=setInterval(tickClo
 function stopClock(){ if(loggerClock){ clearInterval(loggerClock); loggerClock=null; } }
 function renderFinish(){ const m=document.getElementById("finmount"); if(!m) return;
   if(activeSession&&viewingLogger){ const c=loggerCounts(); const isEdit=activeSession.mode==="edit";
-    if(c.done>=1||isEdit){ m.innerHTML='<div class="stickfin"><button class="b" data-finish>'+(isEdit?"Save changes":"Finish workout")+' · '+c.done+' set'+(c.done===1?"":"s")+'</button></div>'; m.querySelector("[data-finish]").onclick=finishWorkout; return; } }
+    if(c.done>=1||isEdit){ m.innerHTML='<div class="stickfin"><button class="b" data-finish'+(finishing?' disabled':'')+'>'+(finishing?'Saving…':(isEdit?"Save changes":"Finish workout")+' · '+c.done+' set'+(c.done===1?"":"s"))+'</button></div>'; m.querySelector("[data-finish]").onclick=finishWorkout; return; } }
   m.innerHTML=""; }
 
 /* ============================================================================ WIRING ============================================================================ */
@@ -4143,28 +4327,67 @@ function deriveTitle(entries){ const ms={}; entries.forEach(en=>{ const ex=exByI
 function startSession(rec){ loggerOpen={}; rerollCounts={}; const entries=(rec?rec.exercises:[]).map(c=>{ const e=exById(c.exId); return { exId:c.exId, sets:Array.from({length:c.sets||DEFAULT_WORK_SETS},()=>({weight:"",reps:"",type:"work",done:false})) }; });
   activeSession={ id:uid(), startedAt:iso(new Date()), dateISO:new Date().toISOString().slice(0,10), title:rec?rec.title:BUILD_TITLE, mode:rec?"adaptive":"manual", entries }; viewingLogger=true; pendingRec=null; saveActive();
   try{ history.pushState({iron:"workout"},""); }catch(e){} route="today"; render(); }
-function finishWorkout(){ const logged=activeSession.entries.reduce((n,en)=>n+workingSets(en).length,0);
+let finishing=false;
+function finishWorkout(){ if(finishing||!activeSession) return;
+  const logged=activeSession.entries.reduce((n,en)=>n+workingSets(en).length,0);
   if(!logged){ confirmSheet("Nothing’s been logged yet. Finish this workout anyway?","Finish anyway",()=>doFinish(),{danger:true,title:"Finish empty workout?"}); return; }
   doFinish(); }
-function doFinish(){ let saved=null;
-  if(activeSession.mode==="edit"){ const d=activeSession.dateISO; const base=d?new Date(d+"T12:00:00"):new Date();   // edits keep their chosen date (noon if re-dated)
-    const idx=S.sessions.findIndex(s=>s.id===activeSession.editingId); const orig=idx>=0?S.sessions[idx]:null;
-    const completedAt=orig&&dayKey(orig.completedAt)===dayKey(base)?orig.completedAt:iso(base);
-    /* v10: synced:false is set explicitly — an edit used to inherit an undefined flag, which the
-       old rehydrate filter (synced===false) did not rescue, so a failed edit push was lost too. */
-    const updated={...activeSession, id:activeSession.editingId, completedAt, mode:"edit", synced:false}; delete updated.editingId; delete updated.dateISO;
-    if(idx>=0) S.sessions[idx]=updated; else S.sessions.push(updated);   // v10: never drop an edit whose original went missing
-    journalPut(updated); persistLocal(); pushWorkout(updated); saved=updated; }
-  else { /* v13 — "Empty workout" was renamed to "Build workout"; both are treated as placeholder
-       titles so a draft started on v12 and finished on v13 still gets a derived title. */
-    if(!activeSession.title||activeSession.title==="Empty workout"||activeSession.title===BUILD_TITLE) activeSession.title=deriveTitle(activeSession.entries);
-    /* v7: a live session finishes at the moment you hit Finish — never the noon placeholder */
-    const sess={ id:activeSession.id, startedAt:activeSession.startedAt, completedAt:iso(new Date()), title:activeSession.title, mode:activeSession.mode, entries:activeSession.entries, synced:false };
-    /* v10 ordering matters: journal → local → cloud. The workout is durable on disk in two
-       independent places before a single network call is made. */
-    journalPut(sess); S.sessions.push(sess); persistLocal();
-    pushWorkout(sess); if(readinessDraft&&route!=="settings") pushCheckin(readinessDraft,sess.id); saved=sess; }
-  const recap=buildRecap(saved); activeSession=null; viewingLogger=false; loggerOpen={}; saveActive(); stopClock(); go("today"); openSheet("recap",recap); }
+/* v15 — read-back verification: is this workout id actually on disk, in the journal or in S? */
+function verifyLocalSaved(id){
+  try{ if(journalRead().some(x=>x&&x.id===id)) return true; }catch(e){}
+  try{ const raw=localStorage.getItem(KEY); if(raw){ const d=JSON.parse(raw); if((d.sessions||[]).some(s=>s&&s.id===id)) return true; } }catch(e){}
+  return false; }
+/* v15 — the one path a draft becomes a completed workout. Ordered, guarded, verified:
+     0. re-entrancy guard: a second tap, a duplicate handler, a strict-mode double call → no-op
+     1. build the completed session under the draft's own STABLE id (edit: the original's id)
+     2. journal → local (replace-by-id) → read back from disk
+     3. ONLY IF the read-back succeeds: clear the draft, close the logger, show the recap
+        (if it fails the draft stays open and you are told — nothing is thrown away)
+     4. cloud push, single-flight; the recap shows its live status; failures queue a retry
+   The order guarantees a finished workout cannot be lost between "draft deleted" and "saved". */
+function doFinish(){
+  if(finishing||!activeSession) return null;
+  finishing=true; renderFinish();
+  let saved=null, isEdit=false;
+  try{
+    if(activeSession.mode==="edit"){ isEdit=true; const d=activeSession.dateISO; const base=d?new Date(d+"T12:00:00"):new Date();   // edits keep their chosen date (noon if re-dated)
+      const orig=(S.sessions||[]).find(s=>s&&s.id===activeSession.editingId)||null;
+      const completedAt=orig&&dayKey(orig.completedAt)===dayKey(base)?orig.completedAt:iso(base);
+      /* v10: synced:false is set explicitly — an edit used to inherit an undefined flag, which the
+         old rehydrate filter (synced===false) did not rescue, so a failed edit push was lost too. */
+      const updated={...activeSession, id:activeSession.editingId, completedAt, mode:"edit", synced:false}; delete updated.editingId; delete updated.dateISO;
+      saved=updated; }
+    else { /* v13 — "Empty workout" was renamed to "Build workout"; both are treated as placeholder
+         titles so a draft started on v12 and finished on v13 still gets a derived title. */
+      if(!activeSession.title||activeSession.title==="Empty workout"||activeSession.title===BUILD_TITLE) activeSession.title=deriveTitle(activeSession.entries);
+      /* v7: a live session finishes at the moment you hit Finish — never the noon placeholder */
+      saved={ id:activeSession.id, startedAt:activeSession.startedAt, completedAt:iso(new Date()), title:activeSession.title, mode:activeSession.mode, entries:activeSession.entries, synced:false }; }
+    if(!saved.id) saved.id=uid();
+    /* 2. journal → local → verify. Replace-by-id: finishing the same draft twice can only ever
+          overwrite the same record, never append a second one. */
+    const jOk=journalPut(saved); upsertLocalSession(saved); const lOk=persistLocal(); const verified=verifyLocalSaved(saved.id);
+    plog("finish",{id:saved.id, mode:isEdit?"edit":"new", journal:!!jOk, local:!!lOk, verified:verified, ex:(saved.entries||[]).length});
+    if(!verified){
+      /* nothing is on disk — keep the draft open, tell the user, and still try the cloud */
+      const sid=saved.id; finishing=false; renderFinish();
+      confirmSheet("This device couldn’t write the workout to storage ("+(lastPersistError||"storage error")+"). Your workout is still open — nothing has been discarded. Free some space (Settings › Data) and tap Finish again, or retry now.","Retry save",()=>doFinish(),{danger:true,title:"Couldn’t save on this device"});
+      pushWorkout(saved,"finish-unverified").then(ok=>{ if(ok&&activeSession&&(activeSession.id===sid||activeSession.editingId===sid)){
+        /* the cloud has it in full — that is a verified save too */
+        plog("finish.cloud-verified",{id:sid}); activeSession=null; viewingLogger=false; loggerOpen={}; clearActive("finished-cloud:"+sid); stopClock(); go("today"); } });
+      return null;
+    }
+    /* 3. draft cleared only now */
+    let recap=null; try{ recap=buildRecap(saved); }catch(e){ plog("finish.recap-error",{id:saved.id, err:String(e&&e.message||e)}); recap=null; }
+    activeSession=null; viewingLogger=false; loggerOpen={}; clearActive("finished:"+saved.id); stopClock();
+    /* 4. cloud, never blocking the UI; the recap's status line tracks the result */
+    const push=pushWorkout(saved,isEdit?"finish-edit":"finish");
+    if(!isEdit&&readinessDraft&&route!=="settings") pushCheckin(readinessDraft,saved.id);
+    go("today");
+    if(recap) openSheet("recap",recap);
+    const sid=saved.id; push.then(()=>{ if(sheet&&sheet.type==="recap"&&sheet.data&&sheet.data.id===sid) renderSheet(); else render(); }).catch(()=>{});
+    return saved;
+  }finally{ finishing=false; renderFinish(); }
+}
 /* v9 - the recap now answers "was that session actually any good?" by putting the raw totals next
    to two references: the last comparable workout, and your rolling 4-week per-session average. */
 function buildRecap(sess){ const setsN=sess.entries.reduce((a,en)=>a+workingSets(en).length,0);
@@ -4207,6 +4430,7 @@ function wireScreen(){
     else rerollCounts={};
     pendingRec=recommend(readinessDraft,opts); render(); });
   act("resync",resyncAll);
+  act("diag",()=>openSheet("diag"));
   act("loadupdate",loadUpdate);
   act("addlim",openLimSheet); act("editlim",openLimSheet);
   act("removelim",()=>confirmSheet("Remove the active limitation? Recommendations will include all exercises again.","Remove",()=>{ clearLimitation(); render(); },{danger:true,title:"Remove limitation?"}));
@@ -4221,10 +4445,10 @@ function wireScreen(){
     viewingLogger=true; pendingRec=null; window.scrollTo(0,0); render(); });
   act("start-rec",()=>startSession(pendingRec));
   act("resume",()=>{ viewingLogger=true; render(); });
-  act("discard",()=>confirmSheet("Discard this workout? This cannot be undone.","Discard",()=>{ activeSession=null; viewingLogger=false; loggerOpen={}; saveActive(); stopClock(); render(); },{danger:true,title:"Discard workout?"}));
+  act("discard",()=>confirmSheet("Discard this workout? This cannot be undone.","Discard",()=>{ const id=activeSession&&activeSession.id; activeSession=null; viewingLogger=false; loggerOpen={}; clearActive("discard:"+id); stopClock(); render(); },{danger:true,title:"Discard workout?"}));
   act("finish",finishWorkout);
   act("savedraft",()=>{ viewingLogger=false; saveActive(); go("today"); });
-  act("deleteedit",()=>{ const id=activeSession.editingId; activeSession=null; viewingLogger=false; saveActive(); deleteWorkout(id); go("history"); });
+  act("deleteedit",()=>{ const id=activeSession.editingId; activeSession=null; viewingLogger=false; clearActive("deleteedit:"+id); deleteWorkout(id); go("history"); });
   act("add-ex",()=>openSheet("add"));
   act("goto-body",()=>go("body")); act("goto-history",()=>go("history"));
   act("goto-stats-week",()=>{ statsPeriod="week"; go("stats"); });
@@ -4336,7 +4560,7 @@ function wireScreen(){
   act("logbw",()=>{ const v=+document.getElementById("bwInput").value; if(v>0){ const row={id:uid(),date:iso(new Date()),kg:v,synced:false}; S.bodyweight.push(row); save(); pushMeasurementRow(row.id,row.date,"bodyweight",v); render(); } });
   act("export",()=>{ const blob=new Blob([JSON.stringify(S,null,2)],{type:"application/json"}); const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="iron-arc-backup-"+dayKey(new Date())+".json"; a.click(); });
   act("import",()=>document.getElementById("importFile").click());
-  const imp=document.getElementById("importFile"); if(imp) imp.onchange=(e)=>{ const f=e.target.files[0]; if(!f) return; const r=new FileReader(); r.onload=()=>{ try{ const d=JSON.parse(r.result); if(d.sessions){ S=d; try{ ensureSetupDefaults(); rebuildCustomExercises(); }catch(err2){} persistLocal(); migrateLocalToCloud(); render(); alert("Imported."); } }catch(err){ alert("Invalid backup file."); } }; r.readAsText(f); };
+  const imp=document.getElementById("importFile"); if(imp) imp.onchange=(e)=>{ const f=e.target.files[0]; if(!f) return; const r=new FileReader(); r.onload=()=>{ try{ const d=JSON.parse(r.result); if(d.sessions){ S=d; S.sessions=normaliseSessions(S.sessions,"import"); try{ ensureSetupDefaults(); rebuildCustomExercises(); }catch(err2){} persistLocal(); migrateLocalToCloud(); render(); alert("Imported."); } }catch(err){ alert("Invalid backup file."); } }; r.readAsText(f); };
 }
 
 /* ============================================================================ BOOT — autosave recovery + back-guard + session ============================================================================ */
@@ -4408,12 +4632,18 @@ try{
    and my workout was gone" looks like. pagehide/visibilitychange are the reliable pair, and
    both are cheap and idempotent. The same moments are used to drain the retry queue. */
 try{
+  /* v15: flush() never deletes the draft (saveActive only writes), so a stale background tab can
+     no longer clobber the workout being logged in another tab. On return to the foreground the
+     draft is re-adopted if this tab lost it, and the retry queue is drained ONCE — every trigger
+     below funnels through the single-flight retryUnsynced()/pushWorkout(). */
   const flush=()=>{ try{ saveActive(); persistLocal(); }catch(e){} };
   window.addEventListener("pagehide",flush);
   window.addEventListener("blur",flush);
-  document.addEventListener("visibilitychange",()=>{ if(document.hidden) flush(); else { flush(); try{ recoverFromJournal(); retryUnsynced(); }catch(e){} } });
-  window.addEventListener("online",()=>{ try{ retryDelay=RETRY_MIN; retryUnsynced(); }catch(e){} });
-  window.addEventListener("focus",()=>{ try{ retryUnsynced(); }catch(e){} });
+  window.addEventListener("freeze",flush);
+  document.addEventListener("visibilitychange",()=>{ if(document.hidden) flush(); else { flush(); try{ if(adoptDraft()) render(); recoverFromJournal(); retryUnsynced("visible"); }catch(e){} } });
+  window.addEventListener("pageshow",(e)=>{ try{ if(e&&e.persisted&&adoptDraft()) render(); }catch(e2){} });
+  window.addEventListener("online",()=>{ try{ retryDelay=RETRY_MIN; retryUnsynced("online"); }catch(e){} });
+  window.addEventListener("focus",()=>{ try{ retryUnsynced("focus"); }catch(e){} });
   document.addEventListener("resume",flush);
   /* belt and braces: while a workout is open, force a snapshot every 10s even if no input fires */
   setInterval(()=>{ try{ if(activeSession) saveActive(); }catch(e){} },10000);
@@ -4422,7 +4652,7 @@ try{ resumeRest(); }catch(e){}                                /* restore a timer
 if(sb){ sb.auth.getSession().then(({data})=>{ authUser=data.session?data.session.user:null; if(authUser) afterAuth(); else render(); });
   sb.auth.onAuthStateChange((_e,session)=>{ const was=authUser&&authUser.id; authUser=session?session.user:null;
     if(authUser&&authUser.id!==was) afterAuth();
-    else if(!authUser&&was){ try{ clearRest(); }catch(e){} setStorageScope(null); S=seed(); activeSession=null; viewingLogger=false; render(); } }); }
+    else if(!authUser&&was){ afterAuthFor=null; plog("auth.signed-out",{was:was}); try{ clearRest(); }catch(e){} setStorageScope(null); S=seed(); activeSession=null; viewingLogger=false; render(); } }); }
 else { render(); }
 </script>
 </body>
