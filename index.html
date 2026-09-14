@@ -43,10 +43,6 @@ button{font-family:inherit; cursor:pointer; border:none; color:inherit;}
 .brand .dot{width:11px; height:11px; border-radius:3px; background:var(--accent);}
 .brand small{display:block; font-weight:500; font-size:10px; letter-spacing:.22em; color:var(--muted); text-transform:uppercase;}
 .modepill{font-size:11px; font-weight:600; padding:6px 11px; border-radius:999px; border:1px solid var(--line); color:var(--muted); background:var(--panel2);}
-.weekstrip{display:flex; gap:6px; margin:10px 0 4px;}
-.day{flex:1; text-align:center; padding:9px 0 8px; border-radius:var(--rs); background:var(--panel); border:1px solid var(--line);}
-.day b{display:block; font-size:11px; color:var(--muted);} .day .pip{margin:5px auto 0; width:9px; height:9px; border-radius:50%; background:var(--grey);}
-.day.done .pip{background:var(--green);} .day.today{border-color:var(--accent); background:rgba(59,130,246,.08);} .day.today b{color:var(--accent);}
 .card{background:var(--panel); border:1px solid var(--line); border-radius:var(--r); padding:16px; margin:12px 0;}
 .card{box-shadow:var(--shadow);} .card.glow{border-color:var(--line2); background:linear-gradient(180deg,var(--panel2),var(--panel));}
 .cta{width:100%; padding:17px; border-radius:14px; font-family:var(--display); font-weight:800; font-size:16px; color:var(--accent-ink); background:var(--accent); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px;}
@@ -63,6 +59,7 @@ button{font-family:inherit; cursor:pointer; border:none; color:inherit;}
 .tag{display:inline-block; font-size:10px; padding:2px 7px; border-radius:6px; background:var(--panel2); color:var(--muted); margin-left:6px;}
 .tag.love{color:var(--gold);} .tag.avoid{color:var(--red);}
 .logex{margin:12px 0;} .logex .hd{display:flex; justify-content:space-between; align-items:flex-start; gap:10px;} .logex .hd .nm{font-weight:700; font-size:16px;}
+.logex .exmeta{margin-top:4px;} .logex .exmeta .tag{margin-left:4px; vertical-align:middle;} .logex .hd .nm{line-height:1.25; padding-top:6px;}
 .exacts{display:flex; gap:6px; margin-top:8px; flex-wrap:wrap;}
 .exacts button{font-size:11px; padding:6px 9px; border-radius:8px; background:var(--panel2); border:1px solid var(--line); color:var(--muted); display:flex; align-items:center; gap:4px;}
 .exacts button.swap{color:var(--accent);} .exacts button.rm{color:var(--red);}
@@ -93,9 +90,6 @@ button{font-family:inherit; cursor:pointer; border:none; color:inherit;}
    the sticky logger header sticks just below it. */
 :root{--resttop:0px;}
 .rest{position:fixed; left:0; right:0; top:0; z-index:55; display:flex; justify-content:center; pointer-events:none; padding-top:env(safe-area-inset-top,0px); will-change:transform; background:linear-gradient(var(--bg),var(--bg)) no-repeat top / 100% env(safe-area-inset-top,0px);}
-.rest .pill{pointer-events:auto; background:var(--panel2); border:1px solid var(--accent); border-radius:999px; padding:10px 14px; display:flex; align-items:center; gap:12px; box-shadow:0 10px 30px rgba(0,0,0,.5);}
-.rest .t{font-family:'JetBrains Mono',monospace; font-size:20px; font-weight:700; color:var(--accent); min-width:62px; text-align:center;}
-.rest button{background:transparent; color:var(--muted); font-size:13px; padding:4px 8px;}
 .app{padding-top:var(--resttop);}
 .sheet-wrap{position:fixed; inset:0; z-index:60; background:rgba(2,4,7,.7); display:flex; align-items:flex-end; justify-content:center;}
 .sheet{background:var(--panel); border:1px solid var(--line); border-radius:20px 20px 0 0; width:100%; max-width:520px; max-height:85vh; overflow-y:auto; padding:18px 16px calc(20px + env(safe-area-inset-bottom));}
@@ -155,8 +149,8 @@ button{font-family:inherit; cursor:pointer; border:none; color:inherit;}
 .collapsed{display:flex; justify-content:space-between; align-items:center; gap:10px; cursor:pointer;}
 .collapsed .smry{font-size:12px; color:var(--accent); margin-top:3px; font-family:'JetBrains Mono',monospace;}
 .exmenu{display:flex; gap:6px; align-items:center;}
-.exmenu .swap{font-size:12px; padding:8px 11px; border-radius:9px; background:var(--panel2); border:1px solid var(--line); color:var(--accent); font-weight:600;}
-.exmenu .more{width:38px; height:38px; border-radius:9px; background:var(--panel2); border:1px solid var(--line); color:var(--muted); font-size:18px; line-height:1;}
+.exmenu{gap:5px; flex:none;} .exmenu .swap{font-size:11.5px; padding:8px 8px; border-radius:9px; background:var(--panel2); border:1px solid var(--line); color:var(--accent); font-weight:600; white-space:nowrap;}   /* v19.1: tighter so the exercise name keeps two lines beside Form / Swap / ⋯ */
+.exmenu .more{width:32px; height:34px; border-radius:9px; background:var(--panel2); border:1px solid var(--line); color:var(--muted); font-size:18px; line-height:1;}
 .recwarn{font-size:11.5px; color:var(--amber); background:rgba(255,194,61,.10); border:1px solid rgba(255,194,61,.3); border-radius:9px; padding:7px 10px; margin:8px 0 2px;}
 .inp.ghosted::placeholder{color:var(--accent); opacity:.5; font-weight:600;}
 .stickfin{position:fixed; left:0; right:0; bottom:86px; z-index:45; display:flex; justify-content:center; pointer-events:none; padding:0 16px;}
@@ -215,6 +209,8 @@ button{font-family:inherit; cursor:pointer; border:none; color:inherit;}
 .setupline .lb{display:block; font-size:10.5px; letter-spacing:.09em; text-transform:uppercase; color:var(--gold); font-weight:700;}
 .setupline .vl{display:block; font-size:12.5px; color:#D8D2C0; margin-top:2px; word-break:break-word; line-height:1.4;}
 .setupline .ed{font-size:11px; color:var(--muted); flex:none; align-self:center;}
+.setupline .vl.one{white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:0; display:inline; margin-left:6px; font-size:12px;} .setupline .lb{display:inline;} .setupline .arr{color:var(--muted); font-weight:400; margin-left:2px;}
+.setupline:not(.open) .bd{white-space:nowrap; overflow:hidden; text-overflow:ellipsis;} .setupline:not(.open){padding:6px 10px; align-items:center;} .setupline.open .ed{cursor:pointer; text-decoration:underline; text-underline-offset:2px;}
 .setupline.empty2{background:transparent; border-style:dashed; border-color:var(--line);}
 .setupline.empty2 .lb, .setupline.empty2 .ic{color:var(--muted);}
 .setupchips{display:flex; flex-wrap:wrap; gap:4px; margin-top:3px;}
@@ -230,22 +226,45 @@ button{font-family:inherit; cursor:pointer; border:none; color:inherit;}
 .mcred>span.c3{color:var(--muted); border-style:dashed;} .mcred>span.c3>b{color:var(--muted);}
 .mcredline{font-size:11.5px; color:var(--muted); margin-top:3px; line-height:1.45;}
 .mcredline b{font-family:'JetBrains Mono',monospace; font-weight:700; color:#8FB8F8;} .mcredline b.p{color:var(--accent);}
+/* v19 — atomic muscle units: "Upper chest · Direct 1.0" never breaks inside; lines wrap BETWEEN units */
+.mcu{display:inline-block; white-space:nowrap;} .mcu:not(:last-child)::after{content:" \00b7"; color:var(--faint); margin-right:4px;}
+/* v19 — Today: Needs work hero */
+.nw{padding:14px 16px 12px;} .nwhd{display:flex; justify-content:space-between; align-items:baseline; gap:10px;}
+.nwlist{margin-top:6px;} .nwrow{padding:9px 0; border-top:1px solid var(--line); cursor:pointer;} .nwrow:first-child{border-top:none;}
+.nwl1{display:flex; align-items:baseline; gap:7px; min-width:0; white-space:nowrap; overflow:hidden;}
+.nwname{font-weight:700; font-size:14.5px; color:var(--text); overflow:hidden; text-overflow:ellipsis;}
+.nwtier{font-size:10.5px; color:var(--gold); font-weight:600;} .nwready{font-size:10.5px; font-weight:700; font-family:'JetBrains Mono',monospace; flex:none;}
+.nwtier::before,.nwready::before{content:"\00b7"; color:var(--faint); margin-right:7px; font-weight:400;}
+.nwl2{display:flex; justify-content:space-between; align-items:center; gap:10px; margin-top:4px;}
+.nwsets{font-family:'JetBrains Mono',monospace; font-size:12.5px; color:var(--muted); white-space:nowrap;} 
+.nwadd{flex:none; max-width:56%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:12.5px; font-weight:700; padding:7px 11px; border-radius:9px; background:var(--accent); color:var(--accent-ink);}
+.nwadd.added{background:transparent; color:var(--green); border:1px solid rgba(46,204,113,.35); font-weight:600;}
+/* v19 — Today: collapsed summary rows + demoted recommend link */
+.folds{margin:10px 0 0;} .fold{border:1px solid var(--line); border-radius:12px; background:var(--panel); margin-top:6px; overflow:hidden;}
+.foldhd{display:flex; align-items:center; gap:8px; padding:10px 14px; font-size:12.5px; cursor:pointer;} .foldhd>span:first-child{font-weight:600;}
+.foldn{color:var(--faint); flex:1;} .foldn::before{content:"\00b7"; margin-right:8px;} .foldarr{color:var(--faint); font-size:14px;}
+.foldbd{padding:0 14px 10px;}
+.linkbtn{display:block; width:100%; background:transparent; color:var(--faint); font-size:12px; padding:12px 0 4px; text-align:center; text-decoration:underline; text-underline-offset:3px;}
 .mcredkey{font-size:10.5px; color:var(--faint); margin-top:6px; line-height:1.4;}
-/* prominent rest timer (item 2) — v14: one compact bar, docked at the top (see .rest above).
-   Progress runs along the bar's top edge; name · countdown · controls sit on a single row so the
-   whole thing costs ~60px of the screen and is visible on every tab, at every scroll position. */
-.restcard{pointer-events:auto; width:100%; max-width:520px; margin:0; background:rgba(30,39,51,.97); -webkit-backdrop-filter:blur(14px); backdrop-filter:blur(14px); border:1px solid var(--accent); border-top:none; border-radius:0 0 16px 16px; padding:0 12px 9px; box-shadow:0 14px 40px rgba(0,0,0,.6);}
-.rest.done .restcard{border-color:var(--green); background:linear-gradient(135deg,rgba(47,210,122,.30),rgba(47,210,122,.06)),var(--panel2); animation:restpulse .6s ease-in-out 3;}
-@keyframes restpulse{0%,100%{box-shadow:0 0 0 0 rgba(47,210,122,.55);}50%{box-shadow:0 0 0 7px rgba(47,210,122,0);}}
-.restbar{height:4px; border-radius:0; background:var(--panel); overflow:hidden; margin:0 -12px 8px;}
-.restbar i{display:block; height:100%; background:var(--accent); border-radius:0 2px 2px 0; transition:width 1s linear;}
-.rest.done .restbar i{background:var(--green);}
-.restrow{display:flex; justify-content:space-between; align-items:center; gap:10px;}
-.resttitle{font-weight:700; font-size:13.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
-.restmeta{font-size:11px; color:var(--muted); margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
-.restt{font-family:'JetBrains Mono',monospace; font-size:26px; font-weight:700; color:var(--accent); min-width:66px; text-align:right; line-height:1; font-variant-numeric:tabular-nums;}
-.restctl{display:flex; gap:5px; margin:0; flex:none;}
-.restctl button{padding:8px 9px; border-radius:9px; background:var(--panel); border:1px solid var(--line); color:var(--muted); font-size:11.5px; font-weight:700; font-family:'JetBrains Mono',monospace; white-space:nowrap; min-height:34px;}
+.bldrow{border-top:1px solid var(--line);} .bldrow:first-child{border-top:none;}
+/* v19 — Body Summary group headers */
+.bgh{font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--faint); font-weight:700; margin:12px 0 0; padding-bottom:3px; border-bottom:1px solid var(--line);} .bgrp .exline:first-child{border-top:none;}
+/* rest timer — v19: a full-width, high-contrast panel (~170px, about a fifth of a phone screen)
+   docked at the top while a timer is active: REST + next-set line, 64px countdown, −15 / +30 / Skip.
+   Done flips it green and reads READY. Zero footprint when no timer is running (--resttop). */
+.restcard{pointer-events:auto; width:100%; max-width:520px; margin:0; position:relative; background:linear-gradient(160deg,#1E4FD1,#3B82F6 70%,#4F8FF7); color:#fff; border:1px solid rgba(255,255,255,.25); border-top:none; border-radius:0 0 22px 22px; padding:12px 16px 14px; box-shadow:0 18px 50px rgba(0,0,0,.65); overflow:hidden;}
+.rest.done .restcard{background:linear-gradient(160deg,#128A4A,#2FD27A 70%,#4BE38F); color:#062814; animation:restpulse .6s ease-in-out 3;}
+@keyframes restpulse{0%,100%{box-shadow:0 0 0 0 rgba(47,210,122,.55);}50%{box-shadow:0 0 0 10px rgba(47,210,122,0);}}
+.resthd{display:flex; align-items:baseline; gap:10px; min-width:0;}
+.resttitle{font-family:var(--display); font-weight:900; font-size:15px; letter-spacing:.2em; flex:none;}
+.restmeta{font-size:12px; opacity:.85; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0; flex:1;}
+.restt{font-family:'JetBrains Mono',monospace; font-size:64px; font-weight:800; line-height:1; text-align:center; letter-spacing:-.02em; margin:8px 0 10px; font-variant-numeric:tabular-nums;}
+.restbig{font-size:52px; font-weight:900; line-height:1; text-align:center; margin:6px 0 10px;}
+.restctl{display:flex; gap:8px; justify-content:center;}
+.restctl button{flex:1; max-width:120px; padding:11px 0; border-radius:12px; background:rgba(255,255,255,.16); border:1px solid rgba(255,255,255,.3); color:#fff; font-size:14px; font-weight:800; font-family:'JetBrains Mono',monospace; white-space:nowrap; min-height:42px;}
+.restctl button.go{max-width:none; background:rgba(255,255,255,.92); color:#062814; font-family:var(--ui); font-size:15px;}
+.restbar{position:absolute; left:0; right:0; bottom:0; height:5px; background:rgba(0,0,0,.25);} .restbar i{display:block; height:100%; background:#fff; transition:width 1s linear;}
+.rest.done .restbar i{background:#062814;}
 .restctl button[data-restskip]{color:var(--text);}
 @media (max-width:379px){ .restt{font-size:22px; min-width:56px;} .restctl button{padding:8px 7px; font-size:11px;} }
 
@@ -381,9 +400,9 @@ const APP_TAGLINE = "Training Command";
    recover.html on a v10 build is expected and correct.
    BUILD is shown in Settings and is what the deployed-version check compares against, so
    it must be bumped on every deploy. */
-const BUILD = "v18";
+const BUILD = "v19";
 const BUILD_DATE = "2026-09-14";
-const BUILD_NOTE = "Stats V2: four collapsible sections (achievements · training pattern · muscle load & coverage · exercise progress), rep PRs, grouped achievement celebration at Finish, whole-session dedup now evidence-gated";
+const BUILD_NOTE = "Workout UX + Today simplification: Needs-work hero, rounded sets, weekday strip and daily quote removed, prominent rest timer, atomic muscle labels, collapsible setup, grouped Body summary";
 
 /* Approved users (client-side UX gate; the real gate is Supabase signup settings — see DEPLOY).
    To add a person: add one line below with their real email (lowercase), display name and role.
@@ -763,180 +782,8 @@ function ensureSetupDefaults(){ if(!S.settings) S.settings={};
 
 const MEASURE_FIELDS = ["Waist","Chest","Arms","Thigh","Hips","Shoulders","Neck"];
 const PHOTO_POSES = ["Front relaxed","Front flexed","Side relaxed","Side flexed","Back relaxed","Back flexed"];
-/* ---------------------------------------------------------------- v13 DAILY QUOTE
-   ATTRIBUTION NOTE — read before editing.
-   The brief asked for "Dr Mike quotes" and explicitly said: do not invent or misattribute.
-   There is no public, verifiable corpus of transcribed Dr Mike Israetel one-liners large enough
-   to fill a rotating bank, and writing 250 in his voice and putting his name on them would be
-   fabrication. So this file ships TWO banks:
-
-     DR_MIKE_QUOTES  — empty by design. Paste VERIFIED, sourced quotes here. When it has
-                       entries they take precedence and the card is labelled with his name.
-     QUOTES          — house lines. Written for this app, in a dry gym-science register.
-                       Attributed to nobody, labelled just "Daily". Nothing here claims to be
-                       a quotation of any real person.
-
-   Rotation is deterministic on the calendar day (see dailyQuote()), so it changes at midnight
-   and is stable for the rest of the day. No network calls. */
-const DR_MIKE_QUOTES = [];   /* verified + sourced only — see note above */
-const QUOTES = [
-"Discipline is choosing what you want most over what you want now.",
-"The work you avoid is the work that grows you.",
-"Win the set in front of you.",
-"Beat last time. That's the whole game.",
-"Hard, brief, frequent, recovered. Repeat.",
-"No zero days.",
-"Consistency beats intensity you can't repeat.",
-"Junk volume is just cardio with extra steps.",
-"If you can talk through the set, it wasn't a set.",
-"Nobody ever got big arguing about which split is optimal.",
-"The best programme is the one still being run in week nine.",
-"Two reps from failure is close enough. Ten reps from failure is a warm-up.",
-"Your ego doesn't grow. Your muscles might.",
-"Adding weight is progress. Adding momentum is not.",
-"Half a rep is half a stimulus. Do the maths.",
-"Fatigue is the price of stimulus, not the point of it.",
-"If everything is a priority, nothing is.",
-"Sleep is the cheapest performance enhancer you will ever refuse to take.",
-"Recovery is not a rest day. It's the actual growing.",
-"You cannot out-train a schedule you don't keep.",
-"The muscle doesn't know what the plate says.",
-"Slow down the negative. Your joints already asked nicely.",
-"Range of motion is free hypertrophy. Take it.",
-"A programme you dread is a programme you'll abandon.",
-"Train the muscle, not the exercise.",
-"More sets stops working long before you stop adding them.",
-"Deloads are not weakness. Grinding into a hole is.",
-"You are not overtrained. You are under-slept and over-caffeinated.",
-"Progressive overload is boring, which is why it works.",
-"Nobody's last set was ruined by good technique.",
-"Chasing a pump is fine. Confusing it with progress is not.",
-"The mirror lies daily. The logbook lies never.",
-"You don't need motivation. You need a start time.",
-"If the weight moved and the muscle didn't, you moved the weight.",
-"Small, boring, repeated. That's the whole method.",
-"Stretch under load beats stretch on the floor.",
-"Failure is a tool, not a personality.",
-"An extra exercise rarely fixes what an extra session would.",
-"Volume is a dose, not a virtue.",
-"If soreness were growth, everyone's first week would be their best.",
-"Train close enough to failure that the last rep is honest.",
-"You cannot bulk your way out of a technique problem.",
-"The best time to deload is one week before you desperately need one.",
-"Warm-ups are cheap. Rehab is not.",
-"Do the exercise you'll actually do.",
-"Consistency compounds. Enthusiasm doesn't.",
-"Nobody has ever regretted logging the set.",
-"Your genetics set the ceiling. Your attendance sets the floor.",
-"A good session you finish beats a perfect session you skip.",
-"Rest longer. Lift heavier. Stop rushing the wrong thing.",
-"Machines are not cheating. They're just honest.",
-"Free weights are not magic. They're just free.",
-"If your programme changes weekly, you have no programme.",
-"Track it or it didn't happen.",
-"Effort is a skill. Practise it.",
-"Nothing on this app grows muscle. The sets do.",
-"You can have hard sets or lots of sets. Rarely both.",
-"Consistency is what talent looks like from the outside.",
-"The set you didn't want to do is usually the one that counted.",
-"Train for the physique you want in three years, not three weeks.",
-"Momentum is not intensity.",
-"If you're not sure it was close to failure, it wasn't.",
-"Hypertrophy is a slow argument you win by showing up.",
-"Every session is a deposit. None of them are the whole account.",
-"Perfect form at a light weight beats bad form at any weight.",
-"There is no advanced technique that replaces four hard sets.",
-"Stop programme-hopping. Start rep-adding.",
-"You grow between sessions, not during them.",
-"A muscle trained twice a week beats a muscle annihilated once.",
-"Frequency is just volume with better recovery.",
-"Soreness measures novelty, not effectiveness.",
-"The lift doesn't care how you feel about it.",
-"Half the gains are just not getting injured.",
-"Load the muscle in the stretch and let biology do the rest.",
-"Nobody's physique was built on a single perfect workout.",
-"Add a rep. That's it. That's the session.",
-"Discipline is just remembering what you said you wanted.",
-"Boring consistency outperforms interesting chaos.",
-"Train hard enough to need recovery, not so hard you never get it.",
-"Progress is measured in months and logged in minutes.",
-"Two hard sets beat five sloppy ones.",
-"Skipping the warm-up is borrowing from next month.",
-"If you can't control the weight, it isn't your weight yet.",
-"Rest is part of the programme, not a gap in it.",
-"You don't have to enjoy it. You have to do it.",
-"The bar doesn't negotiate.",
-"Effort you can repeat is the only effort that counts.",
-"Novelty feels like progress. It usually isn't.",
-"Volume without recovery is just damage.",
-"A rep in the stretch is worth two at the top.",
-"Show up tired. Train anyway. Adjust the load.",
-"Your best set today beats your best set last year only if you logged both.",
-"The plan is not the point. The execution is.",
-"Anyone can train hard once.",
-"You cannot supplement your way past a missing session.",
-"Protein, sleep, sets. Everything else is decoration.",
-"Being sore is not being productive.",
-"Muscle responds to tension, not to your opinion of the exercise.",
-"Long muscle lengths, controlled reps, honest proximity to failure. Done.",
-"You get stronger by finishing sessions, not by planning them.",
-"Do less, better, more often.",
-"Chase reps before you chase plates.",
-"There is no secret. There's just Tuesday.",
-"The best exercise is the one you can progress for six months.",
-"Nobody cares what you lifted. Your muscles included.",
-"Under-recovered is the most common form of under-trained.",
-"Fatigue masks fitness. Rest reveals it.",
-"You can't feel your way to progress. Read the numbers.",
-"Comfort and hypertrophy rarely share a set.",
-"The last two reps do most of the work.",
-"Consistency is not a personality trait. It's a calendar.",
-"Add weight when the reps are easy, not when your ego is loud.",
-"Don't confuse being busy in the gym with being effective in it.",
-"Recovery capacity is the real limit on volume.",
-"Train the movement you can load, not the one that looks impressive.",
-"Every skipped session is a rep you'll never get back.",
-"You are one honest set away from a decent workout.",
-"A programme is a hypothesis. The logbook is the result.",
-"If it's not measurable, it's not manageable.",
-"You'll never regret the sets you actually did.",
-"Beginner gains are a loan. Consistency is how you keep them.",
-"Strength is a skill. Size is a side effect of doing it often.",
-"Bad days still count. Log them.",
-"The stimulus is in the effort, not the exhaustion.",
-"Nobody built a back thinking about their arms.",
-"Control the eccentric or the eccentric controls your week.",
-"Train legs. Yes, still.",
-"Calves grow the same way everything else does. You just skip them.",
-"An exercise you avoid is usually one you need.",
-"You don't need a new split. You need a new week of the old one.",
-"Deload before your joints file the paperwork for you.",
-"Effort is free. Recovery is not.",
-"Doing the minimum consistently beats the maximum occasionally.",
-"There is no substitute for having done it.",
-"Rushing rest periods is just making the set harder for no benefit.",
-"Your warm-up sets are practice, not competition.",
-"Volume you can't recover from is volume you didn't do.",
-"Growth is the residue of repeated honest effort.",
-"Pick the exercise. Do the sets. Go home.",
-"You already know what to do. Go do that.",
-"Ambition sets the plan. Attendance sets the result.",
-"Your future physique is built out of ordinary Tuesdays.",
-"Stop optimising. Start accumulating.",
-"You cannot cram hypertrophy.",
-"One more good rep, one more good session, one more good month.",
-"The programme works when you do.",
-"Hard sets, adequate rest, enough food, repeat until unrecognisable."
-];
-/* Deterministic on the calendar day: same quote all day, new one at midnight, no RNG, no
-   network. Day number is derived from the local date so a timezone change can't reshuffle it
-   mid-session. Verified quotes, if any exist, always win. */
-function quoteBank(){ return (DR_MIKE_QUOTES&&DR_MIKE_QUOTES.length)?DR_MIKE_QUOTES:QUOTES; }
-function quoteLabel(){ return (DR_MIKE_QUOTES&&DR_MIKE_QUOTES.length)?"Dr Mike":"Daily"; }
-function dayNumber(d){ const x=d||new Date();
-  return Math.floor(Date.UTC(x.getFullYear(),x.getMonth(),x.getDate())/864e5); }
-function dailyQuote(d){ const bank=quoteBank(); if(!bank.length) return "";
-  return bank[((dayNumber(d)%bank.length)+bank.length)%bank.length]; }
+/* v19 — the Daily Quote (v13) is gone: the card, the two quote banks (DR_MIKE_QUOTES / QUOTES)
+   and quoteBank() / quoteLabel() / dayNumber() / dailyQuote(). Nothing else called them. */
 
 /* ============================================================================ STORAGE ============================================================================ */
 let KEY="iron_arc_v2", ACTIVE_KEY="iron_arc_active_v2";
@@ -3000,10 +2847,10 @@ function render(){ const app=document.getElementById("app");
 }
 function seasonLabel(){ if(S.settings&&S.settings.season) return S.settings.season; return ["SUMMER","SUMMER","AUTUMN","AUTUMN","AUTUMN","WINTER","WINTER","WINTER","SPRING","SPRING","SPRING","SUMMER"][new Date().getMonth()]; }
 function header(){ const wk=weekSessions().length;
-  return '<div class="top"><div class="brand"><span class="dot"></span><div>'+APP_NAME.toUpperCase()+'<small>'+APP_TAGLINE+'</small></div></div><span class="modepill">'+seasonLabel()+' · '+wk+'/'+S.settings.sessionsPerWeek+'</span></div>'+weekStrip(); }
-function weekStrip(){ const s=startOfWeek(); const names=["M","T","W","T","F","S","S"]; const today=dayKey(new Date()); let c="";
-  for(let i=0;i<7;i++){ const d=new Date(s); d.setDate(d.getDate()+i); const done=S.sessions.some(x=>x.completedAt&&dayKey(x.completedAt)===dayKey(d)); const isT=dayKey(d)===today;
-    c+='<div class="day '+(done?'done':'')+' '+(isT?'today':'')+'"><b>'+names[i]+'</b><span class="pip"></span></div>'; } return '<div class="weekstrip">'+c+'</div>'; }
+  return '<div class="top"><div class="brand"><span class="dot"></span><div>'+APP_NAME.toUpperCase()+'<small>'+APP_TAGLINE+'</small></div></div><span class="modepill">'+seasonLabel()+' · '+wk+'/'+S.settings.sessionsPerWeek+'</span></div>'; }
+/* v19 — the M T W T F S S weekday strip is gone. Only today was interactive-looking and nothing
+   else read it (no handler, no test, no state); the session count in the mode pill already says
+   how the week is going. weekStrip() and its .weekstrip/.day CSS were removed with it. */
 /* v12 — Reports retired. The training dashboard, direct-vs-indirect muscle split and
    per-exercise charts moved into Stats; the duplicated progression board, recent achievements,
    week scorecard, calendar heatmap and Coach Diagnosis are gone. The route still resolves so a
@@ -3025,29 +2872,24 @@ function viewToday(){
      today's recommendation can offer and you should not have to go looking for that. */
   const _al=activeLimitation();
   if(_al) banner += '<div class="card" style="border-color:rgba(168,123,255,.45);background:rgba(168,123,255,.07);padding:11px 14px"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><div class="histline" style="color:var(--violet)">Limitation active: <b>'+_al.name+'</b>'+(_al.until?' · to '+fmtDate(_al.until):'')+'</div><button class="btn sm" data-act="editlim">Edit</button></div></div>';
-  /* ---------------------------------------------------------------- v13 TODAY LAYOUT
-     Ordered per the brief, decisions first and flavour last:
-       1  compact side-by-side actions
-       2  weekly training snapshot
-       3  priority muscles, each with a one-tap "+ Add"   (inside the snapshot card)
-       4  already covered / still recovering              (inside the snapshot card)
-       5  daily quote
-     Two deliberate removals:
-       - "Adaptive - recovery & volume aware" supporting copy. It described the engine, not a
-         decision, and cost a line of screen on every single visit.
-       - Readiness check-in. Removed from THIS SCREEN ONLY. The readiness engine is untouched:
-         readinessDraft still feeds recommend(), pushCheckin() still records it on finish, and
-         Settings > Readiness check-in still opens the full form for when it is wanted. */
-  const q=dailyQuote();
-  const quote='<div class="card" style="padding:12px 16px"><div class="tiny">'+quoteLabel()+'</div>'
-    +'<p class="quote" style="margin:5px 0 0;font-size:13.5px;line-height:1.45">\u201c'+q+'\u201d</p></div>';
-  const actions='<div class="row" style="gap:10px;margin:12px 0">'
-    +'<button class="cta" data-act="recommend" style="flex:1;min-width:0;padding:15px 10px;font-size:14px">Tell me what to train</button>'
-    +'<button class="cta secondary" data-act="build" style="flex:1;min-width:0;padding:15px 10px;font-size:14px">Build Workout</button></div>';
+  /* ---------------------------------------------------------------- v19 TODAY LAYOUT
+     Today answers one question: what needs work and what can I train now?
+       1  Needs work — the hero. Priority + below minimum + trainable, one compact row each,
+          rounded sets, a one-tap "+ <exercise>" button. (snapshotCard)
+       2  Build Workout — the single primary action.
+       3  Already covered / Still recovering — collapsed one-line summaries (todayFoldRow),
+          open state remembered.
+       4  Tell me what to train — demoted to a text link. The recommendation engine is intact
+          (Settings › Readiness check-in still lands a recommendation here); it just no longer
+          competes with the list. A pending recommendation still renders in full above the hero.
+     Removed in v19: the weekday strip, the daily quote, "N sessions left to hit your target",
+     the "below weekly minimum & trainable" heading and the direct/indirect breakdown per row. */
+  const build='<button class="cta" data-act="build" style="margin:10px 0 4px;padding:15px 10px;font-size:15px">Build Workout</button>';
+  const rec='<button class="linkbtn" data-act="recommend">Tell me what to train</button>';
   if(pendingRec){ return resume+banner+recCard(pendingRec)
-    +'<div class="row" style="margin-top:10px;gap:10px"><button class="cta secondary" data-act="recommend" style="flex:1;min-width:0;padding:14px 10px">\u21bb New recommendation</button><button class="cta secondary" data-act="build" style="flex:1;min-width:0;padding:14px 10px">Build Workout</button></div>'
-    +snapshotCard()+quote; }
-  return resume+banner+actions+snapshotCard()+quote;
+    +'<div class="row" style="margin-top:10px;gap:10px"><button class="cta secondary" data-act="recommend" style="flex:1;min-width:0;padding:14px 10px">↻ New recommendation</button><button class="cta secondary" data-act="build" style="flex:1;min-width:0;padding:14px 10px">Build Workout</button></div>'
+    +snapshotCard()+todayFolds(); }
+  return resume+banner+snapshotCard()+build+todayFolds()+rec;
 }
 function unsyncedCount(){ return (S.sessions||[]).filter(s=>s.completedAt&&s.synced===false).length; }
 function resyncAll(){ retryDelay=RETRY_MIN; retryUnsynced("button"); setTimeout(render,1400); }
@@ -3072,7 +2914,12 @@ function muscleCredits(ex){ if(!ex||!ex.m) return [];
     .map(function(pr){ return {m:pr[0], c:pr[1], label:S.muscles[pr[0]].label, tier:creditTier(pr[1])}; }); }
 /* compact, single line: "Rear delts Direct 1.0 · Upper back Indirect 0.5" — for picker rows, the
    open logger card, workout views and recap lines. v17: the contribution word rides with the number. */
-function musLabels(e){ return muscleCredits(e).map(function(x){ return x.label+' <b'+(x.c>=1?' class="p"':'')+'>'+x.tier+' '+fmtCredit(x.c)+'</b>'; }).join(" · "); }
+/* v19 — each muscle + word + coefficient is ONE atomic inline unit (.mcu, nowrap); the line wraps
+   only between units. Workout UI reads Direct 1.0 / Indirect 0.5 / Indirect 0.25 — the coefficient
+   already says "minor", so creditShort() drops the word there. creditTier() (the formal vocabulary)
+   is unchanged for the detail/form sheets and the coverage views. Maths untouched. */
+function creditShort(c){ return c>=1?"Direct":"Indirect"; }
+function musLabels(e){ return muscleCredits(e).map(function(x){ return '<span class="mcu">'+x.label+' \u00b7 <b'+(x.c>=1?' class="p"':'')+'>'+creditShort(x.c)+' '+fmtCredit(x.c)+'</b></span>'; }).join(" "); }
 /* chips + a worked example, for the exercise detail and form sheets and the open logger card */
 function muscleCreditChips(ex,sets){ const list=muscleCredits(ex); if(!list.length) return "";
   const n=Math.max(1,sets||3);
@@ -3121,84 +2968,70 @@ function weeklySnapshot(){
 const READY_META={ ready:{t:"Ready",c:"var(--green)"}, untrained:{t:"Ready",c:"var(--green)"},
   caution:{t:"Moderate recovery",c:"var(--amber)"}, recovering:{t:"Recovering",c:"var(--violet)"},
   overloaded:{t:"At cap",c:"var(--red)"} };
+/* v19 — display rounding for Today. The engine keeps fractional effective sets (6.75); the
+   decision screen shows whole sets with ordinary rounding (5.3 → 5, 5.5 → 6, 5.6 → 6, 6.75 → 7).
+   A row can therefore read "6 / 6 · 0 remaining" while the engine still has it a fraction short —
+   Adam's call: Today is a decision screen, not an accounting screen. Display only. */
+function roundSets(v){ return Math.round(v||0); }
+function todaySetsPair(v,min){ const shown=roundSets(v); return {shown:shown, rem:Math.max(0,min-shown)}; }
+/* v19 — short exercise name for the Today "+ Add" button. Drops the equipment word (the button is
+   about the muscle, and the toast/logger still carry the full name) and "Chest" after Incline /
+   Decline: "Rear Delt Fly Machine" → "Rear Delt Fly", "Machine Incline Chest Press" → "Incline Press". */
+function shortExName(name){ let n=String(name||"");
+  n=n.replace(/\b(Machine|Plate-Loaded|Smith|Cable|Dumbbell|Barbell|Plated)\b/g,"").replace(/\b(Incline|Decline)\s+Chest\b/g,"$1");
+  n=n.replace(/\s{2,}/g," ").replace(/^\s+|\s+$/g,"").replace(/^-+|-+$/g,"");
+  return n||String(name||""); }
+let foldOpen=(function(){ try{ return JSON.parse(localStorage.getItem("iron_arc_todayfold")||'{}')||{}; }catch(e){ return {}; } })();
+function toggleFold(k){ foldOpen[k]=!foldOpen[k]; try{ localStorage.setItem("iron_arc_todayfold",JSON.stringify(foldOpen)); }catch(e){} }
+/* v19 — Needs work: the Today hero. One ranked pass (builderRanked) reused by every row, exactly
+   as v13 did, so Today and the builder can never suggest different exercises for one muscle. */
+const NW_ROWS=5;
 function snapshotCard(){
   const s=weeklySnapshot();
-  /* v13 - one ranked pass, reused by every priority row. Building it per row would re-run
-     muscleScores() and the whole familiarity pass five times on every Today render, which is
-     exactly the sort of thing that feels sluggish on a phone. */
   const _draft=draftExIds();
   const _ranked=builderRanked(_draft);
+  /* v19.1 — every actionable Priority-tier muscle is always shown; lower tiers fill the remaining
+     slots up to NW_ROWS. Priority is never hidden behind "+N more". */
+  const _pri=s.priority.filter(function(r){ return r.tier==="primary"; });
+  const _rest=s.priority.filter(function(r){ return r.tier!=="primary"; });
+  const _show=_pri.concat(_rest.slice(0,Math.max(0,NW_ROWS-_pri.length)));
+  const _hidden=s.priority.length-_show.length;
   const _pick={}, _cov={};
-  s.priority.slice(0,5).forEach(function(r){
+  _show.forEach(function(r){
     _pick[r.m]=bestForMuscleFromRanked(_ranked,r.m);
-    /* "Added" is about the MUSCLE, not one exercise: once the draft contains direct work for a
-       muscle, that muscle is handled for this session. Without this the row would immediately
-       offer the next-best exercise for the same muscle, and because weekly volume only counts
-       FINISHED sessions the gap would not visibly move — so you could stack five calf exercises
-       into one draft without the screen ever telling you. */
     _cov[r.m]=Object.keys(_draft).some(function(id){ const e=exById(id); return e&&(e.m[r.m]||0)>=1; }); });
-  const pill=function(st){ const m=READY_META[st]||READY_META.ready;
-    return '<span class="mono" style="font-size:10.5px;color:'+m.c+';white-space:nowrap">'+m.t+'</span>'; };
-  const setsWord=function(n){ const x=Math.round(n*10)/10; return x+' set'+(x===1?'':'s'); };
-  /* v13 - a priority row now carries its own action. The row still opens the muscle detail; the
-     "+ Add" button carries data-nodrill so the two never fire together. The button appears only
-     when there IS a familiar, eligible exercise for that muscle - an action that might silently
-     do nothing is worse than no action. Same ranking as the Build Workout shortlist, so Today
-     and the builder can never recommend different things for the same muscle. */
   const prow=function(r){
-    const cand=_pick[r.m];
-    const added=!!_cov[r.m];
+    const cand=_pick[r.m]; const added=!!_cov[r.m]; const rm=READY_META[r.status]||READY_META.ready;
+    const pair=todaySetsPair(r.v,r.min);
     const act=(!cand&&!added)?''
-      :(added?'<span class="tag" data-nodrill="1" style="color:var(--green);border:1px solid rgba(46,204,113,.35);margin-left:8px;white-space:nowrap">Added \u2713</span>'
-             :'<button class="btn sm accent" data-addmuscle="'+r.m+'" data-nodrill="1" style="margin-left:8px;white-space:nowrap">+ Add</button>');
-    return '<div class="exline" data-muscle="'+r.m+'" style="padding:6px 0;cursor:pointer">'
-      +'<div style="flex:1;min-width:0"><div class="nm" style="font-size:13px">'+r.label
-      +(r.tier==="primary"?' <span class="tag" style="color:var(--gold)">priority</span>':'')+'</div>'
-      +'<div class="histline">'+r.v.toFixed(1)+'/'+r.min+' \u00b7 '+setsWord(r.gap)+' below minimum'
-      +(r.secondary>0.05?' \u00b7 '+r.direct.toFixed(1)+' direct + '+r.secondary.toFixed(1)+' indirect':'')+'</div>'
-      +(added?'<div class="histline" style="color:var(--faint)">already in this workout</div>'
-             :(cand?'<div class="histline" style="color:var(--faint)">adds: '+escAttr(cand.ex.name)+'</div>':''))+'</div>'
-      +pill(r.status)+act+'</div>'; };
-  const chips=function(list){ return list.map(function(r){
-    return '<span class="tag" data-muscle="'+r.m+'" style="cursor:pointer;color:var(--muted);border:1px solid var(--line);margin:2px 4px 2px 0;display:inline-block">'+r.label+' '+r.v.toFixed(1)+'</span>'; }).join(""); };
+      :(added?'<span class="nwadd added" data-nodrill="1">Added ✓</span>'
+             :'<button class="nwadd" data-addmuscle="'+r.m+'" data-nodrill="1" title="'+escAttr(cand.ex.name)+'">+ '+escAttr(shortExName(cand.ex.name))+'</button>');
+    return '<div class="nwrow" data-muscle="'+r.m+'">'
+      +'<div class="nwl1"><span class="nwname">'+r.label+'</span>'
+      +(r.tier==="primary"?'<span class="nwtier">Priority</span>':'')
+      +'<span class="nwready" style="color:'+rm.c+'">'+rm.t.replace(" recovery","")+'</span></div>'
+      +'<div class="nwl2"><span class="nwsets">'+pair.shown+' / '+r.min+' sets · '+pair.rem+' remaining</span>'+act+'</div></div>'; };
   const tcol=s.sessions>=s.target?"var(--green)":s.sessions>=s.target-1?"var(--amber)":"var(--accent)";
-  let h='<div class="card"><div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px">'
-    +'<div class="tiny">This week · Mon–Sun</div>'
-    +'<div class="mono" style="font-size:13px;color:'+tcol+';font-weight:700">'+s.sessions+'/'+s.target+' sessions</div></div>';
+  let h='<div class="card nw"><div class="nwhd"><div class="tiny" style="color:var(--accent)">Needs work</div>'
+    +'<div class="mono" style="font-size:12.5px;color:'+tcol+';font-weight:700">'+s.sessions+'/'+s.target+' sessions</div></div>';
   if(s.priority.length){
-    h+='<div class="tiny" style="margin-top:12px;color:var(--accent)">Priority · below weekly minimum &amp; trainable</div>'
-      +'<div style="margin-top:2px">'+s.priority.slice(0,5).map(prow).join("")+'</div>';
-    if(s.priority.length>5) h+='<div class="histline" style="margin-top:4px">+'+(s.priority.length-5)+' more below minimum</div>';
+    h+='<div class="nwlist">'+_show.map(prow).join("")+'</div>';
+    if(_hidden>0) h+='<button class="linkbtn" data-act="goto-body" style="padding:8px 0 0;text-align:left">+'+_hidden+' more \u2192 Body</button>';
   } else {
-    h+='<div class="histline" style="margin-top:12px;color:var(--green)">Every muscle is at or above its weekly minimum.</div>';
+    h+='<div class="histline" style="margin-top:8px;color:var(--green)">Every muscle is at or above its weekly minimum.</div>';
   }
-  if(s.covered.length) h+='<div class="tiny" style="margin-top:14px">Already covered</div><div style="margin-top:4px">'+chips(s.covered.slice(0,8))+'</div>';
-  if(s.recovering.length) h+='<div class="tiny" style="margin-top:12px;color:var(--violet)">Still recovering</div><div style="margin-top:4px">'+chips(s.recovering.slice(0,6))+'</div>';
-  h+='<div class="histline" style="margin-top:12px">'+(s.remainingSessions?s.remainingSessions+' session'+(s.remainingSessions===1?'':'s')+' left to hit your target.':'Weekly session target met.')+'</div>';
   return h+'</div>'; }
+/* v19 — Already covered / Still recovering as collapsed one-line rows. Tap to expand; state is
+   remembered. Sets shown rounded, same rule as the hero. */
+function todayFoldRow(key,title,color,list){ if(!list.length) return "";
+  const open=!!foldOpen[key];
+  const chips=list.map(function(r){ return '<span class="tag" data-muscle="'+r.m+'" style="cursor:pointer;color:var(--muted);border:1px solid var(--line);margin:2px 4px 2px 0;display:inline-block">'+r.label+' '+roundSets(r.v)+'/'+r.min+'</span>'; }).join("");
+  return '<div class="fold'+(open?' open':'')+'"><div class="foldhd" data-fold="'+key+'"><span style="color:'+color+'">'+title+'</span><span class="foldn">'+list.length+' muscle'+(list.length===1?'':'s')+'</span><span class="foldarr">'+(open?'▾':'›')+'</span></div>'
+    +(open?'<div class="foldbd">'+chips+'</div>':'')+'</div>'; }
+function todayFolds(){ const s=weeklySnapshot();
+  return '<div class="folds">'+todayFoldRow("covered","Already covered","var(--muted)",s.covered)+todayFoldRow("recovering","Still recovering","var(--violet)",s.recovering)+'</div>'; }
+/* v19 — weekCard() and miniDash() (v12 Today leftovers with no callers) removed. */
 
-function weekCard(){ const w=weekStatus(); const mom=momentumScore();
-  const setsLogged=weekSessions().reduce((a,x)=>a+sessionSets(x),0); const setTarget=w.target*12;
-  const primaryAll=Object.values(S.muscles).filter(c=>c.tier==="primary").length; const primaryMet=primaryAll-w.primaryBelow.length; const primaryPct=primaryAll?Math.round(primaryMet/primaryAll*100):100;
-  const need=w.needsAttention.slice(0,5).map(m=>S.muscles[m].label.toLowerCase());
-  const recov=Object.keys(S.muscles).filter(m=>{const st=recoveryStatus(m); return st==="recovering"||st==="overloaded";}).slice(0,2).map(m=>S.muscles[m].label.toLowerCase());
-  const al=activeLimitation(); const avoid=[]; if(recov.length) avoid.push(recov.join(", ")+" recovering"); if(al) avoid.push(al.name.toLowerCase()+" — exercises excluded");
-  const dots=Array.from({length:Math.max(w.target,w.sess)},(_,i)=>'<span style="width:11px;height:11px;border-radius:3px;background:'+(i<w.sess?'var(--accent)':'var(--panel2)')+';border:1px solid var(--line);display:inline-block"></span>').join(" ");
-  const row=(l,v,c)=>'<div class="exline" style="padding:9px 0"><span class="histline">'+l+'</span><span class="mono" style="font-size:13.5px;color:'+(c||'var(--text)')+'">'+v+'</span></div>';
-  return '<div class="card"><div style="display:flex;justify-content:space-between;align-items:center"><div class="tiny">This week · Mon–Sun</div><div style="display:flex;gap:5px">'+dots+'</div></div><div style="margin-top:6px">'
-    + row("Sessions", w.sess+" / "+w.target, w.sess>=w.target?'var(--green)':'var(--accent)')
-    + row("Effective sets", setsLogged+" / "+setTarget+" min", setsLogged>=setTarget?'var(--green)':'var(--text)')
-    + row("Priority muscles", primaryPct+"% complete", primaryPct>=100?'var(--green)':'var(--amber)') + '</div>'
-    +(need.length?'<div class="histline" style="margin-top:8px"><b>Still needs:</b> '+need.join(", ")+'</div>':'<div class="histline" style="margin-top:8px;color:var(--green)">All priority muscles met this week ✓</div>')
-    +(avoid.length?'<div class="histline" style="margin-top:3px"><b>Avoid today:</b> '+avoid.join("; ")+'</div>':'')
-    +'<div class="row" style="margin-top:11px"><button class="btn ghost sm" data-act="momentum-explain" style="flex:1">Momentum '+mom.score+' · '+mom.label+'</button><button class="btn ghost sm" data-act="goto-stats-week" style="flex:1">Week view →</button></div></div>'; }
-
-function miniDash(){ const flagged=Object.keys(S.muscles).map(m=>({m,g:goalStatus(m),v:weeklyVolume()[m],cfg:S.muscles[m]}))
-    .filter(x=>x.cfg.tier!=="maintenance"||x.v<x.cfg.min).filter(x=>x.g.label==="Below min"||x.g.label==="Over cap").slice(0,4);
-  if(!flagged.length) return ""; const rows=flagged.map(f=>'<div class="exline"><div class="nm">'+f.cfg.label+'</div><span class="statuspill" style="background:'+f.g.c+'22;color:'+f.g.c+'">'+f.g.label+' · '+f.v.toFixed(1)+'</span></div>').join("");
-  return '<div class="card"><div class="tiny">Needs attention</div><div style="margin-top:6px">'+rows+'</div><button class="btn ghost sm full" data-act="goto-body" style="margin-top:8px">Open Body →</button></div>'; }
-
-/* ---------------- LOGGER (new + edit) ---------------- */
 function loggerCurrentIndex(){ for(let i=0;i<activeSession.entries.length;i++){ const en=activeSession.entries[i]; if(en.sets.some(s=>s.type!=="warm"&&!isLogged(s))) return i; } return activeSession.entries.length-1; }
 function entryDone(en){ const work=en.sets.filter(s=>s.type!=="warm"); return work.length>0 && work.every(isLogged); }
 /* v11 — the next exercise still needing work, searching forward first so the session flows in
@@ -3235,7 +3068,7 @@ function ghostFor(en,si){ const e=exById(en.exId);
 function viewLogger(){ const isEdit=activeSession.mode==="edit"; const c=loggerCounts();
   const entries=activeSession.entries.map((en,i)=>loggerEx(en,i)).join("");
   const dateBlock=isEdit?('<div class="card"><div class="tiny">Workout date</div><input class="inp" type="date" value="'+(activeSession.dateISO||new Date().toISOString().slice(0,10))+'" data-wdate style="text-align:left;margin-top:6px;padding:9px"></div>'):"";
-  const head='<div class="lhead"><div style="flex:1"><div class="ttl">'+(isEdit?"Editing · ":"")+(activeSession.title||"Workout")+'</div><div class="meta">'+(isEdit?fmtDate(activeSession.dateISO||new Date()):'<span id="elapsed">0:00</span> elapsed · tap a set’s ✓ to log the suggested numbers')+'</div></div><div><div class="clk" id="setprog">'+c.done+'/'+c.total+'</div><div class="prog">sets</div></div></div>';
+  const head='<div class="lhead"><div style="flex:1"><div class="ttl">'+(isEdit?"Editing · ":"")+(activeSession.title||"Workout")+'</div><div class="meta">'+(isEdit?fmtDate(activeSession.dateISO||new Date()):'<span id="elapsed">0:00</span> elapsed')+'</div></div><div><div class="clk" id="setprog">'+c.done+'/'+c.total+'</div><div class="prog">sets</div></div></div>';
   return head+dateBlock+builderPanel()+entries
     +'<button class="btn ghost full" data-act="add-ex" style="margin:4px 0 12px;color:var(--accent)">+ Add exercise</button>'
     +'<button class="btn ghost full danger" data-act="'+(isEdit?'deleteedit':'discard')+'" style="margin:4px 0 100px">'+(isEdit?"Delete this workout":"Discard workout")+'</button>'; }
@@ -3259,8 +3092,7 @@ function builderPanel(){
   const nIn=activeSession.entries.length;
   const hdr='<div data-bldtoggle="1" style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:14px 16px;cursor:pointer">'
     +'<div><div class="tiny" style="color:var(--accent)">Recommended to add</div>'
-    +'<div class="histline" style="margin-top:2px">'+(nIn?nIn+' exercise'+(nIn===1?'':'s')+' in this workout · ':'')
-    +'ranked by what you need and what you actually train</div></div>'
+    +(nIn?'<div class="histline" style="margin-top:2px">'+nIn+' exercise'+(nIn===1?'':'s')+' in this workout</div>':'')+'</div>'
     +'<span class="muted" style="font-size:15px">'+(builderOpen?'−':'+')+'</span></div>';
   if(!builderOpen) return '<div class="card" style="padding:0;overflow:hidden;border-color:var(--line2)">'+hdr+'</div>';
 
@@ -3282,11 +3114,11 @@ function builderPanel(){
     const list=builderShortlist(excl,BUILD_SHORTLIST);
     rows=list.length?list.map(function(c){ return builderRow(c,false); }).join("")
       :'<div class="empty" style="padding:14px">Nothing left to suggest — every trainable muscle is at its weekly minimum, or everything eligible is already in this workout. Search below to add anything you like.</div>';
-    note='Below weekly minimum, recovered, and weighted towards what you train regularly.';
+    note='';   /* v19: the row itself says muscle · gap · readiness; the sentence restated it */
   }
   return '<div class="card" style="padding:0;overflow:hidden;border-color:var(--line2)">'+hdr
     +'<div style="padding:0 16px 14px">'
-    +'<div class="histline" style="margin-bottom:6px">'+note+'</div>'
+    +(note?'<div class="histline" style="margin-bottom:6px">'+note+'</div>':'')
     +rows
     +'<hr class="sub">'
     +'<input class="inp srch" id="bldSearch" placeholder="Search any exercise by name, muscle, kit..." value="'+escAttr(bldSearch||"")+'">'
@@ -3311,16 +3143,18 @@ function builderFallbackRow(e){ const pm=primaryMuscle(e); const cfg=S.muscles[p
 function builderRow(c,added){
   const rm=READY_META[c.status]||READY_META.ready;
   const g=Math.round(c.gap*10)/10;
-  const need=g>0.01?(g+' set'+(g===1?'':'s')+' below minimum'):'at weekly minimum';
+  const need=g>0.01?(roundSets(g)+' to go'):'at minimum';   /* v19: short, same wording as Body */
   const famTag=c.uses>=REGULAR_USE_MIN?' <span class="tag" style="color:var(--green)">regular</span>'
              :(c.uses===0?' <span class="tag" style="color:var(--faint)">new to you</span>':'');
   const prefTag=c.ex.pref==="love"?' <span class="tag love">★</span>':'';
-  return '<div class="exline" style="padding:8px 0"><div style="flex:1;min-width:0">'
+  /* v19 — the muscle line sits under the row at full width so the atomic units pack two or three
+     to a line instead of one per line beside the + Add button. */
+  return '<div class="bldrow"><div class="exline" style="padding:8px 0 0;border-top:none"><div style="flex:1;min-width:0">'
     +'<div class="nm" style="font-size:13.5px">'+c.ex.name+prefTag+famTag+'</div>'
-    +'<div class="histline">'+c.label+' · '+need+' · <span style="color:'+rm.c+'">'+rm.t+'</span></div>'
-    +'<div class="mcredline" style="margin-top:2px">'+musLabels(c.ex)+'</div></div>'
+    +'<div class="histline">'+c.label+' · '+need+' · <span style="color:'+rm.c+'">'+rm.t.replace(" recovery","")+'</span></div></div>'
     +(added?'<span class="tag" style="color:var(--green);border:1px solid rgba(46,204,113,.35);white-space:nowrap">Added ✓</span>'
-           :'<button class="btn sm accent" data-bldadd="'+c.exId+'" style="white-space:nowrap">+ Add</button>')+'</div>'; }
+           :'<button class="btn sm accent" data-bldadd="'+c.exId+'" style="white-space:nowrap">+ Add</button>')+'</div>'
+    +'<div class="mcredline" style="margin:2px 0 8px">'+musLabels(c.ex)+'</div></div>'; }
 function loggerEx(en,i){ const e=exById(en.exId)||{id:en.exId,name:en.asName||"Unknown exercise",m:{},sl:2,rl:8,rh:12,rest:90,equip:"other",type:"isolation"};
   const cur=loggerCurrentIndex(); const done=entryDone(en);
   /* v11 — one exercise open at a time. Previously every unfinished exercise was expanded, so a
@@ -3343,23 +3177,57 @@ function loggerEx(en,i){ const e=exById(en.exId)||{id:en.exId,name:en.asName||"U
   const gradEx=prog.graduate?exById(prog.graduate):null;
   const gradCta=gradEx?'<button class="btn sm" data-graduate="'+i+'|'+gradEx.id+'" style="margin-top:6px;color:var(--green);border-color:rgba(52,199,89,.45)">↗ Switch to '+gradEx.name+'</button>':'';
   const assistNote=isAssisted(e)?'<div class="histline" style="color:var(--gold)">Lower assistance = progress. '+(hasBodyweight()?'Effective load right now: '+(function(){var bwv=bodyweightAt(new Date()); var c=bestRawLoad(e,(last&&last.sets)||[]); return (bwv!=null&&last)?(Math.round((bwv-c)*10)/10)+'kg':'—';})():'Log your bodyweight to see effective load.')+'</div>'+gradCta:'';
-  return '<div class="card logex" data-ex="'+i+'"><div class="hd"><div style="flex:1" data-expand="'+i+'"><div class="nm">'+entryName(en)+cxTag+' '+trendChip+'</div><div class="histline">Last: <b>'+lastStr+'</b></div><div class="histline target">'+arrow+'Next: '+prog.note+'</div>'+assistNote+'<div class="histline" style="color:'+tr.c+'">'+tr.note+'</div><div class="mcredline" data-tips="'+en.exId+'" style="cursor:pointer">'+musLabels(e)+'</div></div><div class="exmenu"><button class="swap" data-tips="'+en.exId+'" style="color:var(--gold)">Form</button><button class="swap" data-swap="'+i+'">⇄ Swap</button><button class="more" data-more="'+i+'">⋯</button></div></div>'
+  /* v19 — the header row is name + Form / Swap / ⋯ only; the meta lines sit BELOW it at full card
+     width. In v18 the meta shared the row with Form / Swap / ⋯, so the name
+     and the muscle line were squeezed into ~55% of the card and wrapped onto three to five lines. The trend explanation
+     sentence (tr.note) is dropped from the card — the chip carries the verdict, the exercise
+     sheet still has the sentence. */
+  return '<div class="card logex" data-ex="'+i+'"><div class="hd"><div class="nm" data-expand="'+i+'" style="flex:1;min-width:0">'+entryName(en)+cxTag+'</div><div class="exmenu"><button class="swap" data-tips="'+en.exId+'" style="color:var(--gold)">Form</button><button class="swap" data-swap="'+i+'">⇄ Swap</button><button class="more" data-more="'+i+'">⋯</button></div></div>'
+    +'<div class="exmeta" data-expand="'+i+'"><div class="histline"><span class="mcu">Last: <b>'+lastStr+'</b></span> '+trendChip+'</div><div class="histline target">'+arrow+'Next: '+prog.note+'</div>'+assistNote+'<div class="mcredline" data-tips="'+en.exId+'" style="cursor:pointer">'+musLabels(e)+'</div></div>'
     +recwarn
     +setupStrip(en.exId)
     +'<div class="setgrid"><div class="sethead"><span>#</span><span>prev</span>'+(inputOrder()==="rw"?'<span>reps</span><span>'+loadColLabel(e)+'</span>':'<span>'+loadColLabel(e)+'</span><span>reps</span>')+'<span>log</span></div>'+rows+'</div>'
     +'<button class="btn ghost sm" data-addset="'+i+'" style="margin-top:4px">+ set</button>'+flaghtml+winhtml+'</div>'; }
-/* v8 — the tappable setup / machine-settings strip shown on every expanded logger card.
-   Populated cards show the saved values as chips; empty ones show a dashed "add" prompt so the
-   field set is always one tap away. Both open the same editable sheet. */
+/* v19 — SETUP as a compact collapsible block on the open logger card.
+   Collapsed (default):  ⚙ Setup ▸  Seat: 5 notches · Arms: position 4      (one line, ellipsised)
+   Expanded:             the structured fields in full, a free-text note ONLY when it says
+                         something the fields do not, and the edit action.
+   Open/closed is remembered per exercise (localStorage iron_arc_setupopen). Empty setups keep the
+   dashed one-line "add" prompt. Storage is never touched by the display rule — a note that only
+   repeats the structured fields is hidden, not deleted (see setupNoteRedundant). */
+const SETUP_SHORT={seat:"Seat", back:"Back", arm:"Arms", pad:"Pad", rom:"ROM", safety:"Safeties", handle:"Handle", pulley:"Pulley", bench:"Bench", foot:"Feet"};
+let setupOpen=(function(){ try{ return JSON.parse(localStorage.getItem("iron_arc_setupopen")||'{}')||{}; }catch(e){ return {}; } })();
+function toggleSetupOpen(exId){ setupOpen[exId]=!setupOpen[exId]; try{ localStorage.setItem("iron_arc_setupopen",JSON.stringify(setupOpen)); }catch(e){} }
+function setupNums(str){ return (String(str||"").match(/\d+(?:\.\d+)?/g)||[]); }
+/* A legacy note is DETERMINISTICALLY redundant when it carries at least one number and every
+   number in it is already one of the structured values ("Set with Tim — 5 visible seat notches,
+   arms on position 4" against seat:"5 notches", arm:"Position 4"), or when it is byte-identical
+   to the seeded default note. A note with no numbers ("neutral grip, slow eccentric") or with a
+   number the fields do not hold is genuinely additional and stays visible. */
+function setupNoteRedundant(exId,s){ s=s||exSetup(exId)||{}; const note=String(s.notes||"").trim(); if(!note) return true;
+  const seeded=SETUP_DEFAULTS[exId]&&SETUP_DEFAULTS[exId].notes; if(seeded&&note===seeded) return true;
+  const fieldNums={}; SETUP_FIELD_ORDER.forEach(function(k){ setupNums(s[k]).forEach(function(n){ fieldNums[n]=1; }); });
+  const nn=setupNums(note); if(!nn.length) return false;
+  return nn.every(function(n){ return fieldNums[n]; }); }
+/* collapsed-line value: "Position 4" → "4" when the field is the arm/handle position (the label already
+   says Arms); everything else verbatim. Expanded chips always show the stored value in full. */
+function setupShortVal(k,v){ v=String(v||"").trim(); if(k==="arm"||k==="back"||k==="rom") v=v.replace(/^(position|pos\.?|setting|notch)\s+(?=\S)/i,""); return v; }
+function setupPairs(exId){ const s=exSetup(exId)||{};
+  return SETUP_FIELD_ORDER.filter(function(k){ return s[k]&&String(s[k]).trim(); })
+    .map(function(k){ return {k:k, short:SETUP_SHORT[k]||SETUP_FIELDS[k].label, label:SETUP_FIELDS[k].label, v:String(s[k]).trim()}; }); }
 function setupStrip(exId){ const ex=exById(exId); if(!ex) return "";
   const s=exSetup(exId); const keys=setupFieldsFor(ex);
   if(!hasSetup(exId)){
     if(!keys.length && ex.equip!=="machine") return '<button class="setupline empty2" data-setup="'+exId+'"><span class="ic">⚙</span><span class="bd"><span class="lb">Setup notes</span></span><span class="ed">add</span></button>';
-    return '<button class="setupline empty2" data-setup="'+exId+'"><span class="ic">⚙</span><span class="bd"><span class="lb">Setup / machine settings</span><span class="vl" style="color:var(--muted)">'+(keys.length?keys.map(k=>SETUP_FIELDS[k].label).slice(0,3).join(" · "):"Add a note")+'</span></span><span class="ed">add</span></button>'; }
-  const chips=SETUP_FIELD_ORDER.filter(k=>s[k]&&String(s[k]).trim()).map(k=>'<span>'+SETUP_FIELDS[k].label+': '+escAttr(String(s[k]).trim())+'</span>').join("");
-  const note=(s.notes&&String(s.notes).trim())?'<span class="vl">'+escAttr(String(s.notes).trim())+'</span>':"";
-  return '<button class="setupline" data-setup="'+exId+'"><span class="ic">⚙</span><span class="bd"><span class="lb">Setup</span>'
-    +(chips?'<span class="setupchips">'+chips+'</span>':"")+note+'</span><span class="ed">edit</span></button>'; }
+    return '<button class="setupline empty2" data-setup="'+exId+'"><span class="ic">⚙</span><span class="bd"><span class="lb">Setup</span><span class="vl" style="color:var(--muted)">'+(keys.length?keys.map(k=>SETUP_SHORT[k]||SETUP_FIELDS[k].label).slice(0,3).join(" · "):"Add a note")+'</span></span><span class="ed">add</span></button>'; }
+  const pairs=setupPairs(exId); const open=!!setupOpen[exId];
+  const noteRaw=(s.notes&&String(s.notes).trim())||""; const showNote=noteRaw&&!setupNoteRedundant(exId,s);
+  const line=pairs.length?pairs.map(function(p){ return '<span class="mcu">'+p.short+' '+escAttr(setupShortVal(p.k,p.v))+'</span>'; }).join(" · "):(noteRaw?escAttr(noteRaw):"");
+  if(!open) return '<div class="setupline" data-setuptoggle="'+exId+'"><span class="ic">⚙</span><span class="bd"><span class="lb">Setup <span class="arr">▸</span></span><span class="vl one">'+line+'</span></span></div>';
+  return '<div class="setupline open"><div class="bd" style="width:100%"><div data-setuptoggle="'+exId+'" style="display:flex;justify-content:space-between;align-items:center;cursor:pointer"><span class="lb">Setup <span class="arr">▾</span></span><span class="ed" data-setup="'+exId+'">edit</span></div>'
+    +(pairs.length?'<span class="setupchips">'+pairs.map(function(p){ return '<span>'+p.short+' '+escAttr(p.v)+'</span>'; }).join("")+'</span>':'')
+    +(showNote?'<span class="vl">'+escAttr(noteRaw)+'</span>':(pairs.length?'':'<span class="vl">'+escAttr(noteRaw)+'</span>'))
+    +'</div></div>'; }
 function prevForSet(en,si){ const last=exerciseHistory(en.exId).filter(h=>h.sessionId!==activeSession.editingId)[0]; if(!last) return ""; const ps=last.sets[workIndex(en,si)]; return ps?fmtSet(ps.weight,ps.reps):""; }
 function isCurrentSet(en,si){ const s=en.sets[si]; if(s.type==="warm"||isLogged(s)) return false; for(let k=0;k<si;k++){ if(en.sets[k].type!=="warm"&&!isLogged(en.sets[k])) return false; } return true; }
 function setRow(ei,si,s){ const en=activeSession.entries[ei]; const warm=s.type==="warm"; const g=warm?{w:"",r:""}:ghostFor(en,si); const wEmpty=(s.weight===""||s.weight==null), rEmpty=(s.reps===""||s.reps==null);
@@ -4459,7 +4327,8 @@ function viewStats(){
     +statsSection("stats:ex","Exercise progress",exHeaderSub(),exerciseProgressCard,false); }
 
 /* ---------------- BODY (P6 two-layer + P7 grid + P5 attribution) ---------------- */
-const BODY_GROUPS=[["Chest & push",["upper_chest","chest","triceps","front_delts"]],["Back & pull",["back_lats","upper_back","biceps"]],["Delts",["side_delts","rear_delts"]],["Legs",["quads","hamstrings","glutes","calves"]],["Core & other",["abs","lower_back","forearms"]]];
+/* v19 — one anatomical order for BOTH Body views (Summary groups by it too). Titles per the v19 brief. */
+const BODY_GROUPS=[["Chest / Push",["upper_chest","chest","triceps","front_delts"]],["Back / Pull",["back_lats","upper_back","biceps"]],["Delts",["side_delts","rear_delts"]],["Legs",["quads","hamstrings","glutes","calves"]],["Core / Other",["abs","lower_back","forearms"]]];
 const TIER_RANK={primary:0,secondary:1,maintenance:2};
 /* Strategic exercise ordering (item 1): lower score = earlier in the session.
    Compounds and priority/fresh muscles first; isolation + low-fatigue pump work last.
@@ -4492,21 +4361,27 @@ function bodyV2(){
   const line=function(r){
     const meta=READY_META[r.status]||READY_META.ready;
     const tone=r.below?(r.ready?"var(--green)":r.moderate?"var(--amber)":"var(--violet)"):"var(--faint)";
+    /* v19 — readiness moves up beside the name so the Direct/Indirect/Effective line has the full
+       card width and stays on one line. */
     return '<div class="exline" data-muscle="'+r.m+'" style="padding:8px 0;cursor:pointer;align-items:center">'
       +'<div style="flex:1;min-width:0">'
-      +'<div class="nm" style="font-size:13px">'+r.label
-      +(r.tier==="primary"?' <span class="tag" style="color:var(--gold)">priority</span>':'')
-      +(r.below?' <span class="tag" style="color:'+tone+';border:1px solid '+tone+'55">'+n(r.remaining)+' to go</span>':'')+'</div>'
-      +'<div class="histline mono" style="font-size:10.5px">Direct '+n(r.direct)+' · Indirect '+n(r.secondary)+' · Effective '+n(r.eff)+'/'+r.min+' min</div>'
+      +'<div class="nm" style="font-size:13px;display:flex;align-items:center;gap:6px;min-width:0"><span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+r.label+'</span>'
+      +(r.tier==="primary"?'<span class="tag" style="color:var(--gold);margin:0">priority</span>':'')
+      +(r.below?'<span class="tag" style="color:'+tone+';border:1px solid '+tone+'55;margin:0;white-space:nowrap">'+n(r.remaining)+' to go</span>':'')
+      +'<span class="mono" style="margin-left:auto;font-size:10.5px;color:'+meta.c+';white-space:nowrap;flex:none">'+meta.t.replace(" recovery","")+' <span class="muted">›</span></span></div>'
+      +'<div class="histline mono" style="font-size:10.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Direct '+n(r.direct)+' · Indirect '+n(r.secondary)+' · Effective '+n(r.eff)+'/'+r.min+' min</div>'
       +'<div class="bar" style="margin-top:5px"><i style="width:'+Math.max(3,Math.min(100,Math.round(r.eff/r.min*100)))+'%;background:'+(r.below?"var(--blue)":"var(--accent)")+'"></i></div></div>'
-      +'<span class="mono" style="margin-left:10px;font-size:10.5px;color:'+meta.c+';white-space:nowrap">'+meta.t+'</span>'
-      +'<span class="muted" style="margin-left:6px">›</span></div>'; };
+      +'</div>'; };
   let h='<div class="card"><div class="tiny">Where you stand · this week</div>';
   h+= act.length
     ? '<div class="histline" style="margin-top:3px"><b style="color:var(--text)">'+act.length+' muscle'+(act.length===1?'':'s')+' below minimum and trainable now.</b></div>'
     : '<div class="histline" style="margin-top:3px;color:var(--green)">Nothing is both below minimum and ready — either covered or still recovering.</div>';
-  h+='<div style="margin-top:6px">'+rows.map(line).join("")+'</div>';
-  h+='<div class="histline" style="margin-top:10px">Direct = 1.0 credit, this muscle was the target · Indirect = 0.5 / 0.25 credit from other lifts · Effective = both combined, against your configured minimum. Tap any row for full attribution.</div>';
+  /* v19 — grouped in the same anatomical order as Detailed (BODY_GROUPS); inside a group the v12
+     rank still applies (below-minimum & ready first), so scanning is predictable AND actionable. */
+  const byM={}; rows.forEach(function(r){ byM[r.m]=r; });
+  h+=BODY_GROUPS.map(function(g){ const rs=g[1].map(function(m){ return byM[m]; }).filter(Boolean).sort(function(a,b){ return (a.rank-b.rank)||(b.remaining-a.remaining); });
+    if(!rs.length) return ""; return '<div class="bgh">'+g[0]+'</div><div class="bgrp">'+rs.map(line).join("")+'</div>'; }).join("");
+  h+='<div class="histline" style="margin-top:10px">Effective = Direct (1.0) + Indirect (0.5 / 0.25) against your minimum. Tap a row for attribution.</div>';
   return h+'</div>'; }
 function bodyToggle(){
   return '<div class="card" style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px">'
@@ -4724,17 +4599,20 @@ function paintRest(force){ const m=restMount(); if(!m) return; const st=restStat
   const key=restPaintKeyFor(st,now);
   if(!force && key===restPaintKey && m.innerHTML) return;                      /* nothing visibly changed */
   restPaintKey=key;
-  const left=restRemaining(st,now); const mm=Math.floor(left/60), ss=String(left%60).padStart(2,"0");
-  /* v14 layout: [progress along the top edge] then ONE row — name/next · countdown · controls.
-     Done state keeps the same footprint: the message plus a Go button. */
-  const title=done?"✅ Rest done — next set ready":escAttr(st.name||"Resting");
-  const meta=done?escAttr(st.name||""):("Rest"+(st.next?" · "+escAttr(st.next):""));
+  const left=restRemaining(st,now); const mm=String(Math.floor(left/60)).padStart(2,"0"), ss=String(left%60).padStart(2,"0");   /* v19: 01:32, not 1:32 */
+  /* v19 layout — the timer is the most important thing on screen while it runs, so it gets a
+     full-width, high-contrast panel (~20% of a phone viewport): REST · next-set line on top, the
+     countdown in 56px mono, the three controls underneath, progress rail along the bottom edge.
+     Done flips the whole panel green and reads READY with one Go button. Footprint is zero when
+     no timer is active (existing --resttop reservation), and the wall-clock engine is unchanged. */
+  const title=done?"READY":"REST";
+  const meta=escAttr(st.name||"")+(st.next?' \u00b7 '+escAttr(st.next):'');
   m.innerHTML='<div class="rest'+(done?' done':'')+'" role="status" aria-live="polite"><div class="restcard">'
+    +'<div class="resthd"><span class="resttitle">'+title+'</span><span class="restmeta">'+meta+'</span></div>'
+    +(done?'<div class="restbig">'+"\u2713"+'</div><div class="restctl"><button data-restgo class="go">Go \u2014 next set</button></div>'
+          :'<div class="restt">'+mm+":"+String(ss)+'</div><div class="restctl"><button data-restsub aria-label="15 seconds less">−15</button><button data-restadd aria-label="30 seconds more">+30</button><button data-restskip>Skip</button></div>')
     +'<div class="restbar"><i style="width:'+(done?100:restBar(st,now))+'%"></i></div>'
-    +'<div class="restrow"><div style="flex:1;min-width:0"><div class="resttitle">'+title+'</div><div class="restmeta">'+meta+'</div></div>'
-    +(done?'<button data-restgo class="btn accent sm" style="flex:none;padding:9px 18px;font-weight:800">Go</button>'
-          :'<div class="restt">'+mm+":"+ss+'</div><div class="restctl"><button data-restsub aria-label="15 seconds less">−15</button><button data-restadd aria-label="30 seconds more">+30</button><button data-restskip>Skip</button></div>')
-    +'</div></div></div>';
+    +'</div></div>';
   if(done){ const g=m.querySelector("[data-restgo]"); if(g) g.onclick=clearRest; }
   else { const ad=m.querySelector("[data-restadd]"); if(ad) ad.onclick=()=>restAdjust(30);
          const sb=m.querySelector("[data-restsub]"); if(sb) sb.onclick=()=>restAdjust(-15);
@@ -4957,6 +4835,7 @@ function wireScreen(){
   document.querySelectorAll("[data-expand]").forEach(b=>b.onclick=()=>{ const i=+b.dataset.expand; const en=activeSession.entries[i]; const cur=loggerCurrentIndex(); const def=(!entryDone(en)||i===cur); loggerOpen[i]=!(loggerOpen.hasOwnProperty(i)?loggerOpen[i]:def); render(); });
   document.querySelectorAll("[data-more]").forEach(b=>b.onclick=()=>openSheet("exmenu",+b.dataset.more));
   document.querySelectorAll("[data-tips]").forEach(b=>b.onclick=()=>openSheet("tips",b.dataset.tips));
+  document.querySelectorAll("[data-setuptoggle]").forEach(b=>b.onclick=(ev)=>{ if(ev&&ev.target&&ev.target.closest&&ev.target.closest("[data-setup]")) return; toggleSetupOpen(b.dataset.setuptoggle); render(); });
   document.querySelectorAll("[data-setup]").forEach(b=>b.onclick=()=>openSheet("setup",b.dataset.setup));
   document.querySelectorAll("[data-fmgmtg]").forEach(b=>b.onclick=()=>{ mgmtGroup=b.dataset.fmgmtg||""; render(); });
   document.querySelectorAll("[data-fmgmte]").forEach(b=>b.onclick=()=>{ mgmtEquip=b.dataset.fmgmte||""; render(); });
@@ -4997,6 +4876,8 @@ function wireScreen(){
     render(); });
   /* v13 builder panel */
   document.querySelectorAll("[data-bldtoggle]").forEach(b=>b.onclick=()=>{ setBuilderOpen(!builderOpen); render(); });
+  /* v19 Today folds (Already covered / Still recovering) */
+  document.querySelectorAll("[data-fold]").forEach(b=>b.onclick=()=>{ toggleFold(b.dataset.fold); render(); });
   document.querySelectorAll("[data-bldadd]").forEach(b=>b.onclick=()=>{
     const id=b.dataset.bldadd; const ex=exById(id); if(!ex) return;
     if(addToDraft(id)) toast("Added "+ex.name+" \u00b7 "+DEFAULT_WORK_SETS+" sets");
