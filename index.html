@@ -219,8 +219,8 @@ button{font-family:inherit; cursor:pointer; border:none; color:inherit;}
 .setupline.empty2 .lb, .setupline.empty2 .ic{color:var(--muted);}
 .setupchips{display:flex; flex-wrap:wrap; gap:4px; margin-top:3px;}
 .setupchips span{font-size:11px; padding:2px 7px; border-radius:999px; background:rgba(212,175,55,.13); color:#E2D9BE;}
-/* v14 — muscles worked, with the credit each working set earns (1.0 primary · 0.5 secondary ·
-   0.25 minor). The same coefficients the volume engine uses, so what you read here is exactly
+/* v14 — muscles worked, with the credit each working set earns (1.0 direct · 0.5 indirect ·
+   0.25 minor indirect — v17 wording). The same coefficients the volume engine uses, so what you read here is exactly
    what lands in your weekly effective sets. */
 .mcred{display:flex; flex-wrap:wrap; gap:4px; margin-top:6px;}
 .mcred>span{display:inline-flex; align-items:center; gap:5px; font-size:11px; padding:3px 8px; border-radius:999px; border:1px solid var(--line); background:var(--panel2); color:var(--muted); white-space:nowrap;}
@@ -321,6 +321,8 @@ table.cov td.cov-c{background-clip:padding-box; border-top:3px solid transparent
 table.cov td.cov-c.ok{background:rgba(52,199,89,.16); color:var(--green);} table.cov td.cov-c.low{background:rgba(255,90,82,.15); color:var(--red);}
 table.cov td.cov-c.over{background:rgba(255,159,10,.18); color:var(--amber);} table.cov td.cov-c.zero{box-shadow:inset 0 0 0 1px var(--line); color:var(--faint); font-weight:500;}
 table.cov td.cov-c.cur{box-shadow:inset 0 0 0 1.5px var(--accent);}
+table.cov td.cov-c.neutral{background:rgba(255,255,255,.07); color:var(--text);} .cov-legend i.neutral{background:rgba(255,255,255,.07); box-shadow:inset 0 0 0 1px var(--line2);}
+.seg.mini[data-covseg]{width:auto; max-width:260px;}
 table.cov .cov-end{color:var(--muted); font-weight:600; padding:0 0 0 6px; text-align:right; white-space:nowrap; min-width:36px;}
 .cov-legend{display:flex; gap:12px; flex-wrap:wrap; margin-top:10px; font-size:11px; color:var(--muted);}
 .cov-legend i{display:inline-block; width:12px; height:12px; border-radius:3px; vertical-align:-2px; margin-right:5px;}
@@ -336,12 +338,12 @@ table.cov .cov-end{color:var(--muted); font-weight:600; padding:0 0 0 6px; text-
 .dq-t{font-size:13px; font-weight:600;} .dq-w{font-size:11.5px; color:var(--muted); margin-top:2px; line-height:1.45;}
 .dq-item{background:var(--panel2); border:1px solid var(--line); border-radius:12px; padding:11px 12px; margin-bottom:8px;} .dq-item.dismissed{opacity:.6;}
 .dq-ctx{font-family:'JetBrains Mono',monospace; font-size:11px; color:#C6D0DC; white-space:pre-wrap; background:var(--panel); border-radius:8px; padding:7px 9px; margin-top:6px; line-height:1.5;}
-/* rep-range */
-.rr{padding:9px 0; border-top:1px solid var(--line); cursor:pointer;} .rr:first-child{border-top:none;}
-.rr-hd{display:flex; flex-direction:column; gap:4px; align-items:flex-start;} .rr-hd .statuspill{align-self:flex-start;}
+/* rep-range (v17: exercise-level only) */
 .rr-bar{display:flex; height:8px; border-radius:4px; overflow:hidden; background:var(--panel2); margin-top:7px; gap:2px;}
 .rr-bar i{display:block; height:100%;} .rr-bar i.b{background:var(--red);} .rr-bar i.w{background:var(--green);} .rr-bar i.a{background:var(--blue);}
 .rr-nums{display:flex; gap:10px; flex-wrap:wrap; font-family:'JetBrains Mono',monospace; font-size:10.5px; margin-top:5px;}
+.rr-note{margin-top:8px; padding:9px 11px; border-radius:10px; background:var(--panel2); border:1px dashed var(--line);}
+.rr-note .btn{padding:6px 10px; font-size:12px;}
 /* block report */
 .blk-grid{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px;}
 .blk-k{background:var(--panel2); border:1px solid var(--line); border-radius:10px; padding:9px 10px;} .blk-k span{display:block; font-size:10px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted);}
@@ -353,9 +355,6 @@ table.cov .cov-end{color:var(--muted); font-weight:600; padding:0 0 0 6px; text-
 .cal-d{display:block; width:13px; height:13px; border-radius:3px; background:var(--panel2); box-shadow:inset 0 0 0 1px var(--line);}
 .cal-d.l1{background:rgba(59,130,246,.38); box-shadow:none;} .cal-d.l2{background:rgba(59,130,246,.65); box-shadow:none;} .cal-d.l3{background:var(--accent); box-shadow:none;}
 .cal-d.fut{background:transparent; box-shadow:inset 0 0 0 1px var(--line); opacity:.5;} .cal-d.today{box-shadow:inset 0 0 0 1.5px var(--accent);}
-/* strength index */
-.si{padding:10px 0; border-top:1px solid var(--line);} .si:first-child{border-top:none;}
-.si-hd{display:flex; justify-content:space-between; align-items:center; gap:10px;} .si-n{font-family:'JetBrains Mono',monospace; font-size:22px; font-weight:700;}
 </style>
 </head>
 <body>
@@ -392,9 +391,9 @@ const APP_TAGLINE = "Training Command";
    recover.html on a v10 build is expected and correct.
    BUILD is shown in Settings and is what the deployed-version check compares against, so
    it must be bumped on every deploy. */
-const BUILD = "v16";
+const BUILD = "v17";
 const BUILD_DATE = "2026-09-14";
-const BUILD_NOTE = "analytics & data quality: coverage matrix, stall detector, data-quality review, four prototypes, collapsible Stats";
+const BUILD_NOTE = "v16 refinements: Direct / Indirect / Minor indirect wording, coverage Total | Direct | Indirect, strength index and rep-range board removed, rep range per exercise, data-quality checks at set entry and finish, Settings → Data quality";
 
 /* Approved users (client-side UX gate; the real gate is Supabase signup settings — see DEPLOY).
    To add a person: add one line below with their real email (lowercase), display name and role.
@@ -432,7 +431,10 @@ const MUSCLES = {
   lower_back: {label:"Lower back",  tier:"maintenance", size:"large", min:2, gl:4,  gh:6,  cap:9,  rec:[24,44]},
   forearms:   {label:"Forearms",    tier:"maintenance", size:"small", min:0, gl:2,  gh:6,  cap:12, rec:[20,36]},
 };
-const TIER_LABEL={primary:"Primary focus", secondary:"Secondary", maintenance:"Maintenance"};
+/* v17 — the programme-level tiers read Priority / Secondary / Maintenance everywhere; the stored key
+   stays "primary" so no data changes. "Primary" as a word is now reserved for nothing — exercise
+   contribution is Direct / Indirect / Minor indirect. */
+const TIER_LABEL={primary:"Priority", secondary:"Secondary", maintenance:"Maintenance"};
 
 /* ============================================================================================
    v8 — BROAD MUSCLE GROUPS for library browsing and filtering. The engine keeps working on the
@@ -459,7 +461,7 @@ function groupLabel(key){ const g=MUSCLE_GROUPS.find(x=>x.key===key); return g?g
 const EQUIP_FILTERS = [["machine","Machine"],["cable","Cable"],["dumbbell","Dumbbell"],["barbell","Barbell"],["smith","Smith"],["bodyweight","Bodyweight"]];
 function equipLabel(eq){ const p=EQUIP_FILTERS.find(x=>x[0]===eq); return p?p[1]:(eq||""); }
 
-/* pattern drives swap suggestions. credit: 1.0 primary, .5 secondary, .25 minor. */
+/* pattern drives swap suggestions. credit: 1.0 direct, .5 indirect, .25 minor indirect. */
 const EXERCISES = [
  /* ---- LEGS ---- */
  {id:"leg_press", name:"Leg Press", type:"compound", equip:"machine", pattern:"leg_press", pref:"like", avail:"always", rec:true, src:"confirmed", rest:150, rl:8, rh:12, sl:2, sh:3, fatigue:2.5, m:{quads:1, glutes:.5}, aliases:"df-101 sportsart squat quads"},
@@ -745,9 +747,25 @@ function saveSetup(exId,vals){ const store=setupStore(); const clean={};
   if(Object.keys(clean).length){ clean.updatedAt=iso(new Date()); store[exId]=clean; } else { delete store[exId]; }
   save(); }
 function clearSetup(exId){ const store=setupStore(); delete store[exId]; save(); }
+/* v17 — per-exercise TARGET REP RANGE overrides. Stored in settings (so they survive a data-format
+   migration and ride the ordinary settings push to the cloud) and applied onto the live exercise
+   objects whenever S is (re)built, so every reader of ex.rl / ex.rh — the progression engine, the
+   stall next-step, the picker rows — sees the range you chose. Saving the library default clears
+   the override rather than storing a copy of it. Changing a range never touches a logged set. */
+function rangeStore(){ if(!S.settings) S.settings={}; if(!S.settings.exRange) S.settings.exRange={}; return S.settings.exRange; }
+function defaultRange(exId){ const e=EXERCISES.find(function(x){ return x.id===exId; }); if(e) return {rl:e.rl,rh:e.rh};
+  const c=(typeof customRec==="function")?customRec(exId):null; if(c){ const sp=customSpec(c.group); return {rl:c.rl||sp.rl, rh:c.rh||sp.rh}; } return null; }
+function rangeOverride(exId){ const o=S.settings&&S.settings.exRange&&S.settings.exRange[exId]; return (o&&o.rl>0&&o.rh>=o.rl)?o:null; }
+function applyRangeOverrides(){ const st=(S&&S.settings&&S.settings.exRange)||{}; (S&&S.exercises||[]).forEach(function(e){ const o=st[e.id]; if(o&&o.rl>0&&o.rh>=o.rl){ e.rl=o.rl; e.rh=o.rh; } }); }
+function saveRange(exId,rl,rh){ rl=Math.round(+rl||0); rh=Math.round(+rh||0); const ex=exById(exId); if(!ex||!(rl>=1&&rh>=rl&&rh<=60)) return false;
+  const lib=defaultRange(exId); const store=rangeStore();
+  if(lib&&lib.rl===rl&&lib.rh===rh) delete store[exId]; else store[exId]={rl:rl, rh:rh, updatedAt:iso(new Date())};
+  ex.rl=rl; ex.rh=rh; save(); return true; }
+function resetRange(exId){ const store=rangeStore(); delete store[exId]; const ex=exById(exId); const lib=defaultRange(exId); if(ex&&lib){ ex.rl=lib.rl; ex.rh=lib.rh; } save(); }
 /* Seeds the known machine settings on first run / upgrade. Only fills a slot that has never been
    set, and records the seed version so a value you deliberately cleared never comes back. */
 function ensureSetupDefaults(){ if(!S.settings) S.settings={};
+  try{ applyRangeOverrides(); }catch(e){}                 /* v17: target rep ranges follow the account, not the build */
   const store=setupStore(); const seen=S.settings.setupSeeded||0;
   if(seen>=SETUP_SEED_VERSION) return;
   Object.keys(SETUP_DEFAULTS).forEach(id=>{ if(!store[id]) store[id]={...SETUP_DEFAULTS[id], updatedAt:iso(new Date()), seeded:true}; });
@@ -1191,6 +1209,13 @@ function dedupeWorkoutExercises(rows,setByWe){
     if(firstWrite(we)<firstWrite(cur)) byPos[k]=we; });
   const out=Object.values(byPos).sort((a,b)=>a.order_index-b.order_index);
   return {rows:out, dropped:dropped}; }
+/* v17.1 — a workout_exercise can only legitimately hold ONE set row per set_index (pushWorkoutNow
+   writes 0..n-1 exactly once, with deterministic child ids). Two rows at the same index are a
+   repeated insertion by racing pushes on an older build — deterministic evidence, so they are
+   collapsed here (keep the row written first) and the workout is rewritten cleanly. Pure. */
+function dedupeSetRows(rows){ const byIdx={}; let dropped=0; const t=function(r){ const v=Date.parse((r&&r.created_at)||""); return isNaN(v)?Infinity:v; };
+  (rows||[]).forEach(function(r){ const k=String(r.set_index); const cur=byIdx[k]; if(!cur){ byIdx[k]=r; return; } dropped++; if(t(r)<t(cur)) byIdx[k]=r; });
+  return {rows:Object.values(byIdx).sort(function(a,b){ return a.set_index-b.set_index; }), dropped:dropped}; }
 async function hydrateFromCloud(){
   if(!cloudReady()||syncing) return; syncing=true;
   try{
@@ -1217,11 +1242,17 @@ async function hydrateFromCloud(){
       rb.exercises.forEach(e=>{ const r=byId[e.id]; if(r){ if(r.pref) e.pref=r.pref; if(r.muscles&&Object.keys(r.muscles).length) e.m=r.muscles; } }); }  // v6: avail+rec stay authoritative from seed
     const weByW={}; (weR.data||[]).forEach(we=>{(weByW[we.workout_id]=weByW[we.workout_id]||[]).push(we);});
     const setByWe={}; (setR.data||[]).forEach(s=>{(setByWe[s.workout_exercise_id]=setByWe[s.workout_exercise_id]||[]).push(s);});
-    const repaired=[];
+    const repaired=[]; const setRepairs=[];
     rb.sessions=(wR.data||[]).map(w=>{ const dd=dedupeWorkoutExercises(weByW[w.id]||[],setByWe); const wes=dd.rows;
       if(dd.dropped) repaired.push(w.id);
-      return { id:w.id, completedAt:w.performed_at, startedAt:w.created_at||w.performed_at, title:w.title, mode:w.mode, synced:!dd.dropped,
-        entries:wes.map(we=>({ exId:we.exercise_slug, sets:(setByWe[we.id]||[]).sort((a,b)=>a.set_index-b.set_index).map(s=>({weight:s.weight==null?"":Number(s.weight),reps:s.reps==null?"":s.reps,type:s.is_warmup?"warm":"work",done:!!s.completed})) })) }; });
+      let setDropped=0;
+      const entries=wes.map(we=>{ const ds=dedupeSetRows(setByWe[we.id]||[]);
+        if(ds.dropped){ setDropped+=ds.dropped; setRepairs.push({sessionId:w.id, date:w.performed_at, workout:w.title||"Workout", exId:we.exercise_slug, name:(exById(we.exercise_slug)||{}).name||we.exercise_slug,
+          k:null, len:ds.rows.length, before:(setByWe[we.id]||[]).length+" set rows", after:ds.rows.length+" sets", evidence:ds.dropped+" cloud set row"+(ds.dropped===1?"":"s")+" shared a set_index with another (repeated insertion) — the earlier-written row kept"}); }
+        return { exId:we.exercise_slug, sets:ds.rows.map(s=>({weight:s.weight==null?"":Number(s.weight),reps:s.reps==null?"":s.reps,type:s.is_warmup?"warm":"work",done:!!s.completed})) }; });
+      if(setDropped) repaired.push(w.id);
+      return { id:w.id, completedAt:w.performed_at, startedAt:w.created_at||w.performed_at, title:w.title, mode:w.mode, synced:!(dd.dropped||setDropped), entries:entries }; });
+    if(setRepairs.length){ try{ rb.settings.dqRepairs=(rb.settings.dqRepairs||[]).concat([{at:iso(new Date()),entries:setRepairs.length,items:setRepairs,source:"hydrate"}]).slice(-20); }catch(e){} }
     rb.bodyweight=[]; const snaps={};
     (mR.data||[]).forEach(r=>{ if(r.metric==="bodyweight") rb.bodyweight.push({id:r.id,date:r.taken_at,kg:Number(r.value),synced:true});
       else { (snaps[r.taken_at]=snaps[r.taken_at]||{date:r.taken_at,vals:{},synced:true}); snaps[r.taken_at].vals[r.metric]=Number(r.value); } });
@@ -1475,7 +1506,7 @@ function primaryMuscle(ex){ let best=null; for(const [m,c] of Object.entries(ex.
    ONE definition of "effective sets", used by every screen that shows the number:
 
        effective sets for a muscle = SUM over logged working sets of that muscle's credit
-       coefficient for the exercise (1.0 direct, 0.5 secondary, etc.)
+       coefficient for the exercise (1.0 direct, 0.5 indirect, 0.25 minor indirect)
 
    It is NOT a raw set count, and there is no separate weighting anywhere else in the app.
    The v12 audit finding (see UPDATE_NOTES) was that two Stats cards both said "effective sets"
@@ -1497,6 +1528,15 @@ function effectiveSetsByGroup(sessions){ const out={}; MUSCLE_GROUPS.forEach(fun
   return out; }
 /* historical name — same function, same numbers */
 function weeklyVolume(sessions){ return effectiveSetsByMuscle(sessions); }
+/* v17 — the same credit sum restricted to one contribution class, for the coverage matrix views:
+   total = every credit (identical to effectiveSetsByMuscle), direct = 1.0-credit sets only,
+   indirect = the 0.5 and 0.25 credits only. direct + indirect == total, always. */
+const COV_VIEWS=[["total","Total"],["direct","Direct"],["indirect","Indirect"]];
+function creditInView(c,view){ return view==="direct"?c>=1:view==="indirect"?c<1:true; }
+function effectiveSetsByMuscleView(sessions,view){ if(!view||view==="total") return effectiveSetsByMuscle(sessions);
+  const list=sessions||weekSessions(); const vol={}; Object.keys(S.muscles).forEach(m=>vol[m]=0);
+  list.forEach(sess=>{ (sess.entries||[]).forEach(en=>{ const ex=exById(en.exId); if(!ex) return; const n=workingSets(en).length;
+    for(const [m,c] of Object.entries(ex.m)){ if(vol[m]!==undefined&&creditInView(c,view)) vol[m]+=n*c; } }); }); return vol; }
 
 /* P5/P8 — explainable attribution: who contributed to a muscle's number */
 function muscleContrib(muscle, sessions){ const list=sessions||weekSessions(); const map={};
@@ -1509,7 +1549,7 @@ function muscleContrib(muscle, sessions){ const list=sessions||weekSessions(); c
   return { rows, direct, secondary, total:direct+secondary }; }
 
 /* Most-recent hard exposure per muscle: keeps date, max credit, and total working sets
-   (volume lengthens recovery a little). Only direct/secondary credit (>=0.5) counts. */
+   (volume lengthens recovery a little). Only direct/indirect credit (>=0.5) counts; minor indirect (0.25) does not. */
 function lastTrainedMap(){ const map={};
   completedSessions().sort((a,b)=>new Date(a.completedAt)-new Date(b.completedAt)).forEach(sess=>{
     const per={};
@@ -1529,7 +1569,7 @@ function lastPatternMap(){ const map={};
    Recovery is the gate: a muscle below its block window must NOT be a primary target,
    regardless of weekly-volume need. */
 function recWindows(m,lt){ const cfg=S.muscles[m]; const rec=cfg.rec||[cfg.size==="large"?40:24, cfg.size==="large"?64:44];
-  const scale=lt.credit>=1?1:0.62;                                   // secondary credit recovers faster
+  const scale=lt.credit>=1?1:0.62;                                   // indirect credit recovers faster
   const volMult=1+Math.max(-0.15,Math.min(0.28,(lt.sets-3)*0.06));   // higher volume → slightly longer
   return { block:rec[0]*scale*volMult, caution:rec[1]*scale*volMult }; }
 function recoveryStatus(m){ const lt=lastTrainedMap()[m]; if(!lt) return "untrained";
@@ -2119,6 +2159,7 @@ function rebuildCustomExercises(){
     if(c.status==="mapped") return;                       /* its sets now live on the canonical exercise */
     S.exercises.push(customToExercise(c));
   });
+  try{ applyRangeOverrides(); }catch(e){}
   _hayCache={};
 }
 /* Settings toggles mutate the exercise object in place; for a custom exercise that change has to be
@@ -2599,7 +2640,7 @@ function progressionBoardCard(){
 /* ---------------------------------------------------------------- v12 MIGRATED FROM REPORTS
    Reports duplicated most of Stats. These two cards were the genuinely better implementations,
    so they move across and the Reports tab is retired. */
-/* Effective sets split into DIRECT vs SECONDARY on one bar — the Stats version only showed a
+/* Effective sets split into DIRECT vs INDIRECT on one bar — the Stats version only showed a
    combined total, which hid whether a muscle was actually being trained or just catching credit. */
 /* v13 — plain-English name for whatever the Stats window selector is currently set to, so the
    card can state its own window instead of leaving you to infer it from a segmented control
@@ -2625,7 +2666,7 @@ function muscleSplitCard(){
     :'<div class="empty" style="padding:16px">No sets in this window.</div>';
   return '<div class="card"><div class="tiny">Effective sets by INDIVIDUAL muscle \u00b7 '+statsWindowLabel()+'</div>'
     +'<div class="histline" style="margin-top:2px">Same metric as the dashboard above, different slice: one row per muscle, and this card follows the <b>Window</b> selector rather than the dashboard\u2019s rolling period. Tap a row to see which exercises produced it.</div>'
-    +'<p class="muted" style="font-size:11px;margin:4px 0 0"><span style="color:var(--accent)">\u25ae</span> direct \u00b7 <span style="color:var(--grey)">\u25ae</span> secondary</p>'
+    +'<p class="muted" style="font-size:11px;margin:4px 0 0"><span style="color:var(--accent)">\u25ae</span> direct (1.0) \u00b7 <span style="color:var(--grey)">\u25ae</span> indirect (0.5 / 0.25)</p>'
     +'<div style="margin-top:6px">'+mrows+'</div>'
     +(ent.length>5?'<button class="btn ghost full sm" data-showall style="margin-top:8px">'+(showAllMuscles?'Show top 5':'Show all '+ent.length+' muscles')+'</button>':'')
     +'</div>'; }
@@ -2664,7 +2705,7 @@ function diagnoseCard(){ var b=progressionBoard();
   return '<div class="card"><div class="tiny">Coach diagnosis</div>'
     +ln("var(--green)","Improving",up.map(function(p){ return p.ex.name+" "+pctStr(p.recentPct); }),"Not enough repeat data yet.")
     +ln("var(--amber)","Stalled",flat.map(function(p){ return p.ex.name+" (flat over "+p.n+")"; }),"Nothing clearly stalled.")
-    +ln("var(--blue)","Needs direct work",na,"All primary muscles covered this week.")
+    +ln("var(--blue)","Needs direct work",na,"All priority muscles covered this week.")
     +ln("var(--red)","Near / over cap",over,"Nothing overloaded.")+'</div>'; }
 function viewReports(){
   var w=weekStatus(); var mom=momentumScore(); var setsW=weekSessions().reduce(function(a,s){ return a+sessionSets(s); },0);
@@ -2673,7 +2714,7 @@ function viewReports(){
   var tl=w.sess>=w.target?"var(--green)":w.sess>=w.target-1?"var(--amber)":"var(--red)";
   var weekH='<div class="card"><div style="display:flex;justify-content:space-between;align-items:center"><div class="tiny">This week · Mon–Sun</div><span class="statuspill" style="background:'+tl+'22;color:'+tl+'">'+mom.label+'</span></div>'
     +'<div class="kpi" style="margin-top:10px"><div class="k"><b style="color:'+tl+'">'+w.sess+'/'+w.target+'</b><span>sessions</span></div><div class="k"><b>'+setsW+'</b><span>working sets</span></div><div class="k"><b style="color:'+(primaryMet===primaryAll?"var(--green)":"var(--amber)")+'">'+primaryMet+'/'+primaryAll+'</b><span>primary done</span></div></div>'
-    +(below.length?'<div class="ibody" style="margin-top:10px">Below weekly minimum: '+below.join(", ")+'.</div>':'<div class="ibody" style="margin-top:10px">Every primary muscle has met its weekly minimum. 🔥</div>')+'</div>';
+    +(below.length?'<div class="ibody" style="margin-top:10px">Below weekly minimum: '+below.join(", ")+'.</div>':'<div class="ibody" style="margin-top:10px">Every priority muscle has met its weekly minimum. 🔥</div>')+'</div>';
   var histList=S.exercises.map(function(e){ return {e:e,n:exerciseHistory(e.id).length}; }).filter(function(x){ return x.n>=1; }).sort(function(a,b){ return b.n-a.n; });
   if(!repExId||!histList.find(function(x){ return x.e.id===repExId; })) repExId=histList.length?histList[0].e.id:null;
   var trendH;
@@ -2696,7 +2737,7 @@ function viewReports(){
   var mmax=Math.max.apply(null,[1].concat(ent.map(function(x){ return x.total; })));
   var mrows=ent.length?ent.map(function(x){ var dp=Math.round(x.direct/mmax*100), sp=Math.round(x.secondary/mmax*100);
     return '<div class="exline" data-muscle-stat="'+x.m+'" style="padding:7px 0;cursor:pointer"><div style="flex:1"><div class="nm" style="font-size:13px">'+S.muscles[x.m].label+'</div><div class="bar" style="margin-top:5px;display:flex"><i style="width:'+dp+'%;background:var(--accent)"></i><i style="width:'+sp+'%;background:var(--grey)"></i></div></div><span class="mono" style="margin-left:10px">'+x.total.toFixed(1)+'</span></div>'; }).join(""):'<div class="empty" style="padding:16px">No sets logged this week yet.</div>';
-  var muscleH='<div class="card"><div class="tiny">Effective sets by INDIVIDUAL muscle · this week (Mon–Sun)</div><p class="muted" style="font-size:11px;margin:4px 0 0"><span style="color:var(--accent)">▮</span> direct · <span style="color:var(--grey)">▮</span> secondary</p><div style="margin-top:6px">'+mrows+'</div></div>';
+  var muscleH='<div class="card"><div class="tiny">Effective sets by INDIVIDUAL muscle · this week (Mon–Sun)</div><p class="muted" style="font-size:11px;margin:4px 0 0"><span style="color:var(--accent)">▮</span> direct (1.0) · <span style="color:var(--grey)">▮</span> indirect (0.5 / 0.25)</p><div style="margin-top:6px">'+mrows+'</div></div>';
   return '<div class="reportshd" style="margin:10px 2px 2px;display:flex;align-items:center;gap:8px"><span style="font-size:18px">📊</span><div class="tiny" style="font-size:13px;text-transform:none;color:var(--text);font-weight:700">Reports · experimental analysis</div></div>'
     +weekH+dashboardCard()+progressionBoardCard()+trendH+muscleH+recentAchievementsCard(10)+diagnoseCard(); }
 
@@ -2833,7 +2874,7 @@ const BUILD_SHORTLIST=8;
 /* Shared scoring for one exercise, used by both the shortlist and the Today one-tap add. */
 function builderExValue(e,byM,lastExMap,now){
   const pm=primaryMuscle(e); const lead=byM[pm];
-  if(!lead||!lead.trainable) return null;          /* 2 + 7: primary muscle not trainable today */
+  if(!lead||!lead.trainable) return null;          /* 2 + 7: direct muscle not trainable today */
   let val=0;
   /* 1 + 2 + 3 — reuse the exact muscle scores the recommender uses, so Build Workout and
      Tell me what to train can never disagree about what needs work. */
@@ -2882,7 +2923,7 @@ function builderShortlist(excludeIds,limit){
 
 /* The single best familiar, eligible exercise for one specific muscle — what the Today priority
    row's "+ Add" uses. Direct work (credit >= 1) is preferred over an exercise that only catches
-   secondary credit, because a muscle below its minimum wants training, not spillover. */
+   indirect credit, because a muscle below its minimum wants training, not spillover. */
 /* You tapped the TRICEPS row, so you get a triceps exercise.
    This was a real bug found in v13 testing: the first implementation added the target muscle's
    credit as a bonus on top of the general score, which meant a familiar chest press — scoring
@@ -2891,7 +2932,7 @@ function builderShortlist(excludeIds,limit){
    it is not what the tap said it would do.
 
    So direct work is now a HARD TIER, not a bonus: if any exercise trains this muscle directly
-   (credit >= 1) then only those are considered, and secondary-credit exercises are used solely
+   (credit >= 1) then only those are considered, and indirect-credit exercises are used solely
    when no direct option is eligible at all. Within the chosen tier the ordinary ranking decides,
    so you still get the FAMILIAR direct exercise rather than an unfamiliar one. */
 function bestForMuscleFromRanked(ranked,muscle){
@@ -2970,7 +3011,7 @@ function recommend(r,opts){ r=r||{}; opts=opts||{}; const time=r.time||60; const
     for(const [m,c] of Object.entries(ex.m)){ const sc=scored.find(x=>x.m===m); if(!sc) continue;
       if(c>=1){ if(sc.status==="recovering"||sc.status==="overloaded"){ if(relaxed){ cautionLead=true; val-=40; } else { bad=true; } }
         else if(sc.status==="caution"){ if(relaxed){ cautionLead=true; val-=18; } else { val-=85; } } }
-      else if(c>=0.5){ if(sc.status==="recovering"||sc.status==="overloaded") val-=42; else if(sc.status==="caution") val-=16; }   // secondary partial fatigue
+      else if(c>=0.5){ if(sc.status==="recovering"||sc.status==="overloaded") val-=42; else if(sc.status==="caution") val-=16; }   // indirect partial fatigue
       const usable=sc.trainable||relaxed; if(!usable) continue; const dim=(covered[m]||0)>0?0.35:1;
       val+=(sc.trainable?sc.score:Math.max(sc.score,-40))*c*dim; }
     val+=PREF_SCORE[ex.pref]*1.2;
@@ -2990,7 +3031,7 @@ function recommend(r,opts){ r=r||{}; opts=opts||{}; const time=r.time||60; const
     for(const c of chosen){ const ce=exById(c.exId); if(!ce) continue;
       if(ce.pattern===ex.pattern){ val-=130; break; } }                                  // same movement pattern already in session
     if(val>-9999){ const samePrimary=chosen.some(c=>{ const ce=exById(c.exId); return ce&&primaryMuscle(ce)===pm&&ce.pattern!==ex.pattern; });
-      if(samePrimary) val-=42; }                                                          // same primary muscle, different pattern — mild (variety across angles)
+      if(samePrimary) val-=42; }                                                          // same direct muscle, different pattern — mild (variety across angles)
     if(highSore&&ex.type==="compound") val-=22; if(lowEnergy&&ex.fatigue>=2.5) val-=18; return {val,bad,cautionLead}; }
   function fill(relaxed,thresh){ let safety=0;
     while(chosen.length<maxEx && safety++<60){ let best=null,bestEx=null,bestCaution=false;
@@ -2999,7 +3040,7 @@ function recommend(r,opts){ r=r||{}; opts=opts||{}; const time=r.time||60; const
       if(sc&&sc.cfg.tier==="primary"&&sc.v<sc.cfg.gh&&sc.status==="ready") sets=3; if(sc&&sc.v>=sc.cfg.cap*0.85) sets=2; if(lowEnergy||highSore) sets=Math.min(sets,2);
       chosen.push({exId:bestEx.id,sets,caution:bestCaution}); for(const [m,c] of Object.entries(bestEx.m)){ if(c>=0.5) covered[m]=(covered[m]||0)+sets*c; } } }
   fill(false,0);
-  /* DIRECT-COVERAGE: a below-min, ready, PRIMARY-focus muscle must get an exercise where it is the primary target (c>=1) */
+  /* DIRECT-COVERAGE: a below-min, ready, PRIORITY-tier muscle must get an exercise where it is the direct target (c>=1) */
   const needDirect=scored.filter(s=>s.v<s.cfg.min&&s.trainable&&(s.status==="ready"||s.status==="untrained")&&s.cfg.tier==="primary");
   const protectedM=new Set(needDirect.map(x=>x.m));
   needDirect.forEach(nd=>{ if(chosen.some(c=>exById(c.exId).m[nd.m]>=1)) return;
@@ -3013,7 +3054,7 @@ function recommend(r,opts){ r=r||{}; opts=opts||{}; const time=r.time||60; const
   if(chosen.length<Math.min(maxEx,3)) fill(true,-150);   // nothing fresh left — program caution work, flagged
   let tot=chosen.reduce((s,c)=>s+c.sets,0); while(tot>MAX_SESSION_SETS){ const b=chosen.filter(c=>c.sets>2)[0]; if(!b) break; b.sets--; tot--; }
   chosen.sort((a,b)=>orderScore(a)-orderScore(b));   // strategic order
-  /* ---- explainability (direct vs secondary precision) ---- */
+  /* ---- explainability (direct vs indirect precision) ---- */
   const covF={}; chosen.forEach(c=>{ const e=exById(c.exId); for(const [m,k] of Object.entries(e.m)){ if(k>=0.5) covF[m]=(covF[m]||0)+c.sets*k; } });
   const isDirect=(m)=>chosen.some(c=>exById(c.exId).m[m]>=1);
   const secVia=(m)=>{ const e=chosen.map(c=>exById(c.exId)).find(e=>e.m[m]>=0.5&&e.m[m]<1); return e?e.name:null; };
@@ -3021,7 +3062,7 @@ function recommend(r,opts){ r=r||{}; opts=opts||{}; const time=r.time||60; const
   if(lead.length) why.push({t:"go",x:"Today’s focus (trained directly): "+lead.join(", ")+"."});
   belowMin.filter(b=>isDirect(b.m)).slice(0,3).forEach(b=>why.push({t:"go",x:b.cfg.label+" below minimum ("+b.v.toFixed(1)+"/"+b.cfg.min+") and recovered — included directly."}));
   belowMin.filter(b=>!isDirect(b.m)&&(b.cfg.tier==="primary"||secVia(b.m))).slice(0,3).forEach(b=>{ const via=secVia(b.m);
-    if(via){ why.push({t:"warn",x:b.cfg.label+" below minimum — partially covered via "+via+" (secondary only), no direct exercise."}); }
+    if(via){ why.push({t:"warn",x:b.cfg.label+" below minimum — partially covered via "+via+" (indirect credit only), no direct exercise."}); }
     else { let reason="no direct option available"; const directOpts=S.exercises.filter(e=>e.m[b.m]>=1&&usableInPool(e)&&e.pref!=="avoid");
       if(lim&&directOpts.length&&directOpts.every(e=>limBlock(e))) reason="active limitation blocks all direct options";
       else if(chosen.length>=maxEx) reason="session already at its exercise cap";
@@ -3157,7 +3198,7 @@ function header(){ const wk=weekSessions().length;
 function weekStrip(){ const s=startOfWeek(); const names=["M","T","W","T","F","S","S"]; const today=dayKey(new Date()); let c="";
   for(let i=0;i<7;i++){ const d=new Date(s); d.setDate(d.getDate()+i); const done=S.sessions.some(x=>x.completedAt&&dayKey(x.completedAt)===dayKey(d)); const isT=dayKey(d)===today;
     c+='<div class="day '+(done?'done':'')+' '+(isT?'today':'')+'"><b>'+names[i]+'</b><span class="pip"></span></div>'; } return '<div class="weekstrip">'+c+'</div>'; }
-/* v12 — Reports retired. The training dashboard, direct-vs-secondary muscle split and
+/* v12 — Reports retired. The training dashboard, direct-vs-indirect muscle split and
    per-exercise charts moved into Stats; the duplicated progression board, recent achievements,
    week scorecard, calendar heatmap and Coach Diagnosis are gone. The route still resolves so a
    restored route or an old bookmark lands on Stats rather than a blank screen. */
@@ -3214,22 +3255,26 @@ function recCard(rec){ const N=rec.exercises.length; const ex=rec.exercises.map(
     +(rec.orderNote?'<div class="histline" style="margin:6px 0 2px;color:var(--accent)">↕ '+rec.orderNote+'</div>':'')+'<div style="margin-top:10px">'+ex+'</div><ul style="margin:12px 0 0;padding:0;list-style:none">'+why+'</ul><button class="cta" data-act="start-rec" style="margin-top:14px">Start this session<span class="sub">'+tot+' sets · ~'+rec.time+' min</span></button></div>'; }
 /* v14 — every muscle an exercise credits, heaviest first, with the coefficient. These are the
    numbers effectiveSetsByMuscle() multiplies by, so the chips are the volume maths made visible. */
-function creditTier(c){ return c>=1?"Primary":c>=0.5?"Secondary":"Minor"; }
+/* v17 — exercise-to-muscle contribution has its own vocabulary, distinct from the programme-level
+   Priority / Secondary / Maintenance tiers: Direct = 1.0 credit, Indirect = 0.5, Minor indirect = 0.25. */
+function creditTier(c){ return c>=1?"Direct":c>=0.5?"Indirect":"Minor indirect"; }
+function creditWord(c){ return creditTier(c).toLowerCase(); }
 function fmtCredit(c){ const v=Math.round(c*100)/100; return v.toFixed((v*100)%10?2:1); }
 function muscleCredits(ex){ if(!ex||!ex.m) return [];
   return Object.entries(ex.m).filter(function(pr){ return S.muscles[pr[0]]&&pr[1]>0; })
     .sort(function(a,b){ return b[1]-a[1]||a[0].localeCompare(b[0]); })
     .map(function(pr){ return {m:pr[0], c:pr[1], label:S.muscles[pr[0]].label, tier:creditTier(pr[1])}; }); }
-/* compact, single line: "Rear delts 1.0 · Upper back 0.5" — for picker rows and recap lines */
-function musLabels(e){ return muscleCredits(e).map(function(x){ return x.label+' <b'+(x.c>=1?' class="p"':'')+'>'+fmtCredit(x.c)+'</b>'; }).join(" · "); }
+/* compact, single line: "Rear delts Direct 1.0 · Upper back Indirect 0.5" — for picker rows, the
+   open logger card, workout views and recap lines. v17: the contribution word rides with the number. */
+function musLabels(e){ return muscleCredits(e).map(function(x){ return x.label+' <b'+(x.c>=1?' class="p"':'')+'>'+x.tier+' '+fmtCredit(x.c)+'</b>'; }).join(" · "); }
 /* chips + a worked example, for the exercise detail and form sheets and the open logger card */
 function muscleCreditChips(ex,sets){ const list=muscleCredits(ex); if(!list.length) return "";
   const n=Math.max(1,sets||3);
-  const chips=list.map(function(x){ return '<span class="'+(x.c>=1?'c1':x.c>=0.5?'c2':'c3')+'" title="'+x.tier+'">'+x.label+'<b>'+fmtCredit(x.c)+'</b></span>'; }).join("");
+  const chips=list.map(function(x){ return '<span class="'+(x.c>=1?'c1':x.c>=0.5?'c2':'c3')+'" title="'+x.tier+' · '+fmtCredit(x.c)+' credit per working set">'+x.label+'<b>'+x.tier+' '+fmtCredit(x.c)+'</b></span>'; }).join("");
   const eg=list.map(function(x){ return '<b'+(x.c>=1?' class="p"':'')+'>'+fmtCredit(x.c*n)+'</b> '+x.label.toLowerCase(); }).join(" · ");
   return '<div class="mcred">'+chips+'</div>'
     +'<div class="mcredline">'+n+' working set'+(n===1?'':'s')+' here count as '+eg+'.</div>'
-    +'<div class="mcredkey">1.0 primary · 0.5 secondary · 0.25 minor — the same credit the weekly volume totals use.</div>'; }
+    +'<div class="mcredkey">Direct 1.0 · Indirect 0.5 · Minor indirect 0.25 — the same credit the weekly volume totals use.</div>'; }
 function muscleCreditBlock(ex,sets,title){ const ch=muscleCreditChips(ex,sets); if(!ch) return "";
   return '<div class="card" style="margin:8px 0 0;padding:10px 12px;background:var(--panel2)"><div class="tiny">'+(title||"Muscles worked · credit per working set")+'</div>'+ch+'</div>'; }
 function weekStatus(){ const sess=weekSessions(); const vol=weeklyVolume(sess); const target=S.settings.sessionsPerWeek;
@@ -3304,7 +3349,7 @@ function snapshotCard(){
       +'<div style="flex:1;min-width:0"><div class="nm" style="font-size:13px">'+r.label
       +(r.tier==="primary"?' <span class="tag" style="color:var(--gold)">priority</span>':'')+'</div>'
       +'<div class="histline">'+r.v.toFixed(1)+'/'+r.min+' \u00b7 '+setsWord(r.gap)+' below minimum'
-      +(r.secondary>0.05?' \u00b7 '+r.direct.toFixed(1)+' direct + '+r.secondary.toFixed(1)+' secondary':'')+'</div>'
+      +(r.secondary>0.05?' \u00b7 '+r.direct.toFixed(1)+' direct + '+r.secondary.toFixed(1)+' indirect':'')+'</div>'
       +(added?'<div class="histline" style="color:var(--faint)">already in this workout</div>'
              :(cand?'<div class="histline" style="color:var(--faint)">adds: '+escAttr(cand.ex.name)+'</div>':''))+'</div>'
       +pill(r.status)+act+'</div>'; };
@@ -3337,7 +3382,7 @@ function weekCard(){ const w=weekStatus(); const mom=momentumScore();
   return '<div class="card"><div style="display:flex;justify-content:space-between;align-items:center"><div class="tiny">This week · Mon–Sun</div><div style="display:flex;gap:5px">'+dots+'</div></div><div style="margin-top:6px">'
     + row("Sessions", w.sess+" / "+w.target, w.sess>=w.target?'var(--green)':'var(--accent)')
     + row("Effective sets", setsLogged+" / "+setTarget+" min", setsLogged>=setTarget?'var(--green)':'var(--text)')
-    + row("Primary focus", primaryPct+"% complete", primaryPct>=100?'var(--green)':'var(--amber)') + '</div>'
+    + row("Priority muscles", primaryPct+"% complete", primaryPct>=100?'var(--green)':'var(--amber)') + '</div>'
     +(need.length?'<div class="histline" style="margin-top:8px"><b>Still needs:</b> '+need.join(", ")+'</div>':'<div class="histline" style="margin-top:8px;color:var(--green)">All priority muscles met this week ✓</div>')
     +(avoid.length?'<div class="histline" style="margin-top:3px"><b>Avoid today:</b> '+avoid.join("; ")+'</div>':'')
     +'<div class="row" style="margin-top:11px"><button class="btn ghost sm" data-act="momentum-explain" style="flex:1">Momentum '+mom.score+' · '+mom.label+'</button><button class="btn ghost sm" data-act="goto-stats-week" style="flex:1">Week view →</button></div></div>'; }
@@ -3346,7 +3391,7 @@ function weekSummaryCard(){ const w=weekStatus();
   const next=muscleScores({}).filter(s=>s.trainable&&s.v<s.cfg.gl).slice(0,4).map(s=>S.muscles[s.m].label.toLowerCase());
   return '<div class="card glow"><div style="display:flex;justify-content:space-between;align-items:center"><div class="tiny" style="color:var(--accent)">This training week · Mon–Sun</div><div class="mono" style="font-weight:700;font-size:18px;color:'+(w.sess>=w.target?'var(--green)':'var(--accent)')+'">'+w.sess+' / '+w.target+'</div></div>'
     +'<div class="histline" style="margin-top:6px">'+w.sess+' of '+w.target+' sessions'+(w.sess>=w.target?' — target met ✓':' — '+(w.target-w.sess)+' to go')+'</div><hr class="sub">'
-    +'<div class="tiny">Primary focus below weekly minimum</div><div style="margin-top:6px">'+(w.primaryBelow.length?w.primaryBelow.map(chip).join(""):'<span class="muted" style="font-size:12px">None — all primary muscles met ✓</span>')+'</div>'
+    +'<div class="tiny">Priority muscles below weekly minimum</div><div style="margin-top:6px">'+(w.primaryBelow.length?w.primaryBelow.map(chip).join(""):'<span class="muted" style="font-size:12px">None — all priority muscles met ✓</span>')+'</div>'
     +'<div class="tiny" style="margin-top:11px">Secondary / maintenance below minimum</div><div style="margin-top:6px">'+(w.otherBelow.length?w.otherBelow.map(chip).join(""):'<span class="muted" style="font-size:12px">None</span>')+'</div>'
     +'<div class="tiny" style="margin-top:11px">Trained this week</div><div style="margin-top:6px">'+(w.trained.length?w.trained.map(chip).join(""):'<span class="muted" style="font-size:12px">Nothing logged yet this week</span>')+'</div>'
     +(next.length?'<hr class="sub"><div class="tiny">Recommended next focus</div><div class="histline" style="margin-top:5px">'+next.join(", ")+'</div>':'')+'</div>'; }
@@ -3453,7 +3498,7 @@ function builderPanel(){
     +'<button class="btn sm" data-act="add-ex" style="flex:1">Browse full library</button>'
     +'<button class="btn sm" data-bldcustom="'+escAttr(q)+'" style="flex:1;color:var(--gold)">+ Custom exercise</button></div>'
     +'</div></div>'; }
-/* An exercise reachable by search but not by the shortlist (e.g. its primary muscle is still
+/* An exercise reachable by search but not by the shortlist (e.g. its direct muscle is still
    recovering) still needs a row. It is shown with honest context rather than hidden. */
 function builderFallbackRow(e){ const pm=primaryMuscle(e); const cfg=S.muscles[pm]||{};
   const v=(weeklyVolume()[pm]||0);
@@ -3564,7 +3609,7 @@ function renderSheet(){ const m=document.getElementById("sheetmount"); if(!sheet
     if(wide){ subs=S.exercises.filter(function(e){ return e.id!==curId&&!inWk.has(e.id)&&AVAIL_OK[e.avail]&&!limBlock(e)&&exPassesFilters(e,swapGroup,swapEquip)&&exMatches(e,q); })
         .sort(function(a,b){ return ((a.rec?0:1)-(b.rec?0:1))||(PREF_SCORE[b.pref]-PREF_SCORE[a.pref])||a.name.localeCompare(b.name); }).slice(0,40); }
     else { subs=swapSuggestions(curId); }
-    inner='<div class="tiny">Swap '+cur.name+'</div><p class="muted" style="font-size:12px;margin:6px 0 8px">Same primary muscle ('+S.muscles[primaryMuscle(cur)].label+') keeps your volume counting. Search or filter to reach any exercise.</p>'
+    inner='<div class="tiny">Swap '+cur.name+'</div><p class="muted" style="font-size:12px;margin:6px 0 8px">Same direct muscle ('+S.muscles[primaryMuscle(cur)].label+') keeps your volume counting. Search or filter to reach any exercise.</p>'
       +'<input class="inp srch" id="swapSearch" placeholder="Search name, muscle, equipment..." value="'+escAttr(q)+'">'
       +filterChips("swap",swapGroup,swapEquip)
       +'<div style="margin-top:10px">'+(subs.length?subs.map(function(e){ return '<button class="opt" data-pick="'+e.id+'" style="width:100%;text-align:left"><div><div class="nm">'+e.name+(e.pref==="love"?' <span class="tag love">\u2605</span>':'')+(e.rec?'':' <span class="tag">manual</span>')+(hasSetup(e.id)?' <span class="tag" style="color:var(--gold)">\u2699</span>':'')+'</div><div class="meta">'+equipLabel(e.equip)+' \u00b7 '+groupLabel(exGroup(e))+' \u00b7 '+(e.pattern||"").replace(/_/g," ")+'</div><div class="mcredline">'+musLabels(e)+'</div></div><span class="sets">pick</span></button>'; }).join(""):'<div class="empty">No matches in the library.</div>')+'</div>'; }
@@ -3617,11 +3662,12 @@ function renderSheet(){ const m=document.getElementById("sheetmount"); if(!sheet
       +'<div class="histline" style="margin-top:3px">'+((trendEvidence(id)||{}).text||'Not enough history yet.')+'</div>'
       +((trendAction(id)&&!stallAssess(id).next)?'<div class="histline" style="margin-top:5px;color:var(--accent)">\u2192 '+trendAction(id)+'</div>':'')+'</div>'
       +stallDetailBlock(id)
+      +repRangeNote(id)
       +muscleCreditBlock(ex,DEFAULT_WORK_SETS)
       +setupStrip(id)
       +recGrid
       +'<div class="tiny" style="margin-top:14px">Progress · '+metricLabel(exChartMetric,ex)+'</div>'+seg+'<div class="chartwrap">'+chart+'</div>'+_bwNote
-      +'<div class="tiny" style="margin-top:12px">History</div><div style="margin-top:6px">'+(h.length?h.map(function(x){ return '<div class="contrib"><div><b>'+fmtDate(x.date)+(x.asName&&normSearch(x.asName)!==normSearch(ex.name)?' <span class="tag">as “'+escAttr(x.asName)+'”</span>':'')+'</b><div class="muted" style="font-size:12px;margin-top:2px">'+x.sets.map(function(s){ return fmtSet(s.weight,s.reps); }).join("  ")+'</div></div><span class="c-ef">'+(function(){ if(loadKind(ex)==="ext") return rawVolume(x.sets)+'kg'; if(x.bw==null) return sessionReps(x.sets)+' reps'; return Math.round(sessionVolumeFor(ex,x.sets,x.bw))+'kg'; })()+'</span></div>'; }).join(""):'<div class="empty">No logged sessions.</div>')+'</div>'; }
+      +'<div class="tiny" id="exhist-history" style="margin-top:12px">History</div><div style="margin-top:6px">'+(h.length?h.map(function(x){ return '<div class="contrib"><div><b>'+fmtDate(x.date)+(x.asName&&normSearch(x.asName)!==normSearch(ex.name)?' <span class="tag">as “'+escAttr(x.asName)+'”</span>':'')+'</b><div class="muted" style="font-size:12px;margin-top:2px">'+x.sets.map(function(s){ return fmtSet(s.weight,s.reps); }).join("  ")+'</div></div><span class="c-ef">'+(function(){ if(loadKind(ex)==="ext") return rawVolume(x.sets)+'kg'; if(x.bw==null) return sessionReps(x.sets)+' reps'; return Math.round(sessionVolumeFor(ex,x.sets,x.bw))+'kg'; })()+'</span></div>'; }).join(""):'<div class="empty">No logged sessions.</div>')+'</div>'; }
   else if(sheet.type==="custom"){ const d=customDraft; const editing=!!d.id; const c=editing?customRec(d.id):null;
     const gchips=CUSTOM_GROUP_KEYS.map(function(k){ return '<button class="gchip'+(d.group===k?" on":"")+'" data-cxgroup="'+k+'">'+groupLabel(k)+'</button>'; }).join("");
     const lchips=[["ext","Weight"],["assist","Assistance"],["bw","Bodyweight +"]].map(function(pr){
@@ -3678,14 +3724,15 @@ function renderSheet(){ const m=document.getElementById("sheetmount"); if(!sheet
       return '<div class="card" style="margin:8px 0;padding:12px"><div class="nm" style="font-weight:700">'+entryName(en)+(isCustomEx(ex)?' <span class="tag" style="color:var(--gold)">custom</span>':'')+'</div><div class="muted" style="font-size:12px;margin-top:4px">'+(en.sets.map(s=>(s.type==="warm"?"W ":"")+fmtSet(s.weight,s.reps)).join("   ")||"\u2014")+'</div><div class="histline">'+ws.length+' working sets · '+musLabels(ex||{m:{}})+'</div></div>'; }).join("")
       +'<button class="btn full" data-editfromview="'+w.id+'" style="margin-top:6px">Edit this workout</button>'):'<div class="empty">Not found.</div>'; }
   else if(sheet.type==="momentum"){ const m=momentumScore(); const w=weekStatus();
-    const rows=[["Sessions this week",w.sess+" / "+w.target],["Primary muscles met",m.primaryMet+" / "+m.primaryAll],["Weekly target streak",m.streak+" wk"],["Trained recently",m.consist>=0?"yes":"no"]];
+    const rows=[["Sessions this week",w.sess+" / "+w.target],["Priority muscles met",m.primaryMet+" / "+m.primaryAll],["Weekly target streak",m.streak+" wk"],["Trained recently",m.consist>=0?"yes":"no"]];
     inner='<div class="tiny">Momentum · '+m.score+' / 100 · '+m.label+'</div><p class="muted" style="font-size:12.5px;margin:8px 0 12px">A light motivation score — the concrete weekly numbers are what actually matter. It blends:</p>'
       +rows.map(r=>'<div class="contrib"><div><b>'+r[0]+'</b></div><span class="c-ef">'+r[1]+'</span></div>').join(""); }
   else if(sheet.type==="mperiod"){ const m=sheet.data; const cfg=S.muscles[m]; const sess=periodSessions(); const con=muscleContrib(m,sess); const plabel=statsPeriod==="week"?"this week (Mon–Sun)":statsPeriod==="all"?"all time":"last "+statsPeriod+" days";
-    inner='<div class="tiny">'+cfg.label+' · '+plabel+'</div><div class="kpi" style="margin-top:10px"><div class="k"><b>'+con.total.toFixed(1)+'</b><span>effective sets</span></div><div class="k"><b>'+con.direct.toFixed(1)+'</b><span>direct</span></div><div class="k"><b>'+con.secondary.toFixed(1)+'</b><span>secondary</span></div></div>'
-      +'<div class="tiny" style="margin-top:14px">What made this number</div><div style="margin-top:6px">'+(con.rows.length?con.rows.map(r=>'<div class="contrib"><div><b>'+r.name+'</b><div class="muted" style="font-size:11px">'+r.sets+' sets × '+r.credit+' credit · '+(r.credit>=1?"direct":"secondary")+' · last '+fmtAgo(r.dates.sort().slice(-1)[0])+'</div></div><span class="c-ef">'+r.effective.toFixed(1)+'</span></div>').join(""):'<div class="empty" style="padding:10px">No sets in this period.</div>')+'</div>'; }
+    inner='<div class="tiny">'+cfg.label+' · '+plabel+'</div><div class="kpi" style="margin-top:10px"><div class="k"><b>'+con.total.toFixed(1)+'</b><span>effective sets</span></div><div class="k"><b>'+con.direct.toFixed(1)+'</b><span>direct (1.0)</span></div><div class="k"><b>'+con.secondary.toFixed(1)+'</b><span>indirect (0.5 / 0.25)</span></div></div>'
+      +'<div class="tiny" style="margin-top:14px">What made this number</div><div style="margin-top:6px">'+(con.rows.length?con.rows.map(r=>'<div class="contrib"><div><b>'+r.name+'</b><div class="muted" style="font-size:11px">'+r.sets+' sets × '+fmtCredit(r.credit)+' credit · '+creditWord(r.credit)+' · last '+fmtAgo(r.dates.sort().slice(-1)[0])+'</div></div><span class="c-ef">'+r.effective.toFixed(1)+'</span></div>').join(""):'<div class="empty" style="padding:10px">No sets in this period.</div>')+'</div>'; }
   else if(sheet.type==="covcell"){ inner=covCellSheet(sheet.data); }
-  else if(sheet.type==="dq"){ inner=dqSheet(); }
+  else if(sheet.type==="range"){ inner=rangeSheet(sheet.data); }
+  else if(sheet.type==="dq"){ inner=dqSheet(sheet.data); }
   else if(sheet.type==="tips"){ const id=sheet.data; const ex=exById(id); const t=TIPS[id];
     inner='<div class="tiny">'+(ex?ex.name:id)+' · form & coaching</div>'+(ex?muscleCreditBlock(ex,DEFAULT_WORK_SETS):'')+(t?
       '<div class="field" style="margin-top:10px"><label style="color:var(--green)">✅ Should feel</label><div class="ibody">'+t.feel+'</div></div>'
@@ -3730,6 +3777,7 @@ function renderSheet(){ const m=document.getElementById("sheetmount"); if(!sheet
     inner='<div style="text-align:center;padding:2px 0 4px"><div class="tiny" style="color:var(--accent)">Session complete</div><h2 style="font-size:20px;margin:4px 0">'+r.title+'</h2></div>'
       +'<div class="kpi" style="margin-top:6px"><div class="k"><b>'+(r.dur||"—")+'</b><span>minutes</span></div><div class="k"><b>'+r.setsN+'</b><span>working sets</span></div><div class="k"><b>'+r.exN+'</b><span>exercises</span></div></div>'
       +syncStatusLine(r.id)
+      +((r.dq&&r.dq.n&&!r.dqLater)?'<div class="card" data-dqnotice style="margin:10px 0 0;padding:10px 12px;border-color:rgba(255,159,10,.4);background:rgba(255,159,10,.07)"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><div class="ibody" style="font-size:13px;color:var(--amber)"><b>'+r.dq.n+' entr'+(r.dq.n===1?'y looks':'ies look')+' unusual</b> · saved as logged</div><div class="row" style="gap:6px"><button class="btn sm" data-dqreview="'+r.id+'">Review now</button><button class="btn sm ghost" data-dqlater>Later</button></div></div></div>':'')
       +recapDeltas(r)
       +(r.coach?'<div class="card" style="margin:12px 0 0;border-color:rgba(59,130,246,.32);background:rgba(59,130,246,.07)"><div class="tiny" style="color:var(--accent)">Coach says</div><div class="ibody" style="margin-top:4px;color:#C6D0DC">'+r.coach+'</div></div>':"")
       +(r.muscles.length?'<div class="histline" style="margin-top:10px;text-align:center">Trained: '+r.muscles.join(" · ")+'</div>':"")
@@ -3745,6 +3793,8 @@ function renderSheet(){ const m=document.getElementById("sheetmount"); if(!sheet
   const cl2=m.querySelector('[data-sheetclose2]'); if(cl2) cl2.onclick=closeSheet;
   const cy=m.querySelector('[data-confirmyes]'); if(cy) cy.onclick=()=>{ const fn=sheet.data&&sheet.data.onYes; closeSheet(); if(fn) fn(); };
   const rh=m.querySelector('[data-recaphist]'); if(rh) rh.onclick=()=>{ closeSheet(); go("history"); };
+  const dqr=m.querySelector('[data-dqreview]'); if(dqr) dqr.onclick=()=>{ openSheet("dq",dqr.dataset.dqreview); };          /* v17: recap → review this workout's flags */
+  const dql=m.querySelector('[data-dqlater]'); if(dql) dql.onclick=()=>{ if(sheet&&sheet.data) sheet.data.dqLater=true; renderSheet(); };
   const dc=m.querySelector('[data-diagcopy]'); if(dc) dc.onclick=()=>{ const txt=JSON.stringify({build:BUILD, user:authUser&&authUser.id, at:iso(new Date()), inflight:Object.keys(pushInFlight), log:plogRead()},null,1); try{ navigator.clipboard.writeText(txt).then(()=>{ dc.textContent="Copied ✓"; }); }catch(e){ dc.textContent="Copy failed"; } };
   const dx=m.querySelector('[data-diagclear]'); if(dx) dx.onclick=()=>{ plogClear(); renderSheet(); };
   m.querySelectorAll('[data-tips]').forEach(b=>b.onclick=()=>openSheet("tips",b.dataset.tips));
@@ -3755,6 +3805,12 @@ function renderSheet(){ const m=document.getElementById("sheetmount"); if(!sheet
   m.querySelectorAll('[data-dqtoggle]').forEach(b=>b.onclick=()=>{ dqShowDismissed=!dqShowDismissed; renderSheet(); });
   m.querySelectorAll('[data-exhist]').forEach(b=>b.onclick=()=>openSheet("exhist",b.dataset.exhist));
   m.querySelectorAll('[data-setup]').forEach(b=>b.onclick=()=>openSheet("setup",b.dataset.setup));
+  /* v17 target rep range: review / save / reset, and the jump to the recent sets */
+  m.querySelectorAll('[data-range]').forEach(b=>b.onclick=()=>openSheet("range",b.dataset.range));
+  m.querySelectorAll('[data-rangesave]').forEach(b=>b.onclick=()=>{ const id=b.dataset.rangesave; const lo=m.querySelector("#rangeLo"), hi=m.querySelector("#rangeHi");
+    if(saveRange(id,lo&&lo.value,hi&&hi.value)) openSheet("exhist",id); else { b.textContent="Enter a low and a high between 1 and 60"; } });
+  m.querySelectorAll('[data-rangereset]').forEach(b=>b.onclick=()=>{ resetRange(b.dataset.rangereset); openSheet("exhist",b.dataset.rangereset); });
+  m.querySelectorAll('[data-scrollto]').forEach(b=>b.onclick=()=>{ const t=m.querySelector("#"+b.dataset.scrollto); if(t) t.scrollIntoView({behavior:"smooth",block:"start"}); });
   m.querySelectorAll('[data-faddg]').forEach(b=>b.onclick=()=>{ addGroup=b.dataset.faddg||""; renderSheet(); });
   m.querySelectorAll('[data-fadde]').forEach(b=>b.onclick=()=>{ addEquip=b.dataset.fadde||""; renderSheet(); });
   m.querySelectorAll('[data-fswapg]').forEach(b=>b.onclick=()=>{ swapGroup=b.dataset.fswapg||""; renderSheet(); });
@@ -3919,8 +3975,8 @@ function momentumScore(){ const w=weekStatus(); const target=w.target||4; const 
 function coachSummary(){ const m=momentumScore(); const w=weekStatus(); const parts=[];
   parts.push(w.sess>=w.target?("You’ve hit "+w.sess+"/"+w.target+" sessions this week — target met."):(w.sess+"/"+w.target+" sessions logged this week, "+(w.target-w.sess)+" to go."));
   const na=needsAttentionPrimary(); if(na.length) parts.push("Still needs direct work: "+na.slice(0,3).map(x=>S.muscles[x].label.toLowerCase()).join(", ")+".");
-  else parts.push("Every primary muscle has met its weekly minimum.");
-  const sd=secondaryDominant()[0]; if(sd) parts.push(S.muscles[sd.m].label+" volume is mostly secondary — add one direct exercise.");
+  else parts.push("Every priority muscle has met its weekly minimum.");
+  const sd=secondaryDominant()[0]; if(sd) parts.push(S.muscles[sd.m].label+" volume is mostly indirect — add one direct exercise.");
   return parts.join(" "); }
 /* ---- card renderer ---- */
 function insightCard(o){ const c=o.tier==="good"?"var(--green)":o.tier==="warn"?"var(--amber)":o.tier==="bad"?"var(--red)":"var(--accent)";
@@ -4023,10 +4079,14 @@ function consistencyCard(){
      1. Am I training consistently?                      → priorityCoverage() + coverageMatrix()
      2. Are the muscles I care about getting enough work? → coverageMatrix() (muscle × week, banded)
      3. Am I progressing or quietly stalling?            → stallAssess()
-     4. Am I training within the rep ranges we set?      → repRangeCompliance()   [prototype]
-     5. Is anything in the data wrong or suspicious?     → dataQualityScan() + review sheet
-   Plus three prototypes to judge before they become permanent: blockReport(), calendarStrip() with
-   finer time-of-day buckets, and strengthIndex().
+     4. Am I training within the rep ranges we set?      → repRangeCompliance()   [exercise level only, v17]
+     5. Is anything in the data wrong or suspicious?     → dataQualityScan() + review sheet + Settings centre
+   Plus two prototypes still under review: blockReport() and calendarStrip() with finer time-of-day
+   buckets. v17 review (Adam, 14 Sep 2026): the strength index prototype and the Stats-wide rep-range
+   compliance board were removed — indexed numbers were not actionable, and a dashboard judging every
+   exercise against its range does not fit double progression. The rep-range engine stays for the
+   exercise detail sheet (a subtle mismatch note + range editor), the coverage matrix gained a
+   Total | Direct | Indirect view, and the data-quality scan now also runs at set entry and at finish.
    House rules carried over from v11: numbers not verdicts, evidence beside every claim, no invented
    coefficients, and "not enough data" is a legitimate answer. */
 
@@ -4043,24 +4103,28 @@ function muscleGroupOf(m){ const c=S.muscles[m]; if(!c) return "maintenance";
 function weekSessionsFor(start){ const st=new Date(start); const en=new Date(st); en.setDate(en.getDate()+7);
   return completedSessions().filter(function(x){ const t=new Date(x.completedAt); return t>=st&&t<en; }); }
 function cellStatus(v,cfg){ if(!(v>0.01)) return "zero"; if(v>cfg.cap) return "over"; if(v>=cfg.min) return "ok"; return "low"; }
-function coverageMatrix(){
+/* v17 — `view` is "total" (default: min/cap banding, hit count, the scored matrix), "direct" or
+   "indirect". The two partial views carry the same weeks, rows and 10-week average but are shown
+   neutrally: the configured minimum and cap were set for TOTAL effective sets, so a direct-only
+   number is never coloured against them and never counted as a hit or a miss. */
+function coverageMatrix(view){ view=(view==="direct"||view==="indirect")?view:"total"; const scored=view==="total";
   const weeks=weekSeriesAll().map(function(w){ return {start:w.start, current:w.current, sessions:w.sessions}; });
-  const perWeek=weeks.map(function(w){ return effectiveSetsByMuscle(weekSessionsFor(w.start)); });
+  const perWeek=weeks.map(function(w){ return effectiveSetsByMuscleView(weekSessionsFor(w.start),view); });
   const groups={priority:[], secondary:[], maintenance:[]};
   Object.keys(S.muscles).forEach(function(m){ const cfg=S.muscles[m]; const g=muscleGroupOf(m);
     const cells=perWeek.map(function(vol,i){ const v=Math.round((vol[m]||0)*10)/10;
-      return {v:v, status:cellStatus(v,cfg), week:weeks[i].start, current:!!weeks[i].current}; });
+      return {v:v, status:scored?cellStatus(v,cfg):(v>0.01?"neutral":"zero"), week:weeks[i].start, current:!!weeks[i].current}; });
     const complete=cells.filter(function(c){ return !c.current; });
-    const hit=complete.filter(function(c){ return c.status==="ok"||c.status==="over"; }).length;
+    const hit=scored?complete.filter(function(c){ return c.status==="ok"||c.status==="over"; }).length:null;
     const trained=complete.filter(function(c){ return c.status!=="zero"; }).length;
     const last10=complete.slice(-COV_VIEW); const avg10=last10.length?last10.reduce(function(a,c){ return a+c.v; },0)/last10.length:0;
     groups[g].push({m:m, label:cfg.label, min:cfg.min, cap:cfg.cap, tier:cfg.tier, outOfScope:!(cfg.min>0),
       cells:cells, hit:hit, complete:complete.length, trained:trained, avg10:Math.round(avg10*10)/10}); });
-  return {weeks:weeks, groups:groups}; }
+  return {weeks:weeks, groups:groups, view:view, scored:scored}; }
 /* The headline consistency number. A week counts as covered when EVERY active priority muscle
    (tier primary, minimum > 0) reached its minimum. The in-progress week is reported separately so
    a Tuesday never reads as a missed week. */
-function priorityCoverage(mx){ mx=mx||coverageMatrix();
+function priorityCoverage(mx){ mx=(mx&&mx.scored!==false)?mx:coverageMatrix("total");   /* only the total view is scored */
   const rows=mx.groups.priority; const weeks=mx.weeks;
   const per=weeks.map(function(w,i){ if(!rows.length) return null;
     const covered=rows.filter(function(r){ const s=r.cells[i].status; return s==="ok"||s==="over"; }).length;
@@ -4078,8 +4142,10 @@ function priorityCoverage(mx){ mx=mx||coverageMatrix();
   return {active:rows.length, weeks:complete.length, hit:hit, pct:complete.length?Math.round(100*hit/complete.length):0,
     last4:{hit:last4hit, of:last4.length}, last10:{hit:last10hit, of:last10.length}, current:cur, per:per, streaks:streaks}; }
 /* Which exercises produced a cell's number — the app's own attribution helper on that week's sessions. */
-function cellContributors(m,weekStart){ const sess=weekSessionsFor(weekStart); const con=muscleContrib(m,sess);
-  return {rows:con.rows, direct:con.direct, secondary:con.secondary, total:con.total, sessions:sess.length}; }
+function cellContributors(m,weekStart,view){ const sess=weekSessionsFor(weekStart); const con=muscleContrib(m,sess); view=(view==="direct"||view==="indirect")?view:"total";
+  const rows=con.rows.filter(function(r){ return creditInView(r.credit,view); });
+  const shown=view==="total"?con.total:view==="direct"?con.direct:con.secondary;
+  return {rows:rows, direct:con.direct, indirect:con.secondary, secondary:con.secondary, total:con.total, shown:shown, view:view, sessions:sess.length}; }
 
 /* ---------------------------------------------------------------- 3 · STALL DETECTOR
    Double-progression is the yardstick: a session IMPROVES an exercise when the top set carries
@@ -4184,7 +4250,8 @@ function stallBoard(){ const cnt={}; completedSessions().forEach(function(s){ (s
    Runs over the WHOLE history every time Stats renders (cheap: a few hundred sets). Every flag says
    what was seen, why it is suspicious, and what sits either side of it. Nothing is edited here — the
    review sheet hands you Edit and Dismiss. The one automatic repair is the exact k-fold repeated set
-   block a racing sync leaves behind (see dqAutoRepair), because that shape cannot occur by training. */
+   block a racing sync leaves behind (see dqAutoRepair) — and only, from v17.1, when the save record
+   proves it (journal copy, integrity marker or duplicate cloud rows); pattern alone is never enough. */
 const DQ_OUTLIER=0.25, DQ_JUMP=0.40, DQ_SETCOUNT_X=2.5, DQ_ENTRY_SETS=8, DQ_REPS_MAX=30;
 function dqFlagId(kind,sessionId,exId,idx){ return kind+"|"+sessionId+"|"+(exId||"")+"|"+(idx==null?"":idx); }
 function dqDismissed(){ return (S.settings&&S.settings.dqDismissed)||{}; }
@@ -4203,7 +4270,8 @@ function dataQualityScan(){
   sessions.forEach(function(s){ (s.entries||[]).forEach(function(en){ const ex=exById(en.exId); const ws=workingSets(en); if(!ex||!ws.length) return;
     (byEx[en.exId]=byEx[en.exId]||[]).push({sess:s, en:en, ws:ws, top:topSetOf(ex,ws), score:dqSessionScore(ex,ws,bodyweightAt(s.completedAt))}); }); });
   Object.keys(byEx).forEach(function(id){ typicalLoad[id]=median(byEx[id].map(function(x){ return x.top.w; })); });
-  const push=function(f){ f.id=dqFlagId(f.kind,f.sessionId,f.exId,f.idx); f.dismissed=!!dqDismissed()[f.id]; flags.push(f); };
+  const byId={}; sessions.forEach(function(x){ byId[x.id]=x; });
+  const push=function(f){ f.id=dqFlagId(f.kind,f.sessionId,f.exId,f.idx); f.dismissed=!!dqDismissed()[f.id]; const ss=byId[f.sessionId]; f.workout=ss?(ss.title||"Workout"):""; f.exercise=f.exId?((exById(f.exId)||{}).name||""):""; f.dismissedAt=dqDismissed()[f.id]||null; flags.push(f); };
   sessions.forEach(function(s,si){
     const dateStr=fmtDate(s.completedAt);
     const nSets=(s.entries||[]).reduce(function(a,en){ return a+workingSets(en).length; },0);
@@ -4227,7 +4295,7 @@ function dataQualityScan(){
       /* repeated identical set blocks (the 13 Sep 2026 shape) */
       const rep=repeatedBlock(en.sets||[]); if(rep) push({kind:"dup_sets", sev:"warn", sessionId:s.id, date:s.completedAt, exId:en.exId, idx:ei,
         title:dateStr+" · "+entryName(en)+" sets repeat "+rep.k+"×", value:rep.k+" identical blocks of "+rep.len,
-        why:"The set list is the same block written "+rep.k+" times over. Training does not produce that pattern; a sync race does. Fixed automatically on reload (dqAutoRepair) — or edit to confirm.",
+        why:"The set list is the same block written "+rep.k+" times over. A sync race produces this; training almost never does. It is only collapsed automatically when the save record proves the duplication — otherwise it stays exactly as logged: edit it down, or dismiss if you really did repeat the block.",
         context:(en.sets||[]).map(function(x){ return x.type==="warm"?"W":fmtSet(x.weight,x.reps); }).join(" ")});
       /* too many sets on one entry */
       if(ws.length>DQ_ENTRY_SETS&&!rep) push({kind:"entry_sets", sev:"info", sessionId:s.id, date:s.completedAt, exId:en.exId, idx:ei,
@@ -4266,6 +4334,13 @@ function dataQualityScan(){
   flags.sort(function(a,b){ return (sevRank[a.sev]-sevRank[b.sev])||(new Date(b.date)-new Date(a.date)); });
   const open=flags.filter(function(f){ return !f.dismissed; });
   return {flags:flags, open:open, counts:{error:open.filter(function(f){ return f.sev==="error"; }).length, warn:open.filter(function(f){ return f.sev==="warn"; }).length, info:open.filter(function(f){ return f.sev==="info"; }).length}}; }
+/* v17 — which flags are worth interrupting for at finish time: a likely error, or a warning whose
+   shape training does not produce (swapped values, >30 reps, repeated blocks, a session saved
+   twice, an implausible set count). "Appears twice" is left out — returning to an exercise is
+   legitimate — and so is every info-level note. */
+const DQ_HIGH_KINDS={swapped:1, reps:1, dup_sets:1, dup_session:1, setcount:1, outlier:1};
+function dqHighConfidence(f){ return !f.dismissed&&(f.sev==="error"||(f.sev==="warn"&&!!DQ_HIGH_KINDS[f.kind])); }
+function dqForSession(sessionId,scan){ scan=scan||dataQualityScan(); return scan.flags.filter(function(f){ return f.sessionId===sessionId; }); }
 function dqNeighbours(list,sess){ if(!list) return ""; const i=list.findIndex(function(x){ return x.sess.id===sess.id; }); if(i<0) return "";
   const pick=list.slice(Math.max(0,i-2),Math.min(list.length,i+3));
   return pick.map(function(x){ const me=x.sess.id===sess.id; return (me?"▶ ":"")+fmtDate(x.sess.completedAt).replace(/^\w+ /,"")+": "+x.ws.map(function(st){ return fmtSet(st.weight,st.reps); }).join(" "); }).join("\n"); }
@@ -4280,18 +4355,49 @@ function repeatedBlock(sets){ const n=sets.length; if(n<4) return null; const si
       pairs like [50×10,40×10,50×10,40×10] are real training, so a two-fold repeat needs 3+ distinct sets */
       const distinct=new Set(sigs.slice(0,len)).size; if(distinct>=2&&(k>=3||len>=3)) return {k:k,len:len}; } }
   return null; }
-/* Deterministic repair only: collapse an exact k-fold repeated set block to one block. Returns the
-   number of entries repaired; the session is marked unsynced so the cloud copy is rewritten too. */
-function dqAutoRepair(){ let fixed=0;
-  completedSessions().forEach(function(s){ (s.entries||[]).forEach(function(en){ const rep=repeatedBlock(en.sets||[]); if(!rep||rep.k<3) return;   /* three-fold or more only: the sync-race shape */
-    en.sets=en.sets.slice(0,rep.len); s.synced=false; fixed++; }); });
-  if(fixed){ persistLocal(); try{ S.settings.dqRepairs=(S.settings.dqRepairs||[]).concat([{at:iso(new Date()),entries:fixed}]).slice(-20); }catch(e){} try{ retryUnsynced(); }catch(e){} }
+/* v17.1 — EVIDENCE REQUIRED. An exact k-fold repeated set block is only ever collapsed when something
+   outside the pattern itself proves it is a save/sync duplication:
+     journal    the write-ahead journal copy of this workout (written at Finish on this device) holds
+                exactly one block for this entry — the repeat arrived afterwards, through sync, not training
+     integrity  normaliseSessions() already proved a k-fold sync duplication on this same record, same k
+   (Duplicate cloud set rows are the third signature; those are collapsed at hydrate by dedupeSetRows.)
+   Without evidence the block stays exactly as logged and is surfaced as a dup_sets flag for review. */
+function dqRepairEvidence(s,ei,en,rep){
+  try{ const j=journalRead().find(function(x){ return x&&x.id===s.id; }); const je=(j&&Array.isArray(j.entries))?j.entries[ei]:null;
+    const sig=function(x){ return (x.type||"work")+":"+(x.weight===""||x.weight==null?"-":+x.weight)+"x"+(x.reps===""||x.reps==null?"-":+x.reps); };
+    if(je&&je.exId===en.exId&&Array.isArray(je.sets)&&je.sets.length===rep.len&&je.sets.map(sig).join("|")===(en.sets||[]).slice(0,rep.len).map(sig).join("|"))
+      return "the journal copy written at Finish on this device holds one block of "+rep.len+" — the "+rep.k+"× repeat arrived through sync"; }catch(e){}
+  if(s.integrity&&s.integrity.collapsed===rep.k) return "this record already carried a proven "+rep.k+"× sync duplication (integrity marker, same k)";
+  return null; }
+function dqAutoRepair(){ let fixed=0; const items=[];
+  completedSessions().forEach(function(s){ (s.entries||[]).forEach(function(en,ei){ const rep=repeatedBlock(en.sets||[]); if(!rep||rep.k<3) return;   /* three-fold or more only: the sync-race shape */
+    const ev=dqRepairEvidence(s,ei,en,rep); if(!ev) return;                                                                            /* v17.1: no evidence → flag, never touch */
+    const before=(en.sets||[]).map(function(x){ return x.type==="warm"?"W":fmtSet(x.weight,x.reps); }).join(" ");
+    en.sets=en.sets.slice(0,rep.len); s.synced=false; fixed++;
+    items.push({sessionId:s.id, date:s.completedAt, workout:s.title||"Workout", exId:en.exId, name:entryName(en), k:rep.k, len:rep.len, before:before,
+      after:(en.sets||[]).map(function(x){ return x.type==="warm"?"W":fmtSet(x.weight,x.reps); }).join(" "), evidence:ev}); }); });
+  if(fixed){ persistLocal(); try{ S.settings.dqRepairs=(S.settings.dqRepairs||[]).concat([{at:iso(new Date()),entries:fixed,items:items,source:"scan"}]).slice(-20); }catch(e){} try{ retryUnsynced(); }catch(e){} }
   return fixed; }
+/* v17 — SET-ENTRY PLAUSIBILITY. Judged the moment a set is ticked, against this exercise's own
+   history where there is one. Returns null, or a message for a value that is extremely unlikely.
+   It only ever asks; "Save anyway" is always available and the finish-time scan still runs. */
+function setPlausibility(ex,st){ if(!ex||!st||st.type==="warm") return null; const w=+st.weight, r=+st.reps;
+  if(st.weight===""||st.weight==null||st.reps===""||st.reps==null||isNaN(w)||isNaN(r)) return null;
+  const kind=loadKind(ex); const tops=exerciseHistory(ex.id).map(function(x){ return topSetOf(ex,x.sets).w; }).filter(function(v){ return v>0; });
+  const typ=tops.length>=3?median(tops):0;
+  if(kind==="ext"&&typ>0&&r>=typ*0.6&&r<=typ*1.6&&w>0&&w<=DQ_REPS_MAX&&w<typ*0.5) return {kind:"swapped", msg:w+" kg × "+r+" reads like reps and weight swapped for "+ex.name+" — you usually work around "+Math.round(typ)+" kg. Please check reps and weight."};
+  if(r>DQ_REPS_MAX) return {kind:"reps", msg:r+" reps is very unusual for "+ex.name+". Please check reps and weight."};
+  if(kind==="ext"&&typ>0&&w>=typ*3&&w-typ>=20) return {kind:"load", msg:w+" kg is far above your usual "+Math.round(typ)+" kg on "+ex.name+". Please check reps and weight."};
+  if(kind==="ext"&&w>=500) return {kind:"load", msg:w+" kg is very unusual for "+ex.name+". Please check reps and weight."};
+  return null; }
 
-/* ---------------------------------------------------------------- 4 · REP-RANGE COMPLIANCE (prototype)
+/* ---------------------------------------------------------------- 4 · REP-RANGE COMPLIANCE (exercise level)
    Per exercise, the last 8 exposures: how many working sets fell under, inside and over its own
    configured range, and a reading that separates "load is too high" from "the range is not how you
-   actually train this". Neither is changed automatically. */
+   actually train this". Neither is changed automatically. v17: the Stats-wide board is gone; the
+   engine feeds the exercise detail sheet only (repRangeNote), where a persistent mismatch earns one
+   quiet line and two buttons — review the target range, or look at the recent sets. Training is
+   never called wrong: reps falling after a load step and being rebuilt is the method, not a fault. */
 const RR_WINDOW=8, RR_MIN_EXPOSURES=3;
 function repRangeCompliance(exId){ const ex=exById(exId); if(!ex) return null;
   const h=exerciseHistory(exId).slice(0,RR_WINDOW); if(h.length<RR_MIN_EXPOSURES) return null;
@@ -4307,8 +4413,32 @@ function repRangeCompliance(exId){ const ex=exById(exId); if(!ex) return null;
   else if(pa>=50){ lean="light"; reading="Most sets run past "+rh+" reps — room to add load while staying in range."; }
   else { lean="ok"; reading="Mostly inside "+rl+"–"+rh+"."; }
   return {ex:ex, n:n, exposures:h.length, rl:rl, rh:rh, below:below, within:within, above:above, pb:pb, pw:pw, pa:pa, medReps:medReps, tops:tops, lean:lean, reading:reading}; }
-function repRangeBoard(){ const cnt={}; completedSessions().forEach(function(s){ (s.entries||[]).forEach(function(en){ if(workingSets(en).length) cnt[en.exId]=(cnt[en.exId]||0)+1; }); });
-  return Object.keys(cnt).map(function(id){ return repRangeCompliance(id); }).filter(Boolean).sort(function(a,b){ return (b.pb-a.pb)||(b.n-a.n); }); }
+/* v17 — the one quiet line the exercise sheet shows when recent training repeatedly sits outside the
+   configured range: at least 6 recent exposures and three-quarters or more of the working sets on the
+   same side (v17.1 — the 50% lean was too sensitive for double progression). It states the mismatch
+   and offers two ways to look — it never changes the target and never grades the training. */
+const RR_NOTE_MIN_EXPOSURES=6, RR_NOTE_PCT=75;                     /* v17.1: 6+ exposures and ≥75% on one side — quieter than the engine's 50% lean */
+function repRangeMismatch(exId){ const rr=repRangeCompliance(exId); if(!rr) return null; if(rr.exposures<RR_NOTE_MIN_EXPOSURES) return null;
+  if(!(rr.pb>=RR_NOTE_PCT||rr.pa>=RR_NOTE_PCT)) return null;
+  const side=rr.pb>=RR_NOTE_PCT?"below":"above"; const pct=rr.pb>=RR_NOTE_PCT?rr.pb:rr.pa;
+  return {rr:rr, side:side, pct:pct, text:"Your recent training doesn’t match the configured "+rr.rl+"–"+rr.rh+" rep range.",
+    detail:pct+"% of working sets over the last "+rr.exposures+" exposures were "+side+" it · median "+rr.medReps+" reps"}; }
+function repRangeNote(exId){ const m=repRangeMismatch(exId); if(!m) return "";
+  return '<div class="rr-note" data-rrnote><div class="histline" style="margin:0;color:var(--text)">'+m.text+'</div><div class="histline" style="margin-top:2px">'+m.detail+'</div>'
+    +'<div class="row" style="margin-top:8px;gap:6px"><button class="btn sm" data-range="'+exId+'">Review target range</button><button class="btn sm ghost" data-scrollto="exhist-history">View recent sets</button></div></div>'; }
+/* the range editor sheet: configured vs library default, the recent read, two numbers, save / reset */
+function rangeSheet(exId){ const ex=exById(exId); if(!ex) return '<div class="empty">Not found.</div>';
+  const lib=defaultRange(exId); const ov=rangeOverride(exId); const rr=repRangeCompliance(exId);
+  const bar=rr?'<div class="rr-bar"><i class="b" style="width:'+rr.pb+'%"></i><i class="w" style="width:'+rr.pw+'%"></i><i class="a" style="width:'+rr.pa+'%"></i></div>'
+      +'<div class="rr-nums"><span style="color:var(--red)">'+rr.pb+'% below</span><span style="color:var(--green)">'+rr.pw+'% within</span><span style="color:var(--blue)">'+rr.pa+'% above</span><span class="muted">median '+rr.medReps+' reps</span></div>'
+      +'<div class="histline" style="margin-top:4px">'+rr.reading+'</div>':'<div class="histline" style="margin-top:4px">Fewer than '+RR_MIN_EXPOSURES+' recent exposures — no read yet.</div>';
+  return '<div class="tiny">'+ex.name+' · target rep range</div>'
+    +'<p class="muted" style="font-size:12px;margin:6px 0 10px">The range the progression engine works to: reps up to the top of it, then load. Nothing you log is judged by it and no logged set is changed by it.</p>'
+    +'<div class="kpi"><div class="k"><b>'+ex.rl+'–'+ex.rh+'</b><span>configured'+(ov?' · yours':'')+'</span></div>'+(lib?'<div class="k"><b>'+lib.rl+'–'+lib.rh+'</b><span>library default</span></div>':'')+(rr?'<div class="k"><b>'+rr.medReps+'</b><span>median reps · last '+rr.exposures+'</span></div>':'')+'</div>'
+    +'<div class="tiny" style="margin-top:14px">Recent working sets · last '+RR_WINDOW+' exposures</div>'+bar
+    +'<div class="row" style="margin-top:14px;gap:10px"><div class="field" style="flex:1;margin:0"><label>Low</label><input class="inp" id="rangeLo" inputmode="numeric" value="'+ex.rl+'"></div><div class="field" style="flex:1;margin:0"><label>High</label><input class="inp" id="rangeHi" inputmode="numeric" value="'+ex.rh+'"></div></div>'
+    +'<div class="row" style="margin-top:12px"><button class="btn accent full" data-rangesave="'+exId+'">Save range</button>'+(ov&&lib?'<button class="btn" data-rangereset="'+exId+'">Reset to '+lib.rl+'–'+lib.rh+'</button>':'')+'</div>'
+    +(ov&&ov.updatedAt?'<div class="histline" style="margin-top:8px">Set by you '+fmtDate(ov.updatedAt)+' · saved with your settings on every device.</div>':''); }
 
 /* ---------------------------------------------------------------- 5 · FOUR-WEEK BLOCK REPORT (prototype)
    The last four COMPLETE weeks against the four before them. Only signals that change a decision. */
@@ -4357,31 +4487,6 @@ function timeOfDayCounts6(){ const out=TOD6.map(function(b){ return {label:b[0],
   completedSessions().forEach(function(s){ const t=sessionClock(s); if(!t){ unknown++; return; } const h=t.getHours(); TOD6.forEach(function(b,i){ if(h>=b[1]&&h<b[2]) out[i].n++; }); });
   return {buckets:out, unknown:unknown, total:completedSessions().length}; }
 
-/* ---------------------------------------------------------------- 7 · STRENGTH INDEX BY MUSCLE GROUP (prototype)
-   Each exercise's session strength (direction-aware e1RM, or top-set score for high-rep work) is
-   indexed to the median of its first three exposures = 100 (a median, so one mis-typed early session
-   cannot set the baseline). A group's index is the median of the CURRENT
-   index of its member exercises (primary muscle in the group, 5+ exposures). Confidence is stated,
-   and a group with one member or under 10 supporting exposures is shown as such, not as a number
-   to trust. */
-const SI_MIN_EXPOSURES=5, SI_LOW_EXPOSURES=10;
-function strengthIndex(){ const groups={};
-  MUSCLE_GROUPS.forEach(function(g){ groups[g.key]={key:g.key, label:g.label, members:[], exposures:0}; });
-  const cnt={}; completedSessions().forEach(function(s){ (s.entries||[]).forEach(function(en){ if(workingSets(en).length) cnt[en.exId]=(cnt[en.exId]||0)+1; }); });
-  Object.keys(cnt).forEach(function(id){ const ex=exById(id); if(!ex) return; const g=exGroup(ex); if(!g||!groups[g]) return;
-    const h=exerciseHistory(id).slice().reverse(); const ser=h.map(function(x){ return sessionStrength(ex,x.sets,x.bw); }).filter(function(v){ return v>0; });
-    if(ser.length<SI_MIN_EXPOSURES) { groups[g].members.push({ex:ex, n:ser.length, index:null, thin:true}); return; }
-    const base=median(ser.slice(0,3)); if(!(base>0)) return;          /* median of the first three: one bad early entry cannot set the baseline */
-    const cur=median(ser.slice(-3));                                   /* median of the last three, so one session cannot swing it */
-    const stale=exerciseTrendData(id).stale;
-    groups[g].members.push({ex:ex, n:ser.length, index:Math.round(100*cur/base), peak:Math.round(100*Math.max.apply(null,ser)/base), stale:stale, thin:false});
-    if(!stale) groups[g].exposures+=ser.length; });
-  return Object.values(groups).map(function(g){ const live=g.members.filter(function(m){ return m.index!=null&&!m.stale; });
-    const idx=live.length?Math.round(median(live.map(function(m){ return m.index; }))):null;
-    const conf=!live.length?"none":(live.length<2||g.exposures<SI_LOW_EXPOSURES)?"low":"ok";
-    return Object.assign(g,{index:idx, live:live.length, conf:conf}); }).filter(function(g){ return g.members.length; })
-    .sort(function(a,b){ return (b.live-a.live)||(b.exposures-a.exposures); }); }
-
 /* ---------------------------------------------------------------- v16 · STATS SECTIONS
    Stats is long by design now, so every area is a collapsible section. Open/closed state is kept per
    device (the same store Settings uses), with a per-section default: the four questions open, the
@@ -4397,11 +4502,11 @@ function statsSection(key,title,sub,bodyFn,defOpen,badge){
 
 /* ---------------------------------------------------------------- COVERAGE MATRIX CARD */
 function fmtCov(v){ return v<=0?'·':(v>=10?String(Math.round(v)):String(v)); }
-const COV_GROUP_META={priority:{label:"Priority",sub:"tier: primary focus · counts toward priority coverage",def:true},
-  secondary:{label:"Secondary",sub:"tier: secondary · shown, not scored",def:false},
+const COV_GROUP_META={priority:{label:"Priority",sub:"priority tier · counts toward priority coverage",def:true},
+  secondary:{label:"Secondary",sub:"secondary tier · shown, not scored",def:false},
   maintenance:{label:"Maintenance / out of scope",sub:"maintenance tier, or minimum set to 0",def:false}};
 function priorityCoverageBlock(pc){
-  if(!pc.active) return '<div class="empty" style="padding:12px">No muscle is set to the primary tier with a minimum above 0, so there is nothing to score. Set priorities in Settings.</div>';
+  if(!pc.active) return '<div class="empty" style="padding:12px">No muscle is set to the Priority tier with a minimum above 0, so there is nothing to score. Set priorities in Settings.</div>';
   const col=pc.pct>=75?"var(--green)":pc.pct>=50?"var(--amber)":"var(--red)";
   const cur=pc.current?('This week so far: <b>'+pc.current.covered+' of '+pc.current.of+'</b>'+(pc.current.missed.length&&!pc.current.hit?' · still to reach minimum: '+pc.current.missed.join(", "):' · all covered')):'';
   const streak=pc.streaks.length?pc.streaks.slice(0,2).map(function(s){ return s.label+': missed the last '+s.misses+' week'+(s.misses===1?'':'s'); }).join(' · '):'Every priority muscle reached its minimum last week.';
@@ -4413,34 +4518,46 @@ function priorityCoverageBlock(pc){
     +'<div class="histline" style="margin-top:8px">'+streak+'</div>'
     +(cur?'<div class="histline">'+cur+'</div>':'')
     +'</div>'; }
+let covView="total";                                 /* v17 — Total | Direct | Indirect; resets to Total on reload */
+function covViewMeta(v){ return {total:{title:"Effective sets per muscle · week by week", note:"every credit: direct 1.0 + indirect 0.5 + minor indirect 0.25 · scored against each muscle’s minimum and cap"},
+  direct:{title:"Direct sets per muscle · week by week", note:"1.0-credit work only — the sets where this muscle was the target · shown as numbers, not scored: your minimums were set for total effective sets"},
+  indirect:{title:"Indirect sets per muscle · week by week", note:"0.5 and 0.25-credit work only — what other lifts contributed · shown as numbers, not scored: your minimums were set for total effective sets"}}[v]||{title:"",note:""}; }
 function covMatrixCard(){
-  const mx=coverageMatrix(); const pc=priorityCoverage(mx); const weeks=mx.weeks;
+  const mxT=coverageMatrix("total"); const pc=priorityCoverage(mxT); const mx=covView==="total"?mxT:coverageMatrix(covView); const weeks=mx.weeks; const scored=mx.scored;
+  const meta=covViewMeta(covView);
+  const seg='<div class="seg mini" data-covseg style="margin-top:8px">'+COV_VIEWS.map(function(v){ return '<button data-covview="'+v[0]+'" class="'+(covView===v[0]?'on':'')+'">'+v[1]+'</button>'; }).join("")+'</div>';
   /* two columns: a fixed label rail on the left, the week cells in a horizontal scroller on the right.
      Row heights are fixed on both sides so they stay aligned. */
   let labels='<div class="cov-lrow cov-lhead"></div>';
-  let head='<tr class="cov-r cov-head"><th></th>'+weeks.map(function(w){ return '<th class="cov-wk'+(w.current?' cur':'')+'" title="Week of '+fmtDate(w.start)+'">'+fmtWeekLabel(w.start)+'</th>'; }).join("")+'<th class="cov-end">hit</th><th class="cov-end">10-wk</th></tr>';
+  let head='<tr class="cov-r cov-head"><th></th>'+weeks.map(function(w){ return '<th class="cov-wk'+(w.current?' cur':'')+'" title="Week of '+fmtDate(w.start)+'">'+fmtWeekLabel(w.start)+'</th>'; }).join("")+'<th class="cov-end">'+(scored?'hit':'')+'</th><th class="cov-end">10-wk</th></tr>';
   let body='';
-  ["priority","secondary","maintenance"].forEach(function(g){ const meta=COV_GROUP_META[g]; const list=mx.groups[g]; const key="cov:"+g; const open=sectionOpenD(key,meta.def);
-    labels+='<div class="cov-lrow cov-lgrp" data-section="'+key+'" data-secdef="'+(meta.def?1:0)+'"><span class="cov-grp-t">'+(open?'−':'+')+' '+meta.label+' · '+list.length+'</span><span class="cov-grp-s">'+meta.sub+'</span></div>';
-    body+='<tr class="cov-r cov-grow" data-section="'+key+'" data-secdef="'+(meta.def?1:0)+'"><td colspan="'+(weeks.length+3)+'"></td></tr>';
+  ["priority","secondary","maintenance"].forEach(function(g){ const gm=COV_GROUP_META[g]; const list=mx.groups[g]; const key="cov:"+g; const open=sectionOpenD(key,gm.def);
+    labels+='<div class="cov-lrow cov-lgrp" data-section="'+key+'" data-secdef="'+(gm.def?1:0)+'"><span class="cov-grp-t">'+(open?'−':'+')+' '+gm.label+' · '+list.length+'</span><span class="cov-grp-s">'+gm.sub+'</span></div>';
+    body+='<tr class="cov-r cov-grow" data-section="'+key+'" data-secdef="'+(gm.def?1:0)+'"><td colspan="'+(weeks.length+3)+'"></td></tr>';
     if(!open||!list.length) return;
     list.forEach(function(r){
       labels+='<div class="cov-lrow"><span class="cov-m">'+r.label+'</span><small>'+(r.outOfScope?'min 0 · out of scope':'min '+r.min+' · cap '+r.cap)+'</small></div>';
-      body+='<tr class="cov-r"><td></td>'+r.cells.map(function(c){ const tip=r.label+' · week of '+fmtDate(c.week)+' · '+c.v+' effective sets ('+(r.outOfScope?'no minimum':'min '+r.min+', cap '+r.cap)+')';
-          return '<td class="cov-c '+(r.outOfScope&&c.status==='low'?'ok':c.status)+(c.current?' cur':'')+'" data-covcell="'+r.m+'|'+c.week+'" title="'+tip+'">'+fmtCov(c.v)+'</td>'; }).join("")
-        +'<td class="cov-end">'+(r.outOfScope?'—':r.hit+'/'+r.complete)+'</td><td class="cov-end">'+r.avg10+'</td></tr>'; }); });
+      body+='<tr class="cov-r"><td></td>'+r.cells.map(function(c){ const tip=r.label+' · week of '+fmtDate(c.week)+' · '+c.v+(scored?' effective sets ('+(r.outOfScope?'no minimum':'min '+r.min+', cap '+r.cap)+')':' '+covView+' sets');
+          return '<td class="cov-c '+(scored&&r.outOfScope&&c.status==='low'?'ok':c.status)+(c.current?' cur':'')+'" data-covcell="'+r.m+'|'+c.week+'|'+covView+'" title="'+tip+'">'+fmtCov(c.v)+'</td>'; }).join("")
+        +'<td class="cov-end">'+(scored?(r.outOfScope?'—':r.hit+'/'+r.complete):'')+'</td><td class="cov-end">'+r.avg10+'</td></tr>'; }); });
+  const legend=scored
+    ?'<div class="cov-legend"><span><i class="ok"></i>at or above minimum</span><span><i class="low"></i>below minimum</span><span><i class="over"></i>over cap</span><span><i class="zero"></i>not trained</span></div>'
+    :'<div class="cov-legend"><span><i class="neutral"></i>'+covView+' sets logged</span><span><i class="zero"></i>none</span><span class="muted">no minimum applies to this view</span></div>';
   return '<div class="card"><div class="tiny">Priority coverage</div>'+priorityCoverageBlock(pc)+'</div>'
-    +'<div class="card"><div class="tiny">Effective sets per muscle · week by week</div>'
+    +'<div class="card"><div class="tiny">'+meta.title+'</div>'
+    +seg
+    +'<div class="histline" style="margin-top:6px">'+meta.note+'</div>'
     +'<div class="histline" style="margin-top:2px">'+(weeks.length>COV_VIEW?'Latest weeks in view · swipe left for older · tap a cell for the exercises behind it':'Tap a cell for the exercises behind it')+'</div>'
     +'<div class="cov-wrap"><div class="cov-labels">'+labels+'</div><div class="wscroll cov-scroll" data-wscroll><table class="cov">'+head+body+'</table></div></div>'
-    +'<div class="cov-legend"><span><i class="ok"></i>at or above minimum</span><span><i class="low"></i>below minimum</span><span><i class="over"></i>over cap</span><span><i class="zero"></i>not trained</span></div>'
-    +'<div class="histline" style="margin-top:8px">hit = complete weeks at or above minimum · 10-wk = average effective sets over the last 10 complete weeks · the in-progress week is outlined and not scored</div></div>'; }
-function covCellSheet(data){ const pr=data.split("|"); const m=pr[0], week=pr[1]; const cfg=S.muscles[m]||{label:m,min:0,cap:0}; const c=cellContributors(m,week);
+    +legend
+    +'<div class="histline" style="margin-top:8px">'+(scored?'hit = complete weeks at or above minimum · ':'')+'10-wk = average '+(scored?'effective':covView)+' sets over the last 10 complete weeks · the in-progress week is outlined and not scored</div></div>'; }
+function covCellSheet(data){ const pr=data.split("|"); const m=pr[0], week=pr[1], view=(pr[2]==="direct"||pr[2]==="indirect")?pr[2]:"total"; const cfg=S.muscles[m]||{label:m,min:0,cap:0}; const c=cellContributors(m,week,view);
   const st=new Date(week); const en=new Date(st); en.setDate(en.getDate()+6);
-  const rows=c.rows.length?c.rows.map(function(r){ return '<div class="contrib"><div><b>'+r.name+'</b><div class="muted" style="font-size:12px;margin-top:2px">'+r.sets+' working set'+(r.sets===1?'':'s')+' × '+fmtCredit(r.credit)+' credit · '+[...new Set(r.dates.map(function(d){ return fmtDate(d); }))].join(", ")+'</div></div><span class="c-ef">'+(Math.round(r.effective*10)/10)+'</span></div>'; }).join(""):'<div class="empty">Nothing credited to '+cfg.label.toLowerCase()+' that week.</div>';
-  return '<div class="tiny">'+cfg.label+' · week of '+fmtDate(st)+' – '+fmtDate(en)+'</div>'
-    +'<div style="margin-top:8px;font-weight:700;font-size:16px">'+(Math.round(c.total*10)/10)+' effective sets <span class="muted" style="font-weight:500;font-size:13px">· '+(cfg.min>0?'min '+cfg.min+' · cap '+cfg.cap:'no minimum set')+' · '+c.sessions+' session'+(c.sessions===1?'':'s')+'</span></div>'
-    +'<div class="histline">'+(Math.round(c.direct*10)/10)+' direct (credit 1.0) · '+(Math.round(c.secondary*10)/10)+' secondary (0.5 / 0.25)</div>'
+  const viewWord=view==="total"?"effective":view;
+  const rows=c.rows.length?c.rows.map(function(r){ return '<div class="contrib"><div><b>'+r.name+'</b><div class="muted" style="font-size:12px;margin-top:2px">'+r.sets+' working set'+(r.sets===1?'':'s')+' × '+fmtCredit(r.credit)+' credit · '+creditWord(r.credit)+' · '+[...new Set(r.dates.map(function(d){ return fmtDate(d); }))].join(", ")+'</div></div><span class="c-ef">'+(Math.round(r.effective*10)/10)+'</span></div>'; }).join(""):'<div class="empty">No '+viewWord+' sets credited to '+cfg.label.toLowerCase()+' that week.</div>';
+  return '<div class="tiny">'+cfg.label+' · '+(view==="total"?"":view+" · ")+'week of '+fmtDate(st)+' – '+fmtDate(en)+'</div>'
+    +'<div style="margin-top:8px;font-weight:700;font-size:16px">'+(Math.round(c.shown*10)/10)+' '+viewWord+' sets <span class="muted" style="font-weight:500;font-size:13px">· '+(view==="total"?(cfg.min>0?'min '+cfg.min+' · cap '+cfg.cap:'no minimum set'):'no minimum for this view')+' · '+c.sessions+' session'+(c.sessions===1?'':'s')+'</span></div>'
+    +'<div class="histline">'+(Math.round(c.direct*10)/10)+' direct (1.0) · '+(Math.round(c.indirect*10)/10)+' indirect (0.5 / 0.25) · '+(Math.round(c.total*10)/10)+' total effective</div>'
     +'<div style="margin-top:8px">'+rows+'</div>'; }
 
 /* ---------------------------------------------------------------- STALL CARD */
@@ -4481,31 +4598,43 @@ function dqCard(){ const scan=dataQualityScan(); const n=scan.open.length;
     +'<div class="stall-sums">'+(n?sums:'<span class="muted">Nothing suspicious in '+completedSessions().length+' workouts.</span>')+'</div>'
     +(n?'<div class="histline" style="margin:4px 0 8px">Nothing here is changed automatically. Review each flag: edit the workout, or dismiss it if it is right as logged.</div>'+top:'')
     +(n?'<button class="btn sm full" data-dq="all" style="margin-top:8px">Review '+n+' flag'+(n===1?'':'s')+(scan.flags.length>n?' · '+(scan.flags.length-n)+' dismissed':'')+'</button>':(scan.flags.length?'<button class="btn sm ghost full" data-dq="all" style="margin-top:6px">'+scan.flags.length+' dismissed flag'+(scan.flags.length===1?'':'s')+'</button>':''))
-    +(repairs?'<div class="histline" style="margin-top:8px">'+repairs+' automatic repair'+(repairs===1?'':'s')+' of exact repeated set blocks on record (Settings → Data).</div>':'')
+    +(repairs?'<div class="histline" style="margin-top:8px">'+repairs+' automatic repair'+(repairs===1?'':'s')+' of exact repeated set blocks on record (Settings → Data quality).</div>':'')
     +'</div>'; }
-function dqSheet(){ const scan=dataQualityScan(); const list=dqShowDismissed?scan.flags:scan.open;
-  const rows=list.length?list.map(function(f){ const sv=DQ_SEV[f.sev];
-    return '<div class="dq-item'+(f.dismissed?' dismissed':'')+'"><div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start"><div style="flex:1;min-width:0"><div class="dq-t">'+f.title+'</div><div class="histline" style="margin-top:2px"><b style="color:'+sv.c+'">'+sv.label+'</b> · '+f.value+'</div></div></div>'
-      +'<div class="dq-w" style="margin-top:6px">'+f.why+'</div>'
-      +(f.context?'<div class="dq-ctx">'+escAttr(f.context)+'</div>':'')
-      +'<div class="row" style="margin-top:8px;gap:6px"><button class="btn sm" data-dqedit="'+f.sessionId+'" style="flex:1">Edit workout</button>'
-      +(f.dismissed?'<button class="btn sm ghost" data-dqrestore="'+escAttr(f.id)+'" style="flex:1">Restore</button>':'<button class="btn sm ghost" data-dqdismiss="'+escAttr(f.id)+'" style="flex:1">Dismiss · it’s right</button>')+'</div></div>'; }).join("")
-    :'<div class="empty">No open flags.</div>';
-  return '<div class="tiny">Data quality review · '+scan.open.length+' open'+(scan.flags.length-scan.open.length?' · '+(scan.flags.length-scan.open.length)+' dismissed':'')+'</div>'
-    +'<div class="histline" style="margin:6px 0 8px">Whole history, every render. ▶ marks the flagged session in the context lines; dismissed flags stay dismissed on every device.</div>'
-    +(scan.flags.length>scan.open.length?'<button class="btn sm ghost" data-dqtoggle style="margin-bottom:8px">'+(dqShowDismissed?'Hide':'Show')+' dismissed</button>':'')
+/* one flag, rendered the same way in the review sheet, on the recap and in Settings → Data quality:
+   date · workout · exercise · the value · the reason · surrounding sessions · Edit / Dismiss (or Restore) */
+function dqFlagItem(f){ const sv=DQ_SEV[f.sev];
+  return '<div class="dq-item'+(f.dismissed?' dismissed':'')+'" data-dqitem="'+escAttr(f.id)+'"><div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start"><div style="flex:1;min-width:0"><div class="dq-t">'+f.title+'</div>'
+    +'<div class="histline" style="margin-top:2px"><b style="color:'+sv.c+'">'+sv.label+'</b> · '+f.value+(f.workout?' · '+escAttr(f.workout):'')+(f.dismissed&&f.dismissedAt?' · dismissed '+fmtDate(f.dismissedAt):'')+'</div></div></div>'
+    +'<div class="dq-w" style="margin-top:6px">'+f.why+'</div>'
+    +(f.context?'<div class="dq-ctx">'+escAttr(f.context)+'</div>':'')
+    +'<div class="row" style="margin-top:8px;gap:6px"><button class="btn sm" data-dqedit="'+f.sessionId+'" style="flex:1">Edit workout</button>'
+    +(f.dismissed?'<button class="btn sm ghost" data-dqrestore="'+escAttr(f.id)+'" style="flex:1">Reopen</button>':'<button class="btn sm ghost" data-dqdismiss="'+escAttr(f.id)+'" style="flex:1">Dismiss · it’s right</button>')+'</div></div>'; }
+function dqSheet(sessionId){ const scan=dataQualityScan(); const only=(sessionId&&sessionId!=="all")?sessionId:null;
+  let list=dqShowDismissed?scan.flags:scan.open; if(only) list=list.filter(function(f){ return f.sessionId===only; });
+  const rows=list.length?list.map(dqFlagItem).join(""):'<div class="empty">'+(only?'Nothing flagged on this workout.':'No open flags.')+'</div>';
+  const sess=only?(S.sessions||[]).find(function(x){ return x&&x.id===only; }):null;
+  return '<div class="tiny">Data quality review · '+(only?(sess?fmtDate(sess.completedAt)+' · '+(sess.title||'Workout'):'this workout'):scan.open.length+' open'+(scan.flags.length-scan.open.length?' · '+(scan.flags.length-scan.open.length)+' dismissed':''))+'</div>'
+    +'<div class="histline" style="margin:6px 0 8px">'+(only?'Flags on the workout you just saved. Nothing was changed — edit it, or dismiss a flag if it is right as logged. Every flag also lives in Settings → Data quality.':'Whole history, every render. ▶ marks the flagged session in the context lines; dismissed flags stay dismissed on every device.')+'</div>'
+    +(!only&&scan.flags.length>scan.open.length?'<button class="btn sm ghost" data-dqtoggle style="margin-bottom:8px">'+(dqShowDismissed?'Hide':'Show')+' dismissed</button>':'')
     +rows; }
-
-/* ---------------------------------------------------------------- PROTOTYPE 4 · REP-RANGE COMPLIANCE */
-function repRangeCard(){ const list=repRangeBoard(); if(!list.length) return '<div class="card"><div class="empty">Needs '+RR_MIN_EXPOSURES+'+ exposures of an exercise.</div></div>';
-  const rows=list.map(function(r){ const lean={load:["Load probably ahead of the range","var(--amber)"],range:["Range may not match how you train it","var(--gold)"],mixed:["Mixed — check the top sets","var(--muted)"],light:["Room to add load","var(--accent)"],ok:["In range","var(--green)"]}[r.lean];
-    const bar='<div class="rr-bar"><i class="b" style="width:'+r.pb+'%"></i><i class="w" style="width:'+r.pw+'%"></i><i class="a" style="width:'+r.pa+'%"></i></div>';
-    return '<div class="rr" data-exhist="'+r.ex.id+'"><div class="rr-hd"><div class="stall-nm">'+r.ex.name+'</div><div class="histline" style="margin:0">target '+r.rl+'–'+r.rh+' · last '+r.exposures+' exposures · '+r.n+' sets</div><span class="statuspill" style="background:'+lean[1]+'22;color:'+lean[1]+'">'+lean[0]+'</span></div>'
-      +bar+'<div class="rr-nums"><span style="color:var(--red)">'+r.pb+'% below</span><span style="color:var(--green)">'+r.pw+'% within</span><span style="color:var(--blue)">'+r.pa+'% above</span><span class="muted">median '+r.medReps+' reps</span></div>'
-      +'<div class="histline" style="margin-top:4px">'+r.reading+'</div></div>'; }).join("");
-  return '<div class="card"><div class="tiny">Rep-range compliance · last '+RR_WINDOW+' exposures per exercise</div>'
-    +'<div class="histline" style="margin:2px 0 8px">Share of working sets under, inside and over each exercise’s own configured range. The reading separates a load that has run ahead of the range from a range that no longer describes how you train the lift. Neither is changed automatically — edit the range in Settings → Exercise management if the range is the thing that is wrong.</div>'
-    +rows+'</div>'; }
+/* v17 — Settings → Data quality: the permanent review centre. Open flags, dismissed flags (reopenable)
+   and the automatic repairs, each with its evidence. */
+let dqCentreTab="open";
+function dqRepairsList(){ const reps=(S.settings.dqRepairs||[]).slice().reverse(); if(!reps.length) return '<div class="empty">No automatic repairs. A repeated set block is only ever collapsed without asking when the save record proves the duplication — the journal copy written at Finish, a proven sync-duplication marker on the record, or duplicate cloud rows at the same set position. A repeat with no such evidence is flagged for you instead.</div>';
+  return reps.map(function(r){ const items=(r.items||[]);
+    return '<div class="dq-item"><div class="dq-t">'+fmtDate(r.at)+' · '+r.entries+' entr'+(r.entries===1?'y':'ies')+' repaired'+(r.source==="hydrate"?' · from cloud rows':'')+'</div>'
+      +(items.length?items.map(function(it){ return '<div class="histline" style="margin-top:4px"><b>'+escAttr(it.name||"")+'</b> · '+fmtDate(it.date)+(it.workout?' · '+escAttr(it.workout):'')+' · '+(it.k?it.k+' identical blocks of '+it.len+' collapsed to one':'duplicate set rows collapsed to '+it.len)+'</div>'+(it.evidence?'<div class="histline" style="margin-top:2px;color:var(--accent)">evidence: '+escAttr(it.evidence)+'</div>':'')+'<div class="dq-ctx">before: '+escAttr(it.before||"")+'\nafter:  '+escAttr(it.after||"")+'</div>'+(it.sessionId?'<div class="row" style="margin-top:6px"><button class="btn sm" data-dqedit="'+it.sessionId+'">Open workout</button></div>':''); }).join("")
+        :'<div class="histline" style="margin-top:4px">Repeated set blocks collapsed (recorded before v17, no per-entry detail kept).</div>')+'</div>'; }).join(""); }
+function dqCentreCard(){ const scan=dataQualityScan(); const dismissed=scan.flags.filter(function(f){ return f.dismissed; }); const reps=(S.settings.dqRepairs||[]);
+  const tabs=[["open","Open · "+scan.open.length],["dismissed","Dismissed · "+dismissed.length],["repairs","Repairs · "+reps.reduce(function(a,r){ return a+(r.entries||0); },0)]];
+  const seg='<div class="seg mini" style="margin-top:8px">'+tabs.map(function(t){ return '<button data-dqtab="'+t[0]+'" class="'+(dqCentreTab===t[0]?'on':'')+'">'+t[1]+'</button>'; }).join("")+'</div>';
+  let body;
+  if(dqCentreTab==="dismissed") body=dismissed.length?dismissed.map(dqFlagItem).join(""):'<div class="empty">No dismissed flags.</div>';
+  else if(dqCentreTab==="repairs") body=dqRepairsList();
+  else body=scan.open.length?scan.open.map(dqFlagItem).join(""):'<div class="empty">Nothing open — '+completedSessions().length+' workouts scanned.</div>';
+  return '<div class="card"><div class="tiny">Data quality</div>'
+    +'<p class="muted" style="font-size:12px;margin:6px 0 0">Every workout is scanned on save and the whole history on every visit to Stats. Ambiguous entries are only ever flagged — you decide with <b>Edit workout</b> or <b>Dismiss</b>. A dismissed flag can be reopened here. The one automatic repair is a repeated set block that the save record itself proves to be a sync duplication; a repeat without that proof is flagged, not touched.</p>'
+    +seg+'<div style="margin-top:8px">'+body+'</div></div>'; }
 
 /* ---------------------------------------------------------------- PROTOTYPE 5 · BLOCK REPORT */
 function fmtRange(a,b){ const f=function(d){ return new Date(d).toLocaleDateString("en-AU",{day:"numeric",month:"short"}); }; return f(a)+' – '+f(b); }
@@ -4539,16 +4668,6 @@ function calendarCard(){ const cal=calendarStrip(CAL_WEEKS); const names=["M","T
     +'<div style="margin-top:4px">'+todRows+'</div>'
     +'<div class="histline" style="margin-top:6px">'+(top&&top.n?'Most common: <b>'+top.label+'</b> · '+top.n+' of '+placed+'. ':'')+(tod.unknown?tod.unknown+' session'+(tod.unknown===1?'':'s')+' carry the noon placeholder time from a re-dated edit or an older build and are left out rather than guessed.':'')+'</div></div>'; }
 
-/* ---------------------------------------------------------------- PROTOTYPE 7 · STRENGTH INDEX */
-function strengthIndexCard(){ const groups=strengthIndex(); if(!groups.length) return '<div class="card"><div class="empty">No exercise has '+SI_MIN_EXPOSURES+' exposures yet.</div></div>';
-  const rows=groups.map(function(g){ const conf={ok:["",'var(--green)'],low:["low confidence",'var(--amber)'],none:["no scorable lift",'var(--muted)']}[g.conf];
-    const idx=g.index==null?'—':(g.conf==="low"?'~'+g.index:String(g.index));
-    const members=g.members.map(function(m){ return '<div class="contrib" style="padding:5px 0"><div><b>'+m.ex.name+'</b><div class="muted" style="font-size:12px">'+m.n+' exposure'+(m.n===1?'':'s')+(m.thin?' · below the '+SI_MIN_EXPOSURES+' needed':'')+(m.stale?' · not recently trained':'')+(m.peak&&!m.thin?' · peak '+m.peak:'')+'</div></div><span class="c-ef" style="color:'+(m.index==null?'var(--faint)':m.index>=103?'var(--green)':m.index<=97?'var(--red)':'var(--accent)')+'">'+(m.index==null?'—':m.index)+'</span></div>'; }).join("");
-    return '<div class="si"><div class="si-hd"><div><div class="stall-nm">'+g.label+'</div><div class="histline">'+g.live+' scorable lift'+(g.live===1?'':'s')+' · '+g.exposures+' supporting exposures'+(conf[0]?' · <b style="color:'+conf[1]+'">'+conf[0]+'</b>':'')+'</div></div><b class="si-n" style="color:'+(g.index==null?'var(--faint)':conf[1])+'">'+idx+'</b></div>'+members+'</div>'; }).join("");
-  return '<div class="card"><div class="tiny">Strength index by muscle group · first three exposures = 100</div>'
-    +'<div class="histline" style="margin:2px 0 8px">Each lift’s session strength (direction-aware e1RM, or top-set score for high-rep work) indexed to its own start; a group is the median of its lifts’ current index. A group on one lift or under '+SI_LOW_EXPOSURES+' exposures is marked low confidence and shown as ~, not as a number to plan around.</div>'
-    +rows+'</div>'; }
-
 /* ---------------------------------------------------------------- v11 INSIGHTS
    Cut back to insights that carry a number, a chart or a date. Removed outright: the 0-100
    momentum score and its ring, "Momentum: strong", "Best next move", and the all-time
@@ -4560,8 +4679,8 @@ function insightsBlock(){ const cards=[];
     title:na.slice(0,3).map(m=>S.muscles[m].label).join(", "),
     body:na.slice(0,3).map(function(m){ const v=weeklyVolume()[m]||0; return S.muscles[m].label+" "+v.toFixed(1)+"/"+S.muscles[m].min+" sets"; }).join(" · "),muscle:na[0]}));
   const sd=secondaryDominant()[0];
-  if(sd) cards.push(insightCard({tier:"warn",badge:"Mostly secondary volume",title:S.muscles[sd.m].label,
-    body:sd.con.direct.toFixed(1)+" direct vs <b>"+sd.con.secondary.toFixed(1)+" secondary</b> sets this week.",muscle:sd.m}));
+  if(sd) cards.push(insightCard({tier:"warn",badge:"Mostly indirect volume",title:S.muscles[sd.m].label,
+    body:sd.con.direct.toFixed(1)+" direct vs <b>"+sd.con.secondary.toFixed(1)+" indirect</b> sets this week.",muscle:sd.m}));
   let h=cards.join("");
   const unlock=[];
   if(!weekdayPattern()) unlock.push("weekday pattern (log ~6 sessions)");
@@ -4592,8 +4711,10 @@ function viewStats(){
     +miniSpark(x.ex.id)+'<span class="sets" style="margin-left:8px">'+x.n+'</span><span style="margin-left:6px">'+trendBadge(x.ex.id)+'</span></div>').join(""):'<div class="empty" style="padding:16px">Nothing logged.</div>'; };
   const dq=dataQualityScan();
   /* v16 — every area is a section with a remembered open/closed state. The four questions open by
-     default; the four prototypes and the low-use areas closed. Nothing from v11–v14 is removed. */
-  return statsSection("stats:prog","Progression","board: name → last 2 → previous 6 → sparkline → % · achievements · insights",function(){ return progressionBoardCard()+recentAchievementsCard(6)+insightsBlock(); },true)
+     default; the prototypes, the legacy board and the low-use areas closed. Nothing from v11–v14 is removed. */
+  /* v17 — the legacy board starts collapsed (Progression & stalls carries the read now); a manual
+     open/close is remembered like every other section. Nothing inside it changed. */
+  return statsSection("stats:prog","Progression","legacy board: name → last 2 → previous 6 → sparkline → % · achievements · insights",function(){ return progressionBoardCard()+recentAchievementsCard(6)+insightsBlock(); },false)
     +statsSection("stats:cov","Consistency & coverage","priority coverage · effective sets per muscle, week by week",covMatrixCard,true)
     +statsSection("stats:stall","Progression & stalls","double progression on the top set · plateau and below-baseline patterns",stallCard,true)
     +statsSection("stats:dq","Data quality",(dq.open.length?dq.open.length+' open flag'+(dq.open.length===1?'':'s')+' · nothing is edited automatically':'whole history scanned · nothing open'),dqCard,dq.counts.error+dq.counts.warn>0)
@@ -4608,10 +4729,8 @@ function viewStats(){
         return weekScrollChartCard("Working sets per week",ser,"sets","sets")
              + weekScrollChartCard("Workouts per week",ser,"sessions","workouts")
              + consistencyCard()+weekdayCard()+timeOfDayCard(); },true)
-    +statsSection("stats:p-rr","Rep-range compliance","% of sets under / inside / over each exercise’s range · last 8 exposures",repRangeCard,false,"prototype")
     +statsSection("stats:p-block","Four-week block report","last 4 complete weeks vs the 4 before",blockReportCard,false,"prototype")
-    +statsSection("stats:p-cal","Training calendar & time of day","12-week strip · six time-of-day buckets",calendarCard,false,"prototype")
-    +statsSection("stats:p-si","Strength index by muscle group","each lift indexed to its first three exposures · confidence stated",strengthIndexCard,false,"prototype"); }
+    +statsSection("stats:p-cal","Training calendar & time of day","12-week strip · six time-of-day buckets",calendarCard,false,"prototype"); }
 
 /* ---------------- BODY (P6 two-layer + P7 grid + P5 attribution) ---------------- */
 const BODY_GROUPS=[["Chest & push",["upper_chest","chest","triceps","front_delts"]],["Back & pull",["back_lats","upper_back","biceps"]],["Delts",["side_delts","rear_delts"]],["Legs",["quads","hamstrings","glutes","calves"]],["Core & other",["abs","lower_back","forearms"]]];
@@ -4626,7 +4745,7 @@ function positionTag(ex,i,total){ if(i===0) return "First"; if(ex.type==="isolat
 /* ---------------------------------------------------------------- v12 BODY V2
    One question, answered in one screen: where am I below my weekly minimum, and what is ready
    to train? Same numbers as the V1 cards — configured minimum, effective sets, direct vs
-   secondary attribution, existing recovery engine — just laid out as a scannable table and
+   indirect attribution, existing recovery engine — just laid out as a scannable table and
    sorted so the actionable rows are at the top. V1 is still there behind the toggle. */
 function bodyV2Rows(){
   const sess=weekSessions(), vol=weeklyVolume(sess);
@@ -4652,7 +4771,7 @@ function bodyV2(){
       +'<div class="nm" style="font-size:13px">'+r.label
       +(r.tier==="primary"?' <span class="tag" style="color:var(--gold)">priority</span>':'')
       +(r.below?' <span class="tag" style="color:'+tone+';border:1px solid '+tone+'55">'+n(r.remaining)+' to go</span>':'')+'</div>'
-      +'<div class="histline mono" style="font-size:10.5px">Direct '+n(r.direct)+' · Secondary '+n(r.secondary)+' · Effective '+n(r.eff)+'/'+r.min+' min</div>'
+      +'<div class="histline mono" style="font-size:10.5px">Direct '+n(r.direct)+' · Indirect '+n(r.secondary)+' · Effective '+n(r.eff)+'/'+r.min+' min</div>'
       +'<div class="bar" style="margin-top:5px"><i style="width:'+Math.max(3,Math.min(100,Math.round(r.eff/r.min*100)))+'%;background:'+(r.below?"var(--blue)":"var(--accent)")+'"></i></div></div>'
       +'<span class="mono" style="margin-left:10px;font-size:10.5px;color:'+meta.c+';white-space:nowrap">'+meta.t+'</span>'
       +'<span class="muted" style="margin-left:6px">›</span></div>'; };
@@ -4661,7 +4780,7 @@ function bodyV2(){
     ? '<div class="histline" style="margin-top:3px"><b style="color:var(--text)">'+act.length+' muscle'+(act.length===1?'':'s')+' below minimum and trainable now.</b></div>'
     : '<div class="histline" style="margin-top:3px;color:var(--green)">Nothing is both below minimum and ready — either covered or still recovering.</div>';
   h+='<div style="margin-top:6px">'+rows.map(line).join("")+'</div>';
-  h+='<div class="histline" style="margin-top:10px">Direct = this muscle was the target · Secondary = credited from other lifts · Effective = both combined, against your configured minimum. Tap any row for full attribution.</div>';
+  h+='<div class="histline" style="margin-top:10px">Direct = 1.0 credit, this muscle was the target · Indirect = 0.5 / 0.25 credit from other lifts · Effective = both combined, against your configured minimum. Tap any row for full attribution.</div>';
   return h+'</div>'; }
 function bodyToggle(){
   return '<div class="card" style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px">'
@@ -4683,23 +4802,23 @@ function viewBodyV1(){
         +'<div class="mlabel">'+cfg.label+'</div>'
         +'<div style="font-size:11px;font-weight:600;color:'+rd.c+';margin-top:3px">'+rd.label+'</div>'
         +'<div class="histline" style="font-size:10.5px;margin-top:1px">'+(lt?fmtAgo(lt.date):"never trained")+'</div>'
-        +'<div class="histline mono" style="font-size:10.5px;margin-top:7px">Direct '+con.direct.toFixed(1)+' · Sec '+con.secondary.toFixed(1)+'</div>'
+        +'<div class="histline mono" style="font-size:10.5px;margin-top:7px">Direct '+con.direct.toFixed(1)+' · Indirect '+con.secondary.toFixed(1)+'</div>'
         +'<div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:2px"><span class="histline" style="font-size:10px">effective sets</span><span class="mono" style="font-size:12.5px;color:var(--text)">'+v.toFixed(1)+'<span style="color:var(--faint)">/'+cfg.min+' min</span></span></div>'
         +'<div class="bar" style="margin-top:5px"><i style="width:'+fill+'%;background:'+barC+'"></i><span class="capmark" style="left:'+tgt+'%"></span></div>'
         +(exc?'<div style="margin-top:8px">'+exc+'</div>':'')
         +'</div></div>'; }).join("");
     return '<div class="muted tiny" style="margin:14px 2px 2px">'+title+'</div><div class="mgrid">'+cards+'</div>'; }).join("");
-  return '<div class="card"><div class="tiny">Muscle status</div><p class="muted" style="font-size:12px;margin:6px 0 8px">Colour = <b>recovery</b> · Direct/Sec = where the volume came from · Bar = <b>effective sets vs weekly minimum</b>. Tap a muscle for full attribution.</p>'
+  return '<div class="card"><div class="tiny">Muscle status</div><p class="muted" style="font-size:12px;margin:6px 0 8px">Colour = <b>recovery</b> · Direct / Indirect = where the volume came from · Bar = <b>effective sets vs weekly minimum</b>. Tap a muscle for full attribution.</p>'
     +'<div style="display:flex;gap:10px;flex-wrap:wrap;font-size:10px" class="muted"><span>● <span style="color:var(--green)">Ready</span></span><span>● <span style="color:var(--amber)">Caution · nearly ready</span></span><span>● <span style="color:var(--violet)">Recovering</span></span><span>● <span style="color:var(--red)">Overloaded</span></span><span>● <span style="color:var(--grey)">Untrained</span></span></div></div>'
     +groups+'<div id="bodydetail">'+(bodyDetail?muscleDetail(bodyDetail):"")+'</div>'; }
 function muscleDetail(m){ const cfg=S.muscles[m]; const st=recoveryStatus(m); const rd=recoveryDisplay(m); const g=goalStatus(m); const v=weeklyVolume()[m]; const lt=lastTrainedMap()[m]; const con=muscleContrib(m); const wait=readyInHours(m);
-  const rows=con.rows.length?con.rows.map(r=>'<div class="contrib"><div><b>'+r.name+'</b><div class="muted" style="font-size:11px">'+r.sets+' sets × '+r.credit+' credit · '+(r.credit>=1?'direct':'secondary')+' · last '+fmtAgo(r.dates.sort().slice(-1)[0])+'</div></div><span class="c-ef">'+r.effective.toFixed(1)+'</span></div>').join(""):'<div class="empty" style="padding:10px">No sets this week.</div>';
+  const rows=con.rows.length?con.rows.map(r=>'<div class="contrib"><div><b>'+r.name+'</b><div class="muted" style="font-size:11px">'+r.sets+' sets × '+fmtCredit(r.credit)+' credit · '+creditWord(r.credit)+' · last '+fmtAgo(r.dates.sort().slice(-1)[0])+'</div></div><span class="c-ef">'+r.effective.toFixed(1)+'</span></div>').join(""):'<div class="empty" style="padding:10px">No sets this week.</div>';
   const recline=(st==="recovering"||st==="overloaded")?'<div class="recwarn" style="margin-top:10px">Trained '+fmtAgo(lt&&lt.date)+(wait>0?' — best to wait ~'+wait+'h before training it hard again.':' — give it a little more time.')+'</div>':'';
   return '<div class="card reveal" style="border-color:'+rd.c+'55"><div style="display:flex;justify-content:space-between;align-items:center"><h2 style="font-size:19px">'+cfg.label+'</h2><button class="btn ghost sm" data-closedetail>✕</button></div>'
     +'<div class="histline" style="margin-top:6px">Last trained: <b style="color:#AEB9C7">'+lastTrainedStr(m)+'</b></div>'
     +'<div class="row wrap" style="gap:6px;margin-top:8px"><span class="statuspill" style="background:'+rd.c+'22;color:'+rd.c+'">Status: '+rd.label+'</span><span class="statuspill" style="background:'+g.c+'22;color:'+g.c+'">Goal: '+g.label+'</span><span class="statuspill" style="background:var(--panel2);color:var(--muted)">'+TIER_LABEL[cfg.tier]+'</span></div>'
     +recline
-    +'<div class="kpi" style="margin-top:12px"><div class="k"><b>'+v.toFixed(1)+'</b><span>effective sets</span></div><div class="k"><b>'+con.direct.toFixed(1)+'</b><span>direct</span></div><div class="k"><b>'+con.secondary.toFixed(1)+'</b><span>secondary</span></div></div>'
+    +'<div class="kpi" style="margin-top:12px"><div class="k"><b>'+v.toFixed(1)+'</b><span>effective sets</span></div><div class="k"><b>'+con.direct.toFixed(1)+'</b><span>direct (1.0)</span></div><div class="k"><b>'+con.secondary.toFixed(1)+'</b><span>indirect (0.5 / 0.25)</span></div></div>'
     +'<div class="histline" style="margin-top:10px">Target '+cfg.gl+'–'+cfg.gh+' · min '+cfg.min+' · cap '+cfg.cap+'</div>'
     +'<hr class="sub"><div class="tiny">What made this number</div><div style="margin-top:6px">'+rows+'</div></div>'; }
 
@@ -4712,7 +4831,9 @@ function viewSettings(){ const acct=authProfile?'<div class="card"><div class="t
   const _exNarrowed=!!(mgmtSearch||mgmtGroup||mgmtEquip);
   /* v12 — without a search or filter we show a capped preview, not all 119 rows */
   const _exRows=(_exNarrowed?_exMatched:_exMatched.slice(0,12)).map(e=>{ const pm=primaryMuscle(e); const prefC={love:"var(--gold)",like:"var(--green)",neutral:"var(--muted)",avoid:"var(--red)"}[e.pref]; const f=_fam(e);
-    return '<div class="exline" style="padding:9px 0"><div style="flex:1"><div class="nm" style="font-size:13.5px">'+e.name+'</div><div class="histline">'+S.muscles[pm].label+' · '+e.equip+' · <span style="color:'+f.c+'">'+f.t+'</span></div>'+(hasSetup(e.id)?'<div class="histline" style="color:var(--gold)">⚙ '+escAttr(setupSummary(e.id,3))+'</div>':'')+'</div><div class="row" style="gap:6px"><button class="btn sm" data-setup="'+e.id+'" style="color:var(--gold)" title="setup / machine settings">⚙</button><button class="btn sm" data-rec="'+e.id+'" title="recommendable">'+(e.rec?"rec":"manual")+'</button><button class="btn sm" data-pref="'+e.id+'" style="color:'+prefC+'">'+e.pref+'</button><button class="btn sm" data-avail="'+e.id+'">'+e.avail+'</button></div></div>'; }).join("");
+    /* v17 — the row stacks: name, meta and the credit line on top, the controls beneath, so the credit
+       line (now carrying the contribution words) has the full width instead of a squeezed column. */
+    return '<div class="exline" style="padding:9px 0;flex-direction:column;align-items:stretch"><div><div class="nm" style="font-size:13.5px">'+e.name+'</div><div class="histline">'+S.muscles[pm].label+' · '+e.equip+' · '+e.rl+'–'+e.rh+' reps · <span style="color:'+f.c+'">'+f.t+'</span></div><div class="mcredline">'+musLabels(e)+'</div>'+(hasSetup(e.id)?'<div class="histline" style="color:var(--gold)">⚙ '+escAttr(setupSummary(e.id,3))+'</div>':'')+'</div><div class="row" style="gap:6px;margin-top:6px;justify-content:flex-end"><button class="btn sm" data-setup="'+e.id+'" style="color:var(--gold)" title="setup / machine settings">⚙</button><button class="btn sm" data-rec="'+e.id+'" title="recommendable">'+(e.rec?"rec":"manual")+'</button><button class="btn sm" data-pref="'+e.id+'" style="color:'+prefC+'">'+e.pref+'</button><button class="btn sm" data-avail="'+e.id+'">'+e.avail+'</button></div></div>'; }).join("");
   const exList='<input class="inp srch" id="mgmtSearch" placeholder="Search exercises..." value="'+escAttr(mgmtSearch||"")+'">'+filterChips("mgmt",mgmtGroup,mgmtEquip)+(_exNarrowed?'':'<div class="histline" style="margin:8px 0 0">Showing '+Math.min(12,_exMatched.length)+' of '+_exMatched.length+' \u2014 search or filter above to narrow the list.</div>')+'<div style="margin-top:6px">'+(_exRows||'<div class="empty">No matches.</div>')+'</div>';
   const bw=(S.bodyweight||[]).slice(-1)[0];
   const TIERS=["primary","secondary","maintenance"]; const tierC={primary:"var(--gold)",secondary:"var(--accent)",maintenance:"var(--muted)"};
@@ -4728,8 +4849,8 @@ function viewSettings(){ const acct=authProfile?'<div class="card"><div class="t
      the configured weekly minimums are untouched. */
   const _tierCount=Object.values(S.muscles).reduce(function(a,c){ a[c.tier]=(a[c.tier]||0)+1; return a; },{});
   const musclePriorities=section('priorities','Muscle priorities',
-    (_tierCount.primary||0)+' primary \u00b7 '+(_tierCount.secondary||0)+' secondary \u00b7 '+(_tierCount.maintenance||0)+' maintenance',
-    function(){ return '<div class="card"><div class="tiny">Muscle priorities</div><p class="muted" style="font-size:11.5px;margin:5px 0 4px">Tap to cycle Primary \u2192 Secondary \u2192 Maintenance. Drives recommendations and Body ordering.</p>'+muscleRows+'</div>'; });
+    (_tierCount.primary||0)+' priority \u00b7 '+(_tierCount.secondary||0)+' secondary \u00b7 '+(_tierCount.maintenance||0)+' maintenance',
+    function(){ return '<div class="card"><div class="tiny">Muscle priorities</div><p class="muted" style="font-size:11.5px;margin:5px 0 4px">Tap to cycle Priority \u2192 Secondary \u2192 Maintenance. Drives recommendations and Body ordering.</p>'+muscleRows+'</div>'; });
   /* v12 — Settings restructured into collapsible sections. Everything that was here is still
      here; the heavy areas just start closed, and the limitation controls moved in from Today. */
   return acct + profile + musclePriorities
@@ -4745,6 +4866,7 @@ function viewSettings(){ const acct=authProfile?'<div class="card"><div class="t
       function(){ return '<div class="card"><div class="tiny">Exercise management</div><p class="muted" style="font-size:12px;margin:6px 0">Tap <b>rec</b> to include/exclude from auto-recommendations (default vs manual-only). Tap <b>preference</b> to cycle love → like → neutral → avoid. Tap <b>availability</b> to mark if a machine is free / present at your gym.</p><div style="margin-top:6px">'+exList+'</div></div>'; })
     +section('users','Approved users','Who can sign in \u00b7 each person\u2019s data is fully private',
       function(){ return '<div class="card"><div class="tiny">Approved users</div><p class="muted" style="font-size:12px;margin:6px 0">Each person has fully private data (row-level security). Sharing/leaderboards are not built yet.</p>'+approved+'</div>'; })
+    +section('dq','Data quality',(function(){ const sc=dataQualityScan(); const dm=sc.flags.length-sc.open.length; const rp=(S.settings.dqRepairs||[]).reduce(function(a,r){ return a+(r.entries||0); },0); return sc.open.length+' open \u00b7 '+dm+' dismissed \u00b7 '+rp+' automatic repair'+(rp===1?'':'s'); })(),dqCentreCard)
     +section('data','Data','Export, import and backup',
       function(){ return '<div class="card"><div class="tiny">Data</div><div class="row" style="margin-top:8px"><button class="btn full" data-act="export">Export backup</button><button class="btn full" data-act="import">Import</button></div><input type="file" id="importFile" accept="application/json" style="display:none"></div>'; })
     +buildCard(); }
@@ -4939,6 +5061,12 @@ function deriveTitle(entries){ const ms={}; entries.forEach(en=>{ const ex=exByI
 function startSession(rec){ loggerOpen={}; rerollCounts={}; const entries=(rec?rec.exercises:[]).map(c=>{ const e=exById(c.exId); return { exId:c.exId, sets:Array.from({length:c.sets||DEFAULT_WORK_SETS},()=>({weight:"",reps:"",type:"work",done:false})) }; });
   activeSession={ id:uid(), startedAt:iso(new Date()), dateISO:new Date().toISOString().slice(0,10), title:rec?rec.title:BUILD_TITLE, mode:rec?"adaptive":"manual", entries }; viewingLogger=true; pendingRec=null; saveActive();
   try{ history.pushState({iron:"workout"},""); }catch(e){} route="today"; render(); }
+/* the one place a ticked set is committed: mark done, start the rest timer, advance or re-render */
+function commitSet(ei,si){ if(!activeSession) return; const en=activeSession.entries[ei]; if(!en) return; const st=en.sets[si]; if(!st) return;
+  st.done=true; saveActive(); const ex=exById(en.exId);
+  let nextInfo="exercise complete"; for(let k=si+1;k<en.sets.length;k++){ if(en.sets[k].type!=="warm"&&!isLogged(en.sets[k])){ nextInfo="next: set "+(k+1); break; } }
+  if(ex) startRest(ex.rest,ex.name,nextInfo);
+  if(!maybeAdvance(ei)) render(); }
 let finishing=false;
 function finishWorkout(){ if(finishing||!activeSession) return;
   const logged=activeSession.entries.reduce((n,en)=>n+workingSets(en).length,0);
@@ -4990,6 +5118,9 @@ function doFinish(){
     }
     /* 3. draft cleared only now */
     let recap=null; try{ recap=buildRecap(saved); }catch(e){ plog("finish.recap-error",{id:saved.id, err:String(e&&e.message||e)}); recap=null; }
+    /* v17 — the quality scan runs against the workout just saved; only high-confidence flags earn
+       a line on the recap ("Review now / Later"). Nothing is edited, nothing blocks the save. */
+    try{ const hi=dqForSession(saved.id).filter(dqHighConfidence); if(recap) recap.dq={n:hi.length, ids:hi.map(function(f){ return f.id; })}; if(hi.length) plog("finish.dq-flags",{id:saved.id, n:hi.length, kinds:hi.map(function(f){ return f.kind; })}); }catch(e){}
     activeSession=null; viewingLogger=false; loggerOpen={}; clearActive("finished:"+saved.id); stopClock();
     /* 4. cloud, never blocking the UI; the recap's status line tracks the result */
     const push=pushWorkout(saved,isEdit?"finish-edit":"finish");
@@ -5021,7 +5152,7 @@ function buildRecap(sess){ const setsN=sess.entries.reduce((a,en)=>a+workingSets
   else if(prog.up) coach=prog.up+" exercise"+(prog.up===1?"":"s")+" improved"+(movers.length?": "+movers.join(", "):"")+".";
   else if(prog.down&&!prog.up) coach="Nothing moved up this session — "+prog.down+" down, "+prog.same+" held. One flat session is normal; watch it next time.";
   else if(na.length) coach="Momentum "+mom.score+"/100. Still needs direct work this week: "+na.slice(0,2).map(m=>S.muscles[m].label.toLowerCase()).join(", ")+".";
-  else coach="Momentum "+mom.score+"/100 — every primary muscle is on track this week. 🔥";
+  else coach="Momentum "+mom.score+"/100 — every priority muscle is on track this week. 🔥";
   return {id:sess.id, setsN, exN:sess.entries.filter(en=>workingSets(en).length).length, dur, muscles, prs, ach, parts, title:sess.title, coach,
           totals, cmp, cmpTotals, base4, prev4, customUsed, prog, composition:sessionComposition(sess), date:sess.completedAt}; }
 function editWorkout(id){ const s=S.sessions.find(x=>x.id===id); if(!s) return; loggerOpen={}; activeSession={ id:uid(), editingId:id, startedAt:s.startedAt||s.completedAt, dateISO:new Date(s.completedAt).toISOString().slice(0,10), title:s.title, mode:"edit", entries:JSON.parse(JSON.stringify(s.entries)) }; viewingLogger=true; saveActive(); go("today"); }
@@ -5081,10 +5212,12 @@ function wireScreen(){
   // P1 — tap ✓ commits the ghost values (one-tap log); only edit what you changed
   document.querySelectorAll("[data-log]").forEach(b=>b.onclick=()=>{ const [ei,si]=b.dataset.log.split("-").map(Number); const en=activeSession.entries[ei]; const st=en.sets[si];
     if(st.type!=="warm"){ const g=ghostFor(en,si); if((st.weight===""||st.weight==null)&&g.w!=="") st.weight=g.w; if((st.reps===""||st.reps==null)&&g.r!=="") st.reps=g.r; }
-    st.done=true; saveActive(); const ex=exById(en.exId);
-    let nextInfo="exercise complete"; for(let k=si+1;k<en.sets.length;k++){ if(en.sets[k].type!=="warm"&&!isLogged(en.sets[k])){ nextInfo="next: set "+(k+1); break; } }
-    if(ex) startRest(ex.rest,ex.name,nextInfo);
-    if(!maybeAdvance(ei)) render(); });
+    /* v17 — an extremely implausible value gets one non-blocking question before it is committed.
+       "Save anyway" commits it as typed (and is remembered on the set, so a re-tap never asks twice);
+       Cancel leaves the set unticked with the values in place to fix. */
+    const ex=exById(en.exId); const pl=(st.confirmed||st.type==="warm")?null:setPlausibility(ex,st);
+    if(pl){ saveActive(); confirmSheet(pl.msg,"Save anyway",()=>{ st.confirmed=true; commitSet(ei,si); },{title:"Check this set"}); return; }
+    commitSet(ei,si); });
   // keyboard flow: first field → second field → log set (works in either input order)
   document.querySelectorAll(".setrow").forEach(row=>{ const inps=row.querySelectorAll(".inp"); if(inps.length<2) return;
     inps[0].setAttribute("enterkeyhint","next"); inps[1].setAttribute("enterkeyhint","done");
@@ -5155,7 +5288,13 @@ function wireScreen(){
   document.querySelectorAll("[data-section]").forEach(b=>b.onclick=()=>{ toggleSection(b.dataset.section, b.dataset.secdef==="1"); render(); });
   /* v16 */
   document.querySelectorAll("[data-covcell]").forEach(b=>b.onclick=(e)=>{ e.stopPropagation(); openSheet("covcell",b.dataset.covcell); });
+  document.querySelectorAll("[data-covview]").forEach(b=>b.onclick=(e)=>{ e.stopPropagation(); covView=b.dataset.covview; render(); });   /* v17 */
   document.querySelectorAll("[data-dq]").forEach(b=>b.onclick=()=>openSheet("dq",b.dataset.dq));
+  /* v17 — Settings → Data quality review centre */
+  document.querySelectorAll("[data-dqtab]").forEach(b=>b.onclick=()=>{ dqCentreTab=b.dataset.dqtab; render(); });
+  document.querySelectorAll("[data-dqedit]").forEach(b=>b.onclick=()=>editWorkout(b.dataset.dqedit));
+  document.querySelectorAll("[data-dqdismiss]").forEach(b=>b.onclick=()=>{ dqDismiss(b.dataset.dqdismiss); render(); });
+  document.querySelectorAll("[data-dqrestore]").forEach(b=>b.onclick=()=>{ dqRestore(b.dataset.dqrestore); render(); });
   document.querySelectorAll("[data-stallall]").forEach(b=>b.onclick=()=>{ stallShowAll=!stallShowAll; render(); });
   document.querySelectorAll("[data-bodyview]").forEach(b=>b.onclick=()=>{ bodyView=b.dataset.bodyview;
     try{ localStorage.setItem("iron_arc_bodyview",bodyView); }catch(e){} render(); });
