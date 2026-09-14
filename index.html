@@ -272,34 +272,30 @@ button{font-family:inherit; cursor:pointer; border:none; color:inherit;}
 .dcell span{display:block; font-size:9px; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); margin-top:2px;}
 .dcell em{display:block; font-style:normal; font-size:10.5px; font-weight:700; margin-top:4px; font-family:'JetBrains Mono',monospace;}
 /* training calendar heatmap */
-.hmap{display:flex; gap:3px; margin-top:8px; overflow-x:auto; padding-bottom:2px;}
-.hmcol{display:flex; flex-direction:column; gap:3px;}
-.hmcell{width:11px; height:11px; border-radius:2.5px; background:var(--panel2); flex:none;}
-.hmcell.l1{background:rgba(59,130,246,.35);} .hmcell.l2{background:rgba(59,130,246,.62);} .hmcell.l3{background:var(--accent);}
-.hmcell.out{background:transparent;}
-.hmleg{display:flex; align-items:center; gap:4px; font-size:10px; color:var(--muted); margin-top:8px;}
 /* ranked improvement / attention rows */
-.rrow{display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid var(--line); cursor:pointer;}
-.rrow:last-child{border-bottom:none;}
-.rrow .rk{font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--faint); width:14px; flex:none;}
-.rrow .rmain{flex:1; min-width:0;}
-.rrow .rnm{font-size:13px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
-.rrow .rsub{font-size:11px; color:var(--muted); margin-top:2px;}
-.volrow{display:flex; align-items:center; gap:9px; padding:6px 0;}
-.volrow .vnm{font-size:12.5px; width:82px; flex:none; color:var(--text);}
-.volrow .vbar{flex:1; height:8px; border-radius:4px; background:var(--panel2); overflow:hidden; display:flex;}
-.volrow .vbar i{display:block; height:100%; background:var(--accent);}
 /* ===== v16 — analytics & data quality ===== */
+/* v18 — Stats V2 */
+.stats-hd{display:flex; justify-content:space-between; align-items:center; gap:10px; padding:2px 4px 8px;}
+.dqbadge{font-family:'JetBrains Mono',monospace; font-size:10.5px; color:var(--amber); background:rgba(255,159,10,.1); border:1px solid rgba(255,159,10,.4); border-radius:999px; padding:3px 9px; cursor:pointer;}
+.badge.rep{background:rgba(176,124,232,.18); color:#C79CF0; border:1px solid rgba(176,124,232,.4);}
+.achrow .ad+.ad{margin-top:1px;}
+.vg{border-top:1px solid var(--line); padding:6px 0 2px;} .vg:first-child{border-top:none;}
+.vg-hd{display:flex; align-items:center; gap:8px; padding:4px 0; cursor:pointer;} .vg-ch{font-family:'JetBrains Mono',monospace; color:var(--muted); width:12px; flex:none;} .vg-nm{flex:1; font-weight:700; font-size:13.5px;} .vg-v{font-size:13px;}
+.vg-bar{height:5px; background:var(--panel2); border-radius:3px; overflow:hidden; margin:0 0 6px 20px;} .vg-bar i{display:block; height:100%; background:var(--accent);}
+.vg-bd{padding:2px 0 4px;} .vm{display:grid; grid-template-columns:minmax(84px,auto) 1fr 44px; gap:8px; align-items:center; padding:5px 0 5px 20px; cursor:pointer; font-size:12.5px; color:var(--text);}
+.vm-bar{height:5px; background:var(--panel2); border-radius:3px; overflow:hidden; display:flex;} .vm-bar i{display:block; height:100%;} .vm-v{font-size:12px; text-align:right; color:var(--muted);}
+.exgrid{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:8px;} .ext{background:var(--panel2); border:1px solid var(--line); border-radius:9px; padding:8px 10px; min-width:0;}
+.ext span{display:block; font-size:9.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); font-family:'JetBrains Mono',monospace;} .ext b{display:block; font-family:'JetBrains Mono',monospace; font-size:15px; font-weight:600; margin-top:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;} .ext small{display:block; color:var(--muted); font-size:11px; margin-top:1px; font-family:'JetBrains Mono',monospace;}
+.exnote{margin-top:8px; font-size:12px; color:var(--muted); border-left:2px solid var(--accent); padding-left:8px; line-height:1.4;}
+.cal-wrap{display:flex; align-items:flex-start; margin-top:10px;} .cal-wrap .cal-days{flex:none;} .cal-scroll{flex:1; min-width:0;}
+.achcele{margin-top:12px; padding:12px 12px 6px; border-radius:14px; border:1px solid rgba(224,165,60,.35); background:linear-gradient(180deg,rgba(224,165,60,.16),rgba(224,165,60,.03));}
+.achcele-t{font-weight:800; font-size:18px; text-align:center; letter-spacing:-.01em; margin-bottom:8px;}
+.achcele-row{display:flex; justify-content:space-between; align-items:center; gap:10px; padding:8px 10px; margin-bottom:6px; border-radius:10px; background:var(--panel); border:1px solid var(--line); cursor:pointer;}
+.achcele-nm{font-weight:700; font-size:13.5px;} .achcele-rec{font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--text); margin-top:2px;} .achcele-also{font-family:'JetBrains Mono',monospace; font-size:10.5px; color:var(--muted); margin-top:1px;}
 .ssec-hd{display:flex; justify-content:space-between; align-items:center; gap:10px; padding:14px 16px; cursor:pointer;}
 .ssec-bd{padding:0 0 4px;} .ssec-bd>.card{margin:0 0 10px; border-radius:0; border-left:none; border-right:none; box-shadow:none;} .ssec-bd>.card:last-child{margin-bottom:0; border-bottom:none;}
 .protobadge{font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:.12em; text-transform:uppercase; padding:2px 6px; border-radius:5px; background:rgba(191,122,240,.16); color:var(--violet); font-weight:700;}
 /* priority coverage */
-.pcov{margin-top:6px;} .pcov-n{display:flex; align-items:baseline; gap:12px; flex-wrap:wrap;}
-.pcov-n b{font-family:'JetBrains Mono',monospace; font-size:30px; line-height:1;} .pcov-n b i{font-style:normal; font-size:16px; color:var(--muted);}
-.pcov-n>span{font-size:12px; color:var(--muted); max-width:34ch; line-height:1.4;}
-.pcov-grid{display:flex; gap:8px; margin-top:10px; flex-wrap:wrap;}
-.pcov-grid div{flex:1; min-width:90px; background:var(--panel2); border:1px solid var(--line); border-radius:10px; padding:8px 10px;}
-.pcov-grid b{display:block; font-family:'JetBrains Mono',monospace; font-size:17px;} .pcov-grid span{display:block; font-size:10.5px; color:var(--muted); margin-top:2px;}
 /* the matrix: fixed label rail + scrolling cells, rows locked to 30px on both sides */
 .cov-wrap{display:flex; align-items:flex-start; margin-top:10px;}
 .cov-labels{flex:none; width:100px; padding-right:6px;}
@@ -329,9 +325,6 @@ table.cov .cov-end{color:var(--muted); font-weight:600; padding:0 0 0 6px; text-
 .cov-legend i.ok{background:rgba(52,199,89,.16); box-shadow:inset 0 0 0 1px var(--green);} .cov-legend i.low{background:rgba(255,90,82,.15); box-shadow:inset 0 0 0 1px var(--red);}
 .cov-legend i.over{background:rgba(255,159,10,.18); box-shadow:inset 0 0 0 1px var(--amber);} .cov-legend i.zero{box-shadow:inset 0 0 0 1px var(--line2);}
 /* stalls */
-.stall-sums{display:flex; gap:12px; flex-wrap:wrap; margin-top:6px; font-size:12px;} .stall-sum b{font-family:'JetBrains Mono',monospace; font-size:15px; margin-right:3px;}
-.stall{display:flex; align-items:center; gap:10px; padding:9px 0; border-top:1px solid var(--line); cursor:pointer;} .stall:first-child{border-top:none;}
-.stall-main{flex:1; min-width:0;} .stall-nm{font-size:13.5px; font-weight:600;} .stall-ev{font-size:11.5px; color:var(--muted); margin-top:2px;} .stall-next{font-size:11.5px; color:var(--accent); margin-top:3px;}
 /* data quality */
 .dq-row{display:flex; gap:9px; align-items:flex-start; padding:8px 0; border-top:1px solid var(--line); cursor:pointer;} .dq-row:first-child{border-top:none;}
 .dq-dot{width:8px; height:8px; border-radius:50%; flex:none; margin-top:6px;}
@@ -345,9 +338,6 @@ table.cov .cov-end{color:var(--muted); font-weight:600; padding:0 0 0 6px; text-
 .rr-note{margin-top:8px; padding:9px 11px; border-radius:10px; background:var(--panel2); border:1px dashed var(--line);}
 .rr-note .btn{padding:6px 10px; font-size:12px;}
 /* block report */
-.blk-grid{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px;}
-.blk-k{background:var(--panel2); border:1px solid var(--line); border-radius:10px; padding:9px 10px;} .blk-k span{display:block; font-size:10px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted);}
-.blk-k b{display:block; font-family:'JetBrains Mono',monospace; font-size:18px; margin-top:2px;} .blk-k small{display:block; font-size:10.5px; color:var(--muted); margin-top:2px;}
 /* calendar */
 .cal{display:flex; gap:3px; align-items:flex-start; padding-bottom:2px;}
 .cal-days{display:flex; flex-direction:column; gap:3px; padding-top:16px; margin-right:3px;} .cal-days span{height:13px; font-size:9px; color:var(--faint); font-family:'JetBrains Mono',monospace; line-height:13px; width:10px;}
@@ -391,9 +381,9 @@ const APP_TAGLINE = "Training Command";
    recover.html on a v10 build is expected and correct.
    BUILD is shown in Settings and is what the deployed-version check compares against, so
    it must be bumped on every deploy. */
-const BUILD = "v17";
+const BUILD = "v18";
 const BUILD_DATE = "2026-09-14";
-const BUILD_NOTE = "v16 refinements: Direct / Indirect / Minor indirect wording, coverage Total | Direct | Indirect, strength index and rep-range board removed, rep range per exercise, data-quality checks at set entry and finish, Settings → Data quality";
+const BUILD_NOTE = "Stats V2: four collapsible sections (achievements · training pattern · muscle load & coverage · exercise progress), rep PRs, grouped achievement celebration at Finish, whole-session dedup now evidence-gated";
 
 /* Approved users (client-side UX gate; the real gate is Supabase signup settings — see DEPLOY).
    To add a person: add one line below with their real email (lowercase), display name and role.
@@ -1072,8 +1062,34 @@ function collapseRepeatedEntries(entries){
   const out=[]; for(let i=0;i<n;i+=k) out.push(entries[i]);
   return {entries:out, k:k};
 }
+/* v18 — EVIDENCE-GATED. collapseRepeatedEntries() is now only a DETECTOR. A k-fold repeat is collapsed
+   here only when the save record itself proves the duplication:
+     · the journal copy written at Finish on this device holds exactly ONE block whose entries match;
+     · or this record already carries an integrity marker from THIS evidence-gated path (it records the
+       evidence and the build that wrote it) with the same k — a cloud copy that still holds k blocks
+       re-hydrates into the same shape, and the proof from last time still stands.
+   A legacy marker ({collapsed,at} only, written by v15–v17 from the pattern alone) is NOT evidence.
+   No evidence → the session is preserved byte-for-byte and dataQualityScan() raises one dup_kfold
+   flag for it, with a user-initiated "Collapse to one copy" action. Whole-session dedup never again
+   deletes training data on a repeated pattern alone. */
+function kfoldEvidence(s,c){
+  try{ const j=journalRead().find(function(x){ return x&&x.id===s.id; });
+    if(j&&Array.isArray(j.entries)&&j.entries.length===c.entries.length&&j.entries.map(entrySig).join(";")===c.entries.map(entrySig).join(";"))
+      return "the journal copy written at Finish on this device holds one block of "+c.entries.length+" entries — the "+c.k+"× repeat arrived through sync"; }catch(e){}
+  const m=s.integrity;
+  if(m&&m.collapsed===c.k&&m.evidence&&m.build) return "this record already carried a proven "+c.k+"× sync duplication (evidence recorded by build "+m.build+")";
+  return null; }
+/* repairs made here are written before S exists (load), so they queue and flush into Settings → Data quality */
+let integrityRepairQueue=[];
+function flushIntegrityRepairs(){ if(!integrityRepairQueue.length||!S||!S.settings) return 0; const items=integrityRepairQueue.splice(0);
+  try{ S.settings.dqRepairs=(S.settings.dqRepairs||[]).concat([{at:iso(new Date()),entries:items.length,items:items,source:"integrity"}]).slice(-20); persistLocal(); }catch(e){} return items.length; }
+function collapseSessionEntries(s,c,evidence,where){
+  const before=(s.entries||[]).map(entryName).join(" · ");
+  s.entries=c.entries; s.integrity={collapsed:c.k, at:iso(new Date()), evidence:evidence, build:BUILD, where:where||"?"}; s.synced=false;
+  integrityRepairQueue.push({sessionId:s.id, date:s.completedAt, workout:s.title||"Workout", exId:null, name:"Whole workout", k:c.k, len:c.entries.length, evidence:evidence,
+    before:before, after:(s.entries||[]).map(entryName).join(" · ")}); }
 function normaliseSessions(list,where){
-  const byId={}, order=[]; let dupIds=0, collapsed=0;
+  const byId={}, order=[]; let dupIds=0, collapsed=0, preserved=0;
   const score=x=>(x.synced===false?1e9:0)+((x.entries||[]).reduce((a,en)=>a+(en.sets||[]).length,0));
   (list||[]).forEach(s=>{ if(!s||typeof s!=="object") return;
     if(!s.id) s.id=uid();
@@ -1082,8 +1098,10 @@ function normaliseSessions(list,where){
     dupIds++; if(score(s)>score(prev)) byId[s.id]=s; });
   const out=order.map(id=>byId[id]);
   out.forEach(s=>{ if(!s.completedAt||!Array.isArray(s.entries)) return; const c=collapseRepeatedEntries(s.entries);
-    if(c.k>1){ s.entries=c.entries; s.integrity={collapsed:c.k, at:iso(new Date())}; collapsed++; } });
-  if(dupIds||collapsed) plog("integrity",{where:where||"?", dupIds:dupIds, collapsed:collapsed});
+    if(c.k<=1) return;
+    const ev=kfoldEvidence(s,c);
+    if(ev){ collapseSessionEntries(s,c,ev,where); collapsed++; } else preserved++; });
+  if(dupIds||collapsed||preserved) plog("integrity",{where:where||"?", dupIds:dupIds, collapsed:collapsed, preserved:preserved});
   return out;
 }
 /* Replace-by-id, never append-by-position: the one way a finished session enters S. */
@@ -1945,7 +1963,7 @@ function achievementTimeline(limit){
   var sessions=completedSessions().slice().sort(function(a,b){ return new Date(a.completedAt)-new Date(b.completedAt); });
   var best={}, events=[];
   sessions.forEach(function(sess){ (sess.entries||[]).forEach(function(en){ var ws=workingSets(en); if(!ws.length) return; var ex=exById(en.exId); if(!ex) return;
-    var b=best[en.exId]||(best[en.exId]={top:null,rm5:null,rm10:null});
+    var b=best[en.exId]||(best[en.exId]={top:null,rm5:null,rm10:null,repsAt:{}});
     var bwt=bodyweightAt(sess.completedAt);
     var sTop=null,sTopReps=0; ws.forEach(function(s){ var w=+s.weight||0,r=+s.reps||0; if(betterLoad(ex,w,sTop)){ sTop=w; sTopReps=r; } });
     var r10=bestLoadAtReps(ex,ws,10); var r5=bestLoadAtReps(ex,ws,5);
@@ -1953,16 +1971,34 @@ function achievementTimeline(limit){
     if(betterLoad(ex,r10,b.rm10)){ events.push(Object.assign({type:"10RM",first:b.rm10==null,exId:en.exId,name:ex.name,weight:r10,reps:repsAtLoad(ws,r10,10),date:sess.completedAt,sessionId:sess.id},meta(r10))); }
     if(betterLoad(ex,r5,b.rm5) && betterLoad(ex,r5,r10)){ events.push(Object.assign({type:"5RM",first:b.rm5==null,exId:en.exId,name:ex.name,weight:r5,reps:repsAtLoad(ws,r5,5),date:sess.completedAt,sessionId:sess.id},meta(r5))); }   // distinct 5RM only (heavier than the 10RM weight)
     if(betterLoad(ex,sTop,b.top) && sTopReps<5){ events.push(Object.assign({type:"PR",first:b.top==null,exId:en.exId,name:ex.name,weight:sTop,reps:sTopReps,date:sess.completedAt,sessionId:sess.id},meta(sTop))); }   // standalone weight PR only for heavy sub-5-rep sets; 5RM/10RM cover the rest
+    /* v18 — REP PR: more reps than ever before at the SAME working load on this exercise (working sets only).
+       Needs a previous session at that load, so a first visit to a weight never fires. One per exercise per
+       session — the heaviest load that qualified. Overlap with a 5RM/10RM/load PR is grouped at display. */
+    var repPR=null; ws.forEach(function(st){ var w=+st.weight||0, r=+st.reps||0; var prev=b.repsAt[w]; if(prev!=null&&r>prev&&(repPR==null||betterLoad(ex,w,repPR.weight)||(w===repPR.weight&&r>repPR.reps))) repPR={weight:w,reps:r,prevReps:prev}; });
+    if(repPR) events.push(Object.assign({type:"REP",first:false,exId:en.exId,name:ex.name,weight:repPR.weight,reps:repPR.reps,prevReps:repPR.prevReps,date:sess.completedAt,sessionId:sess.id},meta(repPR.weight)));
+    ws.forEach(function(st){ var w=+st.weight||0, r=+st.reps||0; if(b.repsAt[w]==null||r>b.repsAt[w]) b.repsAt[w]=r; });
     if(betterLoad(ex,r10,b.rm10)) b.rm10=r10; if(betterLoad(ex,r5,b.rm5)) b.rm5=r5; if(betterLoad(ex,sTop,b.top)) b.top=sTop;
   }); });
   events.sort(function(a,b){ return new Date(b.date)-new Date(a.date); });
   return limit?events.slice(0,limit):events; }
 function sessionAchievements(sess){ if(!sess) return []; return achievementTimeline(0).filter(function(e){ return e.sessionId===sess.id; }); }
-function achBadgeClass(t){ return t==="5RM"?"rm5":t==="10RM"?"rm10":"pr"; }
+function achBadgeClass(t){ return t==="5RM"?"rm5":t==="10RM"?"rm10":t==="REP"?"rep":"pr"; }
 function achLoadStr(a){ if(a.kind==="assist") return a.weight+"kg assist"+(a.eff!=null?" \u00b7 "+a.eff+"kg effective":"");
   if(a.kind==="bw") return (a.weight>0?"+"+a.weight+"kg":"bodyweight")+(a.eff!=null?" \u00b7 "+a.eff+"kg effective":"");
   return a.weight+"kg"; }
-function achLabel(a){ return a.type==="PR"?(a.kind==="assist"?"lowest assist":"weight PR"):a.type; }
+function achLabel(a){ return a.type==="PR"?(a.kind==="assist"?"lowest assist":"weight PR"):a.type==="REP"?"rep PR":a.type; }
+/* v18 — one row per exercise per session. Precedence Load PR → 10RM → 5RM → Rep PR (Adam's order);
+   every other record the same performance set goes on the "also" line, never a second row. */
+const ACH_RANK={PR:0,"10RM":1,"5RM":2,REP:3};
+function achAlsoText(a){ if(a.type==="REP") return "rep PR at "+achLoadStr(a)+" (previous best "+a.prevReps+")"; return (a.first?"first ":"new ")+achLabel(a)+" · "+achLoadStr(a)+" × "+a.reps; }
+function achNote(g){ const a=g.primary; return a.type==="REP"?"previous best at "+achLoadStr(a)+": "+a.prevReps+" reps":""; }
+function achSubLines(g){ const n=achNote(g); return (n?[n]:[]).concat(g.also.length?["also "+g.also.join(" · ")]:[]); }
+function groupAchievements(events){ const by={}; const order=[];
+  (events||[]).forEach(function(a){ const k=a.exId+"|"+a.sessionId; if(!by[k]){ by[k]={exId:a.exId,name:a.name,date:a.date,sessionId:a.sessionId,records:[]}; order.push(k); } by[k].records.push(a); });
+  const rank=function(t){ return Object.prototype.hasOwnProperty.call(ACH_RANK,t)?ACH_RANK[t]:9; };
+  return order.map(function(k){ const g=by[k]; g.records.sort(function(x,y){ return rank(x.type)-rank(y.type); });
+    g.primary=g.records[0]; g.also=g.records.slice(1).map(achAlsoText); return g; }); }
+function achPrimaryText(g){ const a=g.primary; return (a.first?"First ":"New ")+achLabel(a)+" · "+achLoadStr(a)+" × "+a.reps; }
 function achText(a){ return (a.first?"First ":"New ")+achLabel(a)+" \u2014 "+a.name+": "+achLoadStr(a)+" \u00d7 "+a.reps; }
 /* per-session metric series (oldest->newest) for charts.
    "eff" charts effective load (bodyweight - assistance, or bodyweight + added) which always rises
@@ -2002,13 +2038,14 @@ function metricLabel(m,ex){
 /* Which chart toggles make sense for this exercise. Assisted movements lead with effective load
    when a bodyweight reading exists, and we never offer a metric that cannot be computed. */
 function metricsFor(ex){ var out=[];
-  if(!ex) return [["top","Top kg"]];
+  if(!ex) return [["top","Top"]];
   if(loadKind(ex)!=="ext"&&hasBodyweight()) out.push(["eff","Effective"]);
-  out.push(["top", isAssisted(ex)?"Assist":(isBodyweightLoaded(ex)?"Added":"Top kg")]);
+  out.push(["top", isAssisted(ex)?"Assist":(isBodyweightLoaded(ex)?"Added":"Top")]);
   if(!isAssisted(ex)) out.push(["rm5","5RM"]);
   out.push(["rm10","10RM"]);
+  out.push(["e1rm","e1RM"]);                      /* v18 — the trend estimate the engine already computes (Adam's brief: e1RM stays a trend, never a measured 1RM) */
   out.push(["reps","Reps"]);
-  if(loadKind(ex)==="ext"||hasBodyweight()) out.push(["vol","Volume"]);
+  if(loadKind(ex)==="ext"||hasBodyweight()) out.push(["vol","Vol"]);
   out.push(["sets","Sets"]);
   return out; }
 function defaultMetricFor(ex){ return (ex&&loadKind(ex)!=="ext"&&hasBodyweight())?"eff":"top"; }
@@ -2425,74 +2462,7 @@ function deltaChip(now,base,unit){
   const mag=Math.abs(d)>=100?Math.round(Math.abs(d)):Math.round(Math.abs(d)*10)/10;
   return '<em style="color:'+c+'">'+sign+mag+(unit||"")+(p!=null?" · "+pctStr(p):"")+'</em>'; }
 
-/* ---- training dashboard ---- */
-const DASH_PERIODS=[["4w","4 weeks",28],["12w","12 weeks",84],["26w","6 months",182]];
-function dashDays(){ const p=DASH_PERIODS.find(function(x){ return x[0]===dashPeriod; }); return p?p[2]:28; }
-function dashLabel(){ const p=DASH_PERIODS.find(function(x){ return x[0]===dashPeriod; }); return p?p[1]:"4 weeks"; }
-function sessionsInWindow(days,offsetDays){
-  const end=Date.now()-(offsetDays||0)*864e5, start=end-days*864e5;
-  return completedSessions().filter(function(s){ const t=new Date(s.completedAt).getTime(); return t>=start&&t<=end; }); }
-/* v13 — delegates to the canonical helper so there is exactly one implementation. */
-function volumeByGroup(sessions){ return effectiveSetsByGroup(sessions); }
-function prsInWindow(days,offsetDays){
-  const end=Date.now()-(offsetDays||0)*864e5, start=end-days*864e5;
-  return achievementTimeline(0).filter(function(a){ const t=new Date(a.date).getTime(); return t>=start&&t<=end; }); }
-/* consistency = share of the weeks in the window where you hit your own session target */
-function consistencyPct(days){
-  const weeks=Math.max(1,Math.round(days/7)); const target=Math.max(1,(S.settings&&S.settings.sessionsPerWeek)||4);
-  const counts=weeklyCounts(weeks);
-  const hit=counts.filter(function(w){ return w.count>=target; }).length;
-  return {pct:Math.round(hit/weeks*100), hit:hit, weeks:weeks, target:target}; }
-function dashboardStats(){
-  const d=dashDays();
-  const cur=sessionsInWindow(d), prev=sessionsInWindow(d,d);
-  const curVol=volumeByGroup(cur), prevVol=volumeByGroup(prev);
-  const totals=cur.reduce(function(a,s){ const x=sessionTotals(s); a.sets+=x.sets; a.reps+=x.reps; a.vol+=x.vol; return a; },{sets:0,reps:0,vol:0});
-  const prevTotals=prev.reduce(function(a,s){ const x=sessionTotals(s); a.sets+=x.sets; a.reps+=x.reps; a.vol+=x.vol; return a; },{sets:0,reps:0,vol:0});
-  return { days:d, workouts:cur.length, prevWorkouts:prev.length,
-    perWeek:Math.round(cur.length/(d/7)*10)/10, prevPerWeek:Math.round(prev.length/(d/7)*10)/10,
-    totals:totals, prevTotals:prevTotals, curVol:curVol, prevVol:prevVol,
-    prs:prsInWindow(d).length, prevPrs:prsInWindow(d,d).length,
-    consistency:consistencyPct(d) }; }
-/* compact calendar heatmap: one column per week, one cell per day, intensity = working sets */
-function heatmapWeeks(nWeeks){
-  const byDay={}; completedSessions().forEach(function(s){ const k=dayKey(s.completedAt); byDay[k]=(byDay[k]||0)+sessionSets(s); });
-  const out=[]; const base=startOfWeek();
-  for(let w=nWeeks-1;w>=0;w--){ const mon=new Date(base); mon.setDate(mon.getDate()-w*7);
-    const days=[]; for(let i=0;i<7;i++){ const dte=new Date(mon); dte.setDate(dte.getDate()+i);
-      days.push({date:dte, future:dte>new Date(), sets:byDay[dayKey(dte)]||0}); }
-    out.push({monday:mon, days:days}); }
-  return out; }
-function heatLevel(sets){ return sets<=0?0:sets<=6?1:sets<=12?2:3; }
 
-/* ---- ranked improvements / needs attention ---- */
-/* Only exercises with enough history get a verdict. Everything thinner is surfaced separately as
-   "not enough data" rather than being quietly dropped or, worse, called a decline. */
-/* v11 — the boards describe CURRENT training. An exercise you last did six weeks ago (because the
-   machine was occupied, or the gym removed it) is real history but says nothing about how you are
-   training now, so it is moved to its own "not recently trained" bucket instead of sitting at the
-   top of "Biggest improvements". Anything without TREND_MIN_N exposures is "not enough data". */
-function progressionBoard(){
-  const all=exerciseProgression();
-  const withTrend=all.map(function(p){ const d=exerciseTrendData(p.ex.id);
-    return Object.assign({},p,{tstate:d.state, stale:d.stale, days:d.days, recentPct:d.pct,
-      recentMean:d.recentMean, baseMean:d.baseMean, recentN:d.recentN, baseN:d.baseN, n:d.n}); });
-  const thin=withTrend.filter(function(p){ return p.tstate==="insufficient"; });
-  const rated=withTrend.filter(function(p){ return p.tstate!=="insufficient"; });
-  const stale=rated.filter(function(p){ return p.stale; })
-    .sort(function(a,b){ return a.days-b.days; });
-  const current=rated.filter(function(p){ return !p.stale; });
-  const improving=current.filter(function(p){ return p.tstate==="above"; })
-    .sort(function(a,b){ return b.recentPct-a.recentPct; });
-  const attention=current.filter(function(p){ return p.tstate==="below"; })
-    .sort(function(a,b){ return a.recentPct-b.recentPct; });
-  const steady=current.filter(function(p){ return p.tstate==="steady"; });
-  return {improving:improving, attention:attention, steady:steady, thin:thin, stale:stale, graded:current.length}; }
-/* the plain-English "what changed" line for one exercise */
-function progDeltaStr(p){
-  if(p.kind==="assist") return p.firstRaw+"kg → "+p.latestRaw+"kg assistance over "+p.n+" sessions";
-  if(p.kind==="bw") return (p.firstRaw>0?"+"+p.firstRaw+"kg":"bodyweight")+" → "+(p.latestRaw>0?"+"+p.latestRaw+"kg":"bodyweight")+" over "+p.n+" sessions";
-  return Math.round(p.first)+" → "+Math.round(p.latest)+"kg "+p.metric+" over "+p.n+" sessions"; }
 
 /* The three headline totals, each carrying its change against the last comparable workout, then the
    same three against the rolling 4-week per-session average. Two references, clearly labelled. */
@@ -2515,6 +2485,12 @@ function recapProgress(r){
   return '<div class="tiny" style="margin-top:16px">Exercise progression · vs your last time on each</div>'
     +'<div class="histline" style="margin-top:2px;color:var(--text);font-weight:600">'+(bits.join(" · ")||"—")+'</div>'
     +'<div style="margin-top:4px">'+rows+'</div>'; }
+/* v18 — the moment a PR is earned. One row per exercise (grouped like Stats), the count is exercises. */
+function achievementsRecapBlock(r){ const groups=r.achGroups||groupAchievements(r.ach||[]);
+  if(!groups.length) return '<div class="histline" style="margin-top:12px;text-align:center;color:var(--muted)">No new records this session — keep stacking reps.</div>';
+  return '<div class="achcele"><div class="achcele-t">🏆 '+groups.length+' achievement'+(groups.length===1?'':'s')+' today</div>'
+    +groups.map(function(g){ const a=g.primary; return '<div class="achcele-row" data-exhist="'+g.exId+'"><div style="min-width:0"><div class="achcele-nm">'+g.name+'</div><div class="achcele-rec">'+achPrimaryText(g)+'</div>'+achSubLines(g).map(function(l){ return '<div class="achcele-also">'+l+'</div>'; }).join("")+'</div><span class="badge '+achBadgeClass(a.type)+'">'+achLabel(a)+'</span></div>'; }).join("")
+    +'</div>'; }
 function recapDeltas(r){
   const t=r.totals; if(!t) return "";
   const cell=function(val,unit,base){ return '<div class="dcell"><b>'+val+'</b><span>'+unit+'</span>'+deltaChip(val,base,"")+'</div>'; };
@@ -2549,93 +2525,11 @@ function recapDeltas(r){
   return h; }
 
 /* ---- v9 training dashboard ---- */
-function dashboardCard(){
-  const d=dashboardStats();
-  const pBtns=DASH_PERIODS.map(function(x){ return '<button data-dashp="'+x[0]+'" class="'+(dashPeriod===x[0]?"on":"")+'">'+x[1]+'</button>'; }).join("");
-  /* v12 — "+3 · +25%" made you decode it. Each KPI now names its own unit and the period it
-     is being compared against, on its own line. */
-  const kpi=function(val,label,now,base,unit){
-    let dd='';
-    if(base!=null){ const diff=now-base, pc=deltaPct(now,base);
-      const c=(pc==null||Math.abs(pc)<3)?"var(--muted)":(pc>0?"var(--green)":"var(--red)");
-      const sign=diff>0?"+":(diff<0?"\u2212":"\u00b1");
-      const mag=Math.abs(diff)>=100?Math.round(Math.abs(diff)):Math.round(Math.abs(diff)*10)/10;
-      dd='<em style="color:'+c+';display:block;line-height:1.35">'+sign+mag+' '+(unit||label)+'</em>'
-        +'<em style="color:var(--faint);display:block;line-height:1.3">'+(pc==null?'\u2014':pctStr(pc))+' vs previous '+dashLabel()+'</em>'; }
-    return '<div class="dcell"><b>'+val+'</b><span>'+label+'</span>'+dd+'</div>'; };
-  const groups=MUSCLE_GROUPS.map(function(g){ return {key:g.key, label:g.label, v:d.curVol[g.key]||0, p:d.prevVol[g.key]||0}; })
-    .filter(function(x){ return x.v>0||x.p>0; }).sort(function(a,b){ return b.v-a.v; });
-  const gmax=Math.max.apply(null,[1].concat(groups.map(function(x){ return x.v; })));
-  const volRows=groups.length?groups.map(function(x){ const p=deltaPct(x.v,x.p||null);
-    const c=(p==null||Math.abs(p)<10)?"var(--muted)":(p>0?"var(--green)":"var(--red)");
-    return '<div class="volrow" data-muscle-group="'+x.key+'"><span class="vnm">'+x.label+'</span><span class="vbar"><i style="width:'+Math.round(x.v/gmax*100)+'%"></i></span>'
-      +'<span class="mono" style="font-size:11.5px;min-width:34px;text-align:right">'+x.v.toFixed(1)+'</span>'
-      +'<span class="mono" style="font-size:10.5px;min-width:46px;text-align:right;color:'+c+'">'+(p==null?'new':pctStr(p))+'</span></div>'; }).join("")
-    :'<div class="empty" style="padding:14px">No sets logged in this window.</div>';
-  const cons=d.consistency;
-  return '<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><div class="tiny">Training dashboard</div><div class="seg mini" style="width:60%">'+pBtns+'</div></div>'
-    +'<div class="histline" style="margin-top:3px">A personal best is a new 5RM, 10RM or heaviest working set on any exercise.</div>'
-    +'<div class="dgrid" style="grid-template-columns:repeat(2,1fr)">'
-    + kpi(d.workouts,"workouts",d.workouts,d.prevWorkouts||null,"workouts")
-    + '<div class="dcell"><b>'+d.perWeek+'</b><span>per week</span><em style="color:var(--muted)">target '+cons.target+'</em></div>'
-    + kpi(d.prs,"personal bests",d.prs,d.prevPrs||null,"PBs")
-    + '<div class="dcell"><b style="color:'+(cons.pct>=75?"var(--green)":cons.pct>=50?"var(--amber)":"var(--red)")+'">'+cons.pct+'%</b><span>consistency</span><em style="color:var(--muted)">'+cons.hit+'/'+cons.weeks+' wks</em></div>'
-    + '</div>'
-    +'<div class="tiny" style="margin-top:16px">Effective sets by muscle GROUP · last '+dashLabel()+'</div>'
-    +'<div class="histline" style="margin-top:2px">Chest, back, legs and so on — individual muscles rolled up. Rolling '+dashLabel()+' ending today, compared with the '+dashLabel()+' before it. For per-muscle numbers see <b>Volume &amp; distribution</b> below, which uses its own window.</div>'
-    +'<div style="margin-top:6px">'+volRows+'</div>'
-    +'</div>'; }
-function heatmapHTML(nWeeks){
-  const weeks=heatmapWeeks(nWeeks);
-  const cols=weeks.map(function(w){ return '<div class="hmcol">'+w.days.map(function(dy){
-    if(dy.future) return '<span class="hmcell out"></span>';
-    const lv=heatLevel(dy.sets);
-    return '<span class="hmcell'+(lv?" l"+lv:"")+'" title="'+fmtDate(dy.date)+(dy.sets?" · "+dy.sets+" sets":" · rest")+'"></span>'; }).join("")+'</div>'; }).join("");
-  return '<div class="hmap">'+cols+'</div>'
-    +'<div class="hmleg"><span>less</span><span class="hmcell"></span><span class="hmcell l1"></span><span class="hmcell l2"></span><span class="hmcell l3"></span><span>more</span><span style="margin-left:auto">each column = 1 week · Mon→Sun</span></div>'; }
 
 /* ---- v9 biggest improvements / needs attention ---- */
 /* v11 row shape, applied identically everywhere so the boards scan in one pass:
       exercise name  ->  sparkline  ->  the two actual means  ->  % change
    No explanatory sentence. Order context appears as a neutral chip when it applies. */
-function boardRow(p,i,tone){
-  const t=exerciseTrend(p.ex.id);
-  const ev=trendEvidence(p.ex.id);
-  const oc=orderContext(p.ex.id);
-  const hist=exerciseHistory(p.ex.id);
-  /* v12 fixed row grammar, identical on every board:
-       1  exercise name (+ badges)
-       2  "Last N: <value> <unit>"
-       3  "Previous N: <value> <unit>"
-       4  optional context chip
-     then sparkline and % on the right. Two separate lines, never one wrapping string. */
-  return '<div class="rrow" data-exhist="'+p.ex.id+'"><span class="rk">'+(i+1)+'</span>'
-    +'<div class="rmain"><div class="rnm">'+p.ex.name+(isCustomEx(p.ex)?' <span class="tag" style="color:var(--gold)">custom</span>':'')+'</div>'
-    +'<div class="rsub mono">'+(ev.lineACompact||ev.lineA)+'</div>'
-    +'<div class="rsub mono" style="opacity:.75">'+(ev.lineBCompact||ev.lineB)+'</div>'
-    +(p.stale?'<div class="rsub" style="color:var(--faint)">last trained '+fmtAgo(hist[0]?hist[0].date:null)+'</div>':'')
-    +(oc?'<div class="rsub"><span class="tag" style="color:var(--muted);border:1px solid var(--line)">'+oc.text+'</span></div>':'')
-    +'</div>'
-    +miniSpark(p.ex.id)
-    +'<span class="tb '+(TB_CLASS[t.state]||"na")+'" style="margin-left:8px">'+t.icon+' '+(ev.ok?pctStr(p.recentPct):(p.n+"/"+TREND_MIN_N))+'</span></div>'; }
-function progressionBoardCard(){
-  const b=progressionBoard();
-  const sec=function(title,list,empty,tone){
-    return '<div class="tiny" style="margin-top:14px;color:'+tone+'">'+title+'</div>'
-      +(list.length?list.slice(0,5).map(function(p,i){ return boardRow(p,i,tone); }).join(""):'<div class="histline" style="padding:6px 0">'+empty+'</div>'); };
-  const thinNames=b.thin.slice(0,6).map(function(p){ return p.ex.name; }).join(", ");
-  const staleNames=b.stale.slice(0,6).map(function(p){ return p.ex.name+" ("+Math.round(p.days/7)+"w)"; }).join(", ");
-  return '<div class="card"><div class="tiny">Progression board</div>'
-    +'<div class="histline" style="margin-top:4px">Last '+TREND_RECENT_N+' exposures vs the '+TREND_BASE_MIN+'\u2013'+TREND_BASE_MAX+' before \u00b7 needs '+TREND_MIN_N+'+ sessions \u00b7 trained within '+Math.round(TREND_STALE_DAYS/7)+' weeks</div>'
-    +sec("\u25b2 Above baseline",b.improving,"Nothing above baseline right now.","var(--green)")
-    +sec("\u25bc Below baseline",b.attention,"Nothing below baseline.","var(--amber)")
-    +(b.steady.length?'<div class="tiny" style="margin-top:14px;color:var(--accent)">\u25ac In line \u00b7 '+b.steady.length+'</div>'
-      +b.steady.slice(0,3).map(function(p,i){ return boardRow(p,i,"var(--accent)"); }).join(''):'')
-    +(b.stale.length?'<div class="tiny" style="margin-top:14px;color:var(--faint)">\u25cb Not recently trained \u00b7 '+b.stale.length+'</div>'
-      +'<div class="histline" style="margin-top:2px">'+staleNames+(b.stale.length>6?' and more':'')+'</div>':'')
-    +(b.thin.length?'<div class="tiny" style="margin-top:14px;color:var(--faint)">\u25cb Not enough data \u00b7 '+b.thin.length+'</div>'
-      +'<div class="histline" style="margin-top:2px">'+thinNames+(b.thin.length>6?' and more':'')+'</div>':'')
-    +'</div>'; }
 
 /* ---------------------------------------------------------------- v12 MIGRATED FROM REPORTS
    Reports duplicated most of Stats. These two cards were the genuinely better implementations,
@@ -2646,100 +2540,9 @@ function progressionBoardCard(){
    card can state its own window instead of leaving you to infer it from a segmented control
    several cards further up. Note the default is ALL TIME, which was the single biggest reason
    these totals looked irreconcilable against the dashboard's rolling 4 weeks. */
-function statsWindowLabel(){
-  if(statsPeriod==="all") return "all time";
-  if(statsPeriod==="week") return "this week (Mon\u2013Sun)";
-  return "last "+statsPeriod+" days"; }
-function muscleSplitCard(){
-  var ent=Object.keys(S.muscles).map(function(m){ var c=muscleContrib(m,periodSessions());
-    return {m:m,total:c.total,direct:c.direct,secondary:c.secondary}; })
-    .filter(function(x){ return x.total>0; }).sort(function(a,b){ return b.total-a.total; });
-  var mmax=Math.max.apply(null,[1].concat(ent.map(function(x){ return x.total; })));
-  var shown=showAllMuscles?ent:ent.slice(0,5);
-  var mrows=shown.length?shown.map(function(x){ var dp=Math.round(x.direct/mmax*100), sp=Math.round(x.secondary/mmax*100);
-    var below=x.total<S.muscles[x.m].min;
-    return '<div class="exline" data-muscle-stat="'+x.m+'" style="padding:7px 0;cursor:pointer"><div style="flex:1">'
-      +'<div class="nm" style="font-size:13px">'+S.muscles[x.m].label
-      +(below?' <span class="tag" style="color:var(--blue)">below min</span>':'')+'</div>'
-      +'<div class="bar" style="margin-top:5px;display:flex"><i style="width:'+dp+'%;background:var(--accent)"></i><i style="width:'+sp+'%;background:var(--grey)"></i></div></div>'
-      +'<span class="mono" style="margin-left:10px">'+x.total.toFixed(1)+'</span></div>'; }).join("")
-    :'<div class="empty" style="padding:16px">No sets in this window.</div>';
-  return '<div class="card"><div class="tiny">Effective sets by INDIVIDUAL muscle \u00b7 '+statsWindowLabel()+'</div>'
-    +'<div class="histline" style="margin-top:2px">Same metric as the dashboard above, different slice: one row per muscle, and this card follows the <b>Window</b> selector rather than the dashboard\u2019s rolling period. Tap a row to see which exercises produced it.</div>'
-    +'<p class="muted" style="font-size:11px;margin:4px 0 0"><span style="color:var(--accent)">\u25ae</span> direct (1.0) \u00b7 <span style="color:var(--grey)">\u25ae</span> indirect (0.5 / 0.25)</p>'
-    +'<div style="margin-top:6px">'+mrows+'</div>'
-    +(ent.length>5?'<button class="btn ghost full sm" data-showall style="margin-top:8px">'+(showAllMuscles?'Show top 5':'Show all '+ent.length+' muscles')+'</button>':'')
-    +'</div>'; }
 /* Per-exercise chart with metric toggles and search. */
-function exerciseTrendsCard(){
-  var histList=S.exercises.map(function(e){ return {e:e,n:exerciseHistory(e.id).length}; })
-    .filter(function(x){ return x.n>=1; }).sort(function(a,b){ return b.n-a.n; });
-  if(!repExId||!histList.find(function(x){ return x.e.id===repExId; })) repExId=histList.length?histList[0].e.id:null;
-  if(!repExId) return '<div class="card"><div class="tiny">Exercise charts</div><div class="empty" style="padding:18px">Log a few sessions to chart your progress.</div></div>';
-  var fq=(repSearch||"").toLowerCase();
-  var chips=histList.filter(function(x){ return !fq||exMatches(x.e,fq); }).slice(0,40)
-    .map(function(x){ return '<button data-repexid="'+x.e.id+'" class="'+(x.e.id===repExId?"on":"")+'">'+x.e.name+'</button>'; }).join("");
-  var ex=exById(repExId); var rec=exerciseRecords(repExId);
-  var metrics=metricsFor(ex); if(!metricOK(ex,repMetric)) repMetric=defaultMetricFor(ex);
-  var seg='<div class="seg mini" style="margin-top:8px">'+metrics.map(function(mn){ return '<button data-repmetric="'+mn[0]+'" class="'+(repMetric===mn[0]?"on":"")+'">'+mn[1]+'</button>'; }).join("")+'</div>';
-  var chart=lineChartSVG(exerciseSeries(repExId,repMetric),{unit:metricUnit(repMetric),dirNote:dirNoteFor(ex,repMetric)});
-  return '<div class="card"><div class="tiny">Exercise charts</div>'
-    +'<input class="inp srch" id="repSearch" placeholder="Search exercises..." value="'+escAttr(repSearch||"")+'" style="margin-top:8px">'
-    +'<div class="chips" style="margin-top:8px">'+(chips||'<span class="muted" style="font-size:12px">No matches</span>')+'</div>'
-    +'<div style="font-weight:700;font-size:14px;margin-top:4px">'+ex.name+trendBadge(ex.id)+'</div><div class="histline">'+metricLabel(repMetric,ex)+'</div>'
-    +seg+'<div class="chartwrap">'+chart+'</div>'
-    +'<div class="histline" style="margin-top:8px">'+(isAssisted(ex)
-        ? ('Lowest assistance '+(hasRec(rec.top)?rec.top.raw+"kg"+(rec.top.eff!=null?" \u00b7 "+rec.top.eff+"kg effective load":""):"\u2014")+' \u00b7 at 10+ reps '+(hasRec(rec.rm10)?rec.rm10.raw+"kg":"\u2014"))
-        : ('5RM '+(hasRec(rec.rm5)?rec.rm5.raw+"kg\u00d7"+rec.rm5.reps:"\u2014")+' \u00b7 10RM '+(hasRec(rec.rm10)?rec.rm10.raw+"kg\u00d7"+rec.rm10.reps:"\u2014")+' \u00b7 Top '+(hasRec(rec.top)?rec.top.raw+"kg":"\u2014")))+'</div></div>'; }
 
 /* ---- Reports tab cards ---- */
-function recentAchievementsCard(limit){ var evs=achievementTimeline(limit||8);
-  if(!evs.length) return '<div class="card"><div class="tiny">Recent achievements 🏆</div><div class="empty" style="padding:14px">Log working sets to start earning 5RM, 10RM and weight PRs.</div></div>';
-  return '<div class="card"><div class="tiny">Recent achievements 🏆</div><div style="margin-top:6px">'+evs.map(function(a){ return '<div class="achrow" data-exhist="'+a.exId+'" style="cursor:pointer"><div><div class="am">'+a.name+'</div><div class="ad">'+achLoadStr(a)+' × '+a.reps+' · '+fmtDate(a.date)+'</div></div><span class="badge '+achBadgeClass(a.type)+'">'+(a.first?"First ":"")+achLabel(a)+'</span></div>'; }).join("")+'</div></div>'; }
-function diagnoseCard(){ var b=progressionBoard();
-  var up=b.improving.slice(0,3);
-  var flat=b.attention.filter(function(p){ return p.state==="stalled"; }).slice(0,3);
-  var na=needsAttentionPrimary().map(function(m){ return S.muscles[m].label; });
-  var vol=weeklyVolume(); var over=Object.entries(S.muscles).filter(function(pr){ return vol[pr[0]]>=pr[1].cap*0.85; }).map(function(pr){ return S.muscles[pr[0]].label+" ("+vol[pr[0]].toFixed(1)+"/"+pr[1].cap+")"; }).slice(0,3);
-  function ln(c,label,items,empty){ return '<div style="margin-top:10px"><div class="tiny" style="color:'+c+'">'+label+'</div><div class="ibody" style="margin-top:2px">'+(items.length?items.join(" · "):empty)+'</div></div>'; }
-  return '<div class="card"><div class="tiny">Coach diagnosis</div>'
-    +ln("var(--green)","Improving",up.map(function(p){ return p.ex.name+" "+pctStr(p.recentPct); }),"Not enough repeat data yet.")
-    +ln("var(--amber)","Stalled",flat.map(function(p){ return p.ex.name+" (flat over "+p.n+")"; }),"Nothing clearly stalled.")
-    +ln("var(--blue)","Needs direct work",na,"All priority muscles covered this week.")
-    +ln("var(--red)","Near / over cap",over,"Nothing overloaded.")+'</div>'; }
-function viewReports(){
-  var w=weekStatus(); var mom=momentumScore(); var setsW=weekSessions().reduce(function(a,s){ return a+sessionSets(s); },0);
-  var primaryAll=Object.values(S.muscles).filter(function(c){ return c.tier==="primary"; }).length; var primaryMet=primaryAll-w.primaryBelow.length;
-  var below=w.needsAttention.map(function(m){ return S.muscles[m].label; });
-  var tl=w.sess>=w.target?"var(--green)":w.sess>=w.target-1?"var(--amber)":"var(--red)";
-  var weekH='<div class="card"><div style="display:flex;justify-content:space-between;align-items:center"><div class="tiny">This week · Mon–Sun</div><span class="statuspill" style="background:'+tl+'22;color:'+tl+'">'+mom.label+'</span></div>'
-    +'<div class="kpi" style="margin-top:10px"><div class="k"><b style="color:'+tl+'">'+w.sess+'/'+w.target+'</b><span>sessions</span></div><div class="k"><b>'+setsW+'</b><span>working sets</span></div><div class="k"><b style="color:'+(primaryMet===primaryAll?"var(--green)":"var(--amber)")+'">'+primaryMet+'/'+primaryAll+'</b><span>primary done</span></div></div>'
-    +(below.length?'<div class="ibody" style="margin-top:10px">Below weekly minimum: '+below.join(", ")+'.</div>':'<div class="ibody" style="margin-top:10px">Every priority muscle has met its weekly minimum. 🔥</div>')+'</div>';
-  var histList=S.exercises.map(function(e){ return {e:e,n:exerciseHistory(e.id).length}; }).filter(function(x){ return x.n>=1; }).sort(function(a,b){ return b.n-a.n; });
-  if(!repExId||!histList.find(function(x){ return x.e.id===repExId; })) repExId=histList.length?histList[0].e.id:null;
-  var trendH;
-  if(!repExId){ trendH='<div class="card"><div class="tiny">Progress trends</div><div class="empty" style="padding:18px">Log a few sessions to chart your progress.</div></div>'; }
-  else { var fq=(repSearch||"").toLowerCase();
-    var chips=histList.filter(function(x){ return !fq||exMatches(x.e,fq); }).slice(0,40).map(function(x){ return '<button data-repexid="'+x.e.id+'" class="'+(x.e.id===repExId?"on":"")+'">'+x.e.name+'</button>'; }).join("");
-    var ex=exById(repExId); var rec=exerciseRecords(repExId);
-    var metrics=metricsFor(ex); if(!metricOK(ex,repMetric)) repMetric=defaultMetricFor(ex);
-    var seg='<div class="seg mini" style="margin-top:8px">'+metrics.map(function(mn){ return '<button data-repmetric="'+mn[0]+'" class="'+(repMetric===mn[0]?"on":"")+'">'+mn[1]+'</button>'; }).join("")+'</div>';
-    var chart=lineChartSVG(exerciseSeries(repExId,repMetric),{unit:metricUnit(repMetric),dirNote:dirNoteFor(ex,repMetric)});
-    trendH='<div class="card"><div class="tiny">Progress trends</div>'
-      +'<input class="inp srch" id="repSearch" placeholder="Search exercises..." value="'+escAttr(repSearch||"")+'" style="margin-top:8px">'
-      +'<div class="chips" style="margin-top:8px">'+(chips||'<span class="muted" style="font-size:12px">No matches</span>')+'</div>'
-      +'<div style="font-weight:700;font-size:14px;margin-top:4px">'+ex.name+trendBadge(ex.id)+'</div><div class="histline">'+metricLabel(repMetric,ex)+'</div>'
-      +seg+'<div class="chartwrap">'+chart+'</div>'
-      +'<div class="histline" style="margin-top:8px">'+(isAssisted(ex)
-          ? ('Lowest assistance '+(hasRec(rec.top)?rec.top.raw+"kg"+(rec.top.eff!=null?" · "+rec.top.eff+"kg effective":""):"—")+' · at 10+ reps '+(hasRec(rec.rm10)?rec.rm10.raw+"kg":"—"))
-          : ('5RM '+(hasRec(rec.rm5)?rec.rm5.raw+"kg×"+rec.rm5.reps:"—")+' · 10RM '+(hasRec(rec.rm10)?rec.rm10.raw+"kg×"+rec.rm10.reps:"—")+' · Top '+(hasRec(rec.top)?rec.top.raw+"kg":"—")))+'</div></div>'; }
-  var ent=Object.keys(S.muscles).map(function(m){ var c=muscleContrib(m,weekSessions()); return {m:m,total:c.total,direct:c.direct,secondary:c.secondary}; }).filter(function(x){ return x.total>0; }).sort(function(a,b){ return b.total-a.total; });
-  var mmax=Math.max.apply(null,[1].concat(ent.map(function(x){ return x.total; })));
-  var mrows=ent.length?ent.map(function(x){ var dp=Math.round(x.direct/mmax*100), sp=Math.round(x.secondary/mmax*100);
-    return '<div class="exline" data-muscle-stat="'+x.m+'" style="padding:7px 0;cursor:pointer"><div style="flex:1"><div class="nm" style="font-size:13px">'+S.muscles[x.m].label+'</div><div class="bar" style="margin-top:5px;display:flex"><i style="width:'+dp+'%;background:var(--accent)"></i><i style="width:'+sp+'%;background:var(--grey)"></i></div></div><span class="mono" style="margin-left:10px">'+x.total.toFixed(1)+'</span></div>'; }).join(""):'<div class="empty" style="padding:16px">No sets logged this week yet.</div>';
-  var muscleH='<div class="card"><div class="tiny">Effective sets by INDIVIDUAL muscle · this week (Mon–Sun)</div><p class="muted" style="font-size:11px;margin:4px 0 0"><span style="color:var(--accent)">▮</span> direct (1.0) · <span style="color:var(--grey)">▮</span> indirect (0.5 / 0.25)</p><div style="margin-top:6px">'+mrows+'</div></div>';
-  return '<div class="reportshd" style="margin:10px 2px 2px;display:flex;align-items:center;gap:8px"><span style="font-size:18px">📊</span><div class="tiny" style="font-size:13px;text-transform:none;color:var(--text);font-weight:700">Reports · experimental analysis</div></div>'
-    +weekH+dashboardCard()+progressionBoardCard()+trendH+muscleH+recentAchievementsCard(10)+diagnoseCard(); }
 
 function incrementFor(e){ return (e.m.quads||e.m.hamstrings||e.m.glutes||e.m.back_lats>=1)?5:2.5; }
 /* Next-session target. Direction comes from the exercise's own progression model, so an assisted
@@ -3118,7 +2921,11 @@ function filterChips(kind,curGroup,curEquip){
   return '<div class="fchips">'+gb("","All muscles")+MUSCLE_GROUPS.map(g=>gb(g.key,g.label)).join("")+'</div>'
         +'<div class="fchips">'+eb("","All kit")+EQUIP_FILTERS.map(p=>eb(p[0],p[1])).join("")+'</div>'; }
 /* ============================================================================ UI STATE + ROUTER ============================================================================ */
-let route="today", activeSession=null, viewingLogger=false, pendingRec=null, restTimer=null, sheet=null, statsPeriod="all", bodyDetail=null;
+/* v18 — Stats V2 remembered choices: Muscle load tab (Coverage first, then yours) and the Volume window */
+const STATS_PREF_KEY="iron_arc_statsv2";
+let statsPref=(function(){ const d={tab:"coverage",period:"84"}; try{ return Object.assign(d,JSON.parse(localStorage.getItem(STATS_PREF_KEY)||"{}")||{}); }catch(e){ return d; } })();
+function saveStatsPref(){ try{ localStorage.setItem(STATS_PREF_KEY,JSON.stringify(statsPref)); }catch(e){} }
+let route="today", activeSession=null, viewingLogger=false, pendingRec=null, restTimer=null, sheet=null, statsPeriod=(["week","28","84","182","all"].indexOf(statsPref.period)>=0?statsPref.period:"84"), bodyDetail=null;
 /* v12 — Body layout preference, persisted so it survives a reload while you compare the two. */
 /* v12 — Settings is long by nature (it is configuration). Rather than trimming what is there,
    every heavy area is now a collapsible section, collapsed by default, with the exercise
@@ -3134,11 +2941,10 @@ function section(key,title,sub,bodyFn){
     +'<span class="muted" style="font-size:15px">'+(open?'\u2212':'+')+'</span></div>'
     +(open?'<div style="padding:0 16px 14px">'+bodyFn()+'</div>':'')+'</div>'; }
 let bodyView=(function(){ try{ return localStorage.getItem("iron_arc_bodyview")==="v1"?"v1":"v2"; }catch(e){ return "v2"; } })();
-let showAllMuscles=false;
 let exChartMetric="top", addSearch="", swapSearch="", mgmtSearch="", repExId=null, repMetric="top", repSearch="";  /* v6 chart/search UI state */
 let addGroup="", addEquip="", swapGroup="", swapEquip="", mgmtGroup="", mgmtEquip="";  /* v8 library filter state */
 let customDraft={name:"",group:"",id:null};   /* v9 custom-exercise composer */
-let reconcileSearch="", reconcileFilter="review", dashPeriod="4w";   /* v9 reconciliation + dashboard */
+let reconcileSearch="", reconcileFilter="review";   /* v9 reconciliation */
 let loggerOpen={}, loggerClock=null;
 /* v13 builder panel state. Kept separate from the add-exercise SHEET state (addSearch/addGroup/
    addEquip) so opening the full library from inside the builder does not wipe what you typed in
@@ -3386,15 +3192,6 @@ function weekCard(){ const w=weekStatus(); const mom=momentumScore();
     +(need.length?'<div class="histline" style="margin-top:8px"><b>Still needs:</b> '+need.join(", ")+'</div>':'<div class="histline" style="margin-top:8px;color:var(--green)">All priority muscles met this week ✓</div>')
     +(avoid.length?'<div class="histline" style="margin-top:3px"><b>Avoid today:</b> '+avoid.join("; ")+'</div>':'')
     +'<div class="row" style="margin-top:11px"><button class="btn ghost sm" data-act="momentum-explain" style="flex:1">Momentum '+mom.score+' · '+mom.label+'</button><button class="btn ghost sm" data-act="goto-stats-week" style="flex:1">Week view →</button></div></div>'; }
-function weekSummaryCard(){ const w=weekStatus();
-  const chip=(m)=>'<span class="statuspill" style="background:var(--panel2);color:var(--muted);margin:0 5px 5px 0;display:inline-block">'+S.muscles[m].label+'</span>';
-  const next=muscleScores({}).filter(s=>s.trainable&&s.v<s.cfg.gl).slice(0,4).map(s=>S.muscles[s.m].label.toLowerCase());
-  return '<div class="card glow"><div style="display:flex;justify-content:space-between;align-items:center"><div class="tiny" style="color:var(--accent)">This training week · Mon–Sun</div><div class="mono" style="font-weight:700;font-size:18px;color:'+(w.sess>=w.target?'var(--green)':'var(--accent)')+'">'+w.sess+' / '+w.target+'</div></div>'
-    +'<div class="histline" style="margin-top:6px">'+w.sess+' of '+w.target+' sessions'+(w.sess>=w.target?' — target met ✓':' — '+(w.target-w.sess)+' to go')+'</div><hr class="sub">'
-    +'<div class="tiny">Priority muscles below weekly minimum</div><div style="margin-top:6px">'+(w.primaryBelow.length?w.primaryBelow.map(chip).join(""):'<span class="muted" style="font-size:12px">None — all priority muscles met ✓</span>')+'</div>'
-    +'<div class="tiny" style="margin-top:11px">Secondary / maintenance below minimum</div><div style="margin-top:6px">'+(w.otherBelow.length?w.otherBelow.map(chip).join(""):'<span class="muted" style="font-size:12px">None</span>')+'</div>'
-    +'<div class="tiny" style="margin-top:11px">Trained this week</div><div style="margin-top:6px">'+(w.trained.length?w.trained.map(chip).join(""):'<span class="muted" style="font-size:12px">Nothing logged yet this week</span>')+'</div>'
-    +(next.length?'<hr class="sub"><div class="tiny">Recommended next focus</div><div class="histline" style="margin-top:5px">'+next.join(", ")+'</div>':'')+'</div>'; }
 
 function miniDash(){ const flagged=Object.keys(S.muscles).map(m=>({m,g:goalStatus(m),v:weeklyVolume()[m],cfg:S.muscles[m]}))
     .filter(x=>x.cfg.tier!=="maintenance"||x.v<x.cfg.min).filter(x=>x.g.label==="Below min"||x.g.label==="Over cap").slice(0,4);
@@ -3727,10 +3524,11 @@ function renderSheet(){ const m=document.getElementById("sheetmount"); if(!sheet
     const rows=[["Sessions this week",w.sess+" / "+w.target],["Priority muscles met",m.primaryMet+" / "+m.primaryAll],["Weekly target streak",m.streak+" wk"],["Trained recently",m.consist>=0?"yes":"no"]];
     inner='<div class="tiny">Momentum · '+m.score+' / 100 · '+m.label+'</div><p class="muted" style="font-size:12.5px;margin:8px 0 12px">A light motivation score — the concrete weekly numbers are what actually matter. It blends:</p>'
       +rows.map(r=>'<div class="contrib"><div><b>'+r[0]+'</b></div><span class="c-ef">'+r[1]+'</span></div>').join(""); }
-  else if(sheet.type==="mperiod"){ const m=sheet.data; const cfg=S.muscles[m]; const sess=periodSessions(); const con=muscleContrib(m,sess); const plabel=statsPeriod==="week"?"this week (Mon–Sun)":statsPeriod==="all"?"all time":"last "+statsPeriod+" days";
+  else if(sheet.type==="mperiod"){ const m=sheet.data; const cfg=S.muscles[m]; const sess=periodSessions(); const con=muscleContrib(m,sess); const plabel=statsWindowLabel();
     inner='<div class="tiny">'+cfg.label+' · '+plabel+'</div><div class="kpi" style="margin-top:10px"><div class="k"><b>'+con.total.toFixed(1)+'</b><span>effective sets</span></div><div class="k"><b>'+con.direct.toFixed(1)+'</b><span>direct (1.0)</span></div><div class="k"><b>'+con.secondary.toFixed(1)+'</b><span>indirect (0.5 / 0.25)</span></div></div>'
       +'<div class="tiny" style="margin-top:14px">What made this number</div><div style="margin-top:6px">'+(con.rows.length?con.rows.map(r=>'<div class="contrib"><div><b>'+r.name+'</b><div class="muted" style="font-size:11px">'+r.sets+' sets × '+fmtCredit(r.credit)+' credit · '+creditWord(r.credit)+' · last '+fmtAgo(r.dates.sort().slice(-1)[0])+'</div></div><span class="c-ef">'+r.effective.toFixed(1)+'</span></div>').join(""):'<div class="empty" style="padding:10px">No sets in this period.</div>')+'</div>'; }
   else if(sheet.type==="covcell"){ inner=covCellSheet(sheet.data); }
+  else if(sheet.type==="achall"){ inner=achAllSheet(); }
   else if(sheet.type==="range"){ inner=rangeSheet(sheet.data); }
   else if(sheet.type==="dq"){ inner=dqSheet(sheet.data); }
   else if(sheet.type==="tips"){ const id=sheet.data; const ex=exById(id); const t=TIPS[id];
@@ -3776,12 +3574,12 @@ function renderSheet(){ const m=document.getElementById("sheetmount"); if(!sheet
   else if(sheet.type==="recap"){ const r=sheet.data;
     inner='<div style="text-align:center;padding:2px 0 4px"><div class="tiny" style="color:var(--accent)">Session complete</div><h2 style="font-size:20px;margin:4px 0">'+r.title+'</h2></div>'
       +'<div class="kpi" style="margin-top:6px"><div class="k"><b>'+(r.dur||"—")+'</b><span>minutes</span></div><div class="k"><b>'+r.setsN+'</b><span>working sets</span></div><div class="k"><b>'+r.exN+'</b><span>exercises</span></div></div>'
+      +achievementsRecapBlock(r)
       +syncStatusLine(r.id)
       +((r.dq&&r.dq.n&&!r.dqLater)?'<div class="card" data-dqnotice style="margin:10px 0 0;padding:10px 12px;border-color:rgba(255,159,10,.4);background:rgba(255,159,10,.07)"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><div class="ibody" style="font-size:13px;color:var(--amber)"><b>'+r.dq.n+' entr'+(r.dq.n===1?'y looks':'ies look')+' unusual</b> · saved as logged</div><div class="row" style="gap:6px"><button class="btn sm" data-dqreview="'+r.id+'">Review now</button><button class="btn sm ghost" data-dqlater>Later</button></div></div></div>':'')
       +recapDeltas(r)
       +(r.coach?'<div class="card" style="margin:12px 0 0;border-color:rgba(59,130,246,.32);background:rgba(59,130,246,.07)"><div class="tiny" style="color:var(--accent)">Coach says</div><div class="ibody" style="margin-top:4px;color:#C6D0DC">'+r.coach+'</div></div>':"")
       +(r.muscles.length?'<div class="histline" style="margin-top:10px;text-align:center">Trained: '+r.muscles.join(" · ")+'</div>':"")
-      +((r.ach&&r.ach.length)?'<div class="tiny" style="margin-top:14px">Achievements 🏆</div><div style="margin-top:4px">'+r.ach.map(function(a){ return '<div class="achrow"><div><div class="am">'+a.name+'</div><div class="ad">'+achLoadStr(a)+' × '+a.reps+'</div></div><span class="badge '+achBadgeClass(a.type)+'">'+(a.first?"First ":"")+achLabel(a)+'</span></div>'; }).join("")+'</div>':'<div class="histline" style="margin-top:12px;text-align:center;color:var(--muted)">No new 5RM / 10RM / PR this session — keep stacking reps.</div>')
       +'<div class="tiny" style="margin-top:14px">Volume added by muscle</div><div style="margin-top:6px">'+(r.parts.length?r.parts.map(function(p){ return '<div class="exline" style="padding:6px 0"><div class="nm" style="font-size:13px">'+p.label+'</div><span class="sets">'+p.v.toFixed(1)+' sets</span></div>'; }).join(""):'<div class="empty" style="padding:10px">No working sets logged.</div>')+'</div>'
       +(r.customUsed?'<div class="card" style="margin:12px 0 0;padding:11px 13px;border-color:rgba(224,165,60,.35);background:rgba(224,165,60,.07)"><div class="ibody" style="font-size:12px;color:var(--gold)">'+r.customUsed+' custom exercise'+(r.customUsed===1?'':'s')+' recorded. Everything is saved — you can tidy them up any time in Settings → Custom exercises.</div></div>':'')
       +'<div class="row" style="margin-top:16px"><button class="btn accent full" data-recaphist="'+r.id+'">View in History</button><button class="btn full" data-sheetclose2>Done</button></div>'; }
@@ -3801,6 +3599,7 @@ function renderSheet(){ const m=document.getElementById("sheetmount"); if(!sheet
   /* v16 data-quality review actions */
   m.querySelectorAll('[data-dqedit]').forEach(b=>b.onclick=()=>{ const id=b.dataset.dqedit; closeSheet(); editWorkout(id); });
   m.querySelectorAll('[data-dqdismiss]').forEach(b=>b.onclick=()=>{ dqDismiss(b.dataset.dqdismiss); renderSheet(); });
+  m.querySelectorAll('[data-dqcollapse]').forEach(b=>b.onclick=()=>{ dqCollapseSession(b.dataset.dqcollapse); renderSheet(); });
   m.querySelectorAll('[data-dqrestore]').forEach(b=>b.onclick=()=>{ dqRestore(b.dataset.dqrestore); renderSheet(); });
   m.querySelectorAll('[data-dqtoggle]').forEach(b=>b.onclick=()=>{ dqShowDismissed=!dqShowDismissed; renderSheet(); });
   m.querySelectorAll('[data-exhist]').forEach(b=>b.onclick=()=>openSheet("exhist",b.dataset.exhist));
@@ -3884,27 +3683,10 @@ function periodRange(){ if(statsPeriod==="all") return null; if(statsPeriod==="w
 function inPeriod(d){ const p=periodRange(); if(!p) return true; const t=new Date(d); return t>=p.from&&t<=p.to; }
 function periodSessions(){ return completedSessions().filter(s=>inPeriod(s.completedAt)); }
 function setsByBodyPartP(){ return weeklyVolume(periodSessions()); }
-function mostUsedExercises(limit){ const cnt={}; periodSessions().forEach(s=>s.entries.forEach(en=>{ if(workingSets(en).length) cnt[en.exId]=(cnt[en.exId]||0)+1; }));
-  return Object.entries(cnt).sort((a,b)=>b[1]-a[1]).slice(0,limit||6).map(([id,n])=>({ex:exById(id),n})); }
-function workoutsByMonth(){ const m={}; completedSessions().forEach(s=>{ const k=monthKey(s.completedAt); m[k]=(m[k]||0)+1; }); return m; }
-function bestMonth(){ let b=null; for(const [k,v] of Object.entries(workoutsByMonth())){ if(!b||v>b.v) b={k,v}; } return b; }
-function weeklyCounts(n){ const out=[]; const base=startOfWeek(); for(let i=n-1;i>=0;i--){ const s=new Date(base); s.setDate(s.getDate()-i*7); const e=new Date(s); e.setDate(e.getDate()+7);
-  out.push({count:completedSessions().filter(x=>new Date(x.completedAt)>=s&&new Date(x.completedAt)<e).length, current:i===0}); } return out; }
 /* Progression metric: e1RM for low-rep work; top-set load or best-set volume for
    isolation / high-rep movements where e1RM would be misleading (P10). */
 /* First-vs-latest movement per exercise, always measured on the comparable (direction-aware)
    strength number, so an assisted movement shedding assistance reads as a GAIN, not a loss. */
-function exerciseProgression(){ return S.exercises.map(e=>{ const h=exerciseHistory(e.id); if(h.length<2) return null;
-  const fh=h[h.length-1], lh=h[0];
-  let first=sessionStrength(e,fh.sets,fh.bw), latest=sessionStrength(e,lh.sets,lh.bw);
-  let metric=(exE1RM(e,bestRawLoad(e,lh.sets),Math.max(...lh.sets.map(s=>+s.reps||0)),lh.bw)>0)?"e1RM":(loadKind(e)==="ext"?"top set":"effective load");
-  if(loadKind(e)==="ext"&&first<=0&&latest<=0){ first=bestSetVol(fh.sets); latest=bestSetVol(lh.sets); metric="best vol"; }
-  if(first===0) return null;
-  const td=exerciseTrendData(e.id);
-  return {ex:e, first, latest, n:h.length, metric, pct:(latest-first)/Math.abs(first)*100,
-          state:td.state, recentPct:td.pct, kind:loadKind(e),
-          firstRaw:bestRawLoad(e,fh.sets), latestRaw:bestRawLoad(e,lh.sets)}; })
-  .filter(Boolean).sort((a,b)=>b.pct-a.pct); }
 function calcStreak(){ let streak=0,cursor=startOfWeek(); for(let i=0;i<26;i++){ const s=new Date(cursor); const e=new Date(s); e.setDate(e.getDate()+7);
   const n=completedSessions().filter(x=>new Date(x.completedAt)>=s&&new Date(x.completedAt)<e).length;
   if(i===0&&n<S.settings.sessionsPerWeek){ cursor.setDate(cursor.getDate()-7); continue; } if(n>=S.settings.sessionsPerWeek) streak++; else break; cursor.setDate(cursor.getDate()-7); } return streak; }
@@ -3920,26 +3702,6 @@ function secondaryDominant(){ const wk=weekSessions(); const vol=weeklyVolume(wk
   Object.entries(S.muscles).forEach(([m,cfg])=>{ const v=vol[m]; if(v<=0||v>=cfg.min) return; const con=muscleContrib(m,wk); if(con.total<=0) return;
     if(con.secondary>con.direct && con.direct<cfg.min*0.6) out.push({m,cfg,con,v}); });
   return out.sort((a,b)=>b.con.secondary-a.con.secondary); }
-function dayOfWeekCounts(){ const c=[0,0,0,0,0,0,0]; completedSessions().forEach(s=>{ c[(new Date(s.completedAt).getDay()+6)%7]++; }); return c; }
-function bestTrainingDay(){ const c=dayOfWeekCounts(); const total=c.reduce((a,b)=>a+b,0); if(total<6) return null;
-  const names=["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"]; let bi=0; c.forEach((n,i)=>{ if(n>c[bi]) bi=i; });
-  if(c[bi]<2) return null; return {day:names[bi], n:c[bi], total, share:c[bi]/total, counts:c}; }
-const TOD_BUCKETS=[["Early (before 9am)",0,9],["Morning (9am–12pm)",9,12],["Afternoon (12–5pm)",12,17],["Evening (5pm+)",17,24]];
-function timeOfDayCounts(){ return TOD_BUCKETS.map(([label,lo,hi])=>{ let n=0; completedSessions().forEach(s=>{ const h=new Date(s.startedAt||s.completedAt).getHours(); if(h>=lo&&h<hi) n++; }); return {label,n}; }); }
-function bestTimeWindow(){ const total=completedSessions().length; const buckets=timeOfDayCounts(); const best=buckets.slice().sort((a,b)=>b.n-a.n)[0];
-  if(!best||best.n===0) return null; return {window:best.label, n:best.n, total, early:total<8}; }
-/* v11 — the full weekday distribution, presented as fact rather than judgement. Which day you
-   train least is as informative as which you train most, and neither is inherently good or bad. */
-function weekdayPattern(){
-  const c=dayOfWeekCounts(); const total=c.reduce(function(a,b){ return a+b; },0);
-  if(total<6) return null;
-  const names=["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
-  const full=["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
-  let hi=0, lo=0;
-  c.forEach(function(n,i){ if(n>c[hi]) hi=i; if(n<c[lo]) lo=i; });
-  return {counts:c, names:names, total:total, max:Math.max.apply(null,c),
-    most:{day:full[hi], n:c[hi], share:c[hi]/total},
-    least:{day:full[lo], n:c[lo], share:c[lo]/total}}; }
 /* working sets per week for the last n weeks — the chart asked for, alongside workouts-per-week */
 function weeklySetsSeries(n){
   const out=[]; const base=startOfWeek();
@@ -3949,12 +3711,6 @@ function weeklySetsSeries(n){
   return out; }
 /* v11 replaces "0 week streak" — a number that is zero most of the time and says nothing — with
    how often the weekly target was actually hit over a window you can verify against the bars. */
-function consistencyRecord(weeks){
-  const target=S.settings.sessionsPerWeek||4;
-  const ser=weeklySetsSeries(weeks||8);
-  const hit=ser.filter(function(w){ return w.sessions>=target; }).length;
-  return {hit:hit, weeks:ser.length, target:target, ser:ser}; }
-function progressionInsights(){ return exerciseProgression().filter(p=>p.n>=3); }
 function bestWeekSoFar(){ const wk={}; completedSessions().forEach(s=>{ const k=weekKeyOf(s.completedAt); const o=wk[k]||(wk[k]={sessions:0,sets:0,muscles:new Set()}); o.sessions++; o.sets+=sessionSets(s);
     (s.entries||[]).forEach(en=>{ if(workingSets(en).length){ const ex=exById(en.exId); const pm=ex&&primaryMuscle(ex); if(pm) o.muscles.add(pm); } }); });
   const weeks=Object.values(wk); if(!weeks.length) return null; weeks.sort((a,b)=>b.sets-a.sets); const b=weeks[0]; if(b.sets<10) return null;
@@ -3979,10 +3735,6 @@ function coachSummary(){ const m=momentumScore(); const w=weekStatus(); const pa
   const sd=secondaryDominant()[0]; if(sd) parts.push(S.muscles[sd.m].label+" volume is mostly indirect — add one direct exercise.");
   return parts.join(" "); }
 /* ---- card renderer ---- */
-function insightCard(o){ const c=o.tier==="good"?"var(--green)":o.tier==="warn"?"var(--amber)":o.tier==="bad"?"var(--red)":"var(--accent)";
-  return '<div class="icard'+(o.muscle?' tap':'')+'" style="border-left-color:'+c+'"'+(o.muscle?' data-insight-muscle="'+o.muscle+'"':'')+'>'
-    +'<div class="ihd"><span class="ibadge" style="background:'+c+'22;color:'+c+'">'+(o.badge||"Insight")+'</span>'+(o.metric?'<span class="imetric" style="color:'+c+'">'+o.metric+'</span>':'')+'</div>'
-    +'<div class="ititle">'+o.title+'</div>'+(o.body?'<div class="ibody">'+o.body+'</div>':'')+(o.muscle?'<div class="ibody" style="color:var(--accent);margin-top:6px">Tap to see what made this number →</div>':'')+'</div>'; }
 function coachCard(){ const m=momentumScore(); const col=momColor(m.score);
   const ring='<div class="momring" style="background:conic-gradient('+col+' '+m.score+'%, var(--panel2) 0)"><div class="inner"><b style="font-family:\'JetBrains Mono\',monospace;font-size:21px;color:'+col+'">'+m.score+'</b><span style="font-size:8px;letter-spacing:.12em;color:var(--muted)">/ 100</span></div></div>';
   return '<div class="card glow"><div class="tiny" style="color:var(--accent)">🏋 Coach says</div><div class="momwrap" style="margin-top:10px">'+ring+'<div><div style="font-weight:800;font-size:15px">Momentum: '+m.label+'</div><div class="ibody" style="margin-top:4px">'+coachSummary()+'</div></div></div></div>'; }
@@ -3997,16 +3749,6 @@ function weeklyScorecard(){ const w=weekStatus(); const vol=weeklyVolume();
     +'<div class="tiny" style="margin-top:12px">Weekly sets · last 8 weeks</div><div class="spark">'+bars+'</div></div>'; }
 /* ---------------------------------------------------------------- v11 PATTERN + VOLUME CARDS
    Charts and counts, no scores. Every element here answers with a number, a bar or a date. */
-function barChartCard(title,sub,series,valKey,labelFn){
-  const max=Math.max.apply(null,[1].concat(series.map(function(x){ return x[valKey]; })));
-  const bars=series.map(function(x){
-    return '<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px">'
-      +'<div style="height:56px;width:100%;display:flex;align-items:flex-end">'
-      +'<i style="width:100%;height:'+Math.round(x[valKey]/max*100)+'%;min-height:3px;background:'+(x.current?'var(--accent)':'var(--grey)')+';border-radius:4px 4px 0 0;display:block"></i></div>'
-      +'<span class="mono" style="font-size:10px;color:var(--muted)">'+x[valKey]+'</span></div>'; }).join("");
-  return '<div class="card"><div class="tiny">'+title+'</div>'
-    +(sub?'<div class="histline" style="margin-top:2px">'+sub+'</div>':'')
-    +'<div style="display:flex;gap:4px;margin-top:10px;align-items:flex-end">'+bars+'</div></div>'; }
 /* v14 — the whole logged history, one column per week, in a horizontal scroller that opens on
    the latest ten. Both training-pattern charts read from this one series so they scroll in step
    with each other. Capped at WEEK_SCROLL_MAX columns (two years) so an old account can't render
@@ -4039,39 +3781,8 @@ function weekScrollChartCard(title,series,valKey,unit){
     +'<div class="wfoot"><span>'+WEEK_SCROLL_VIEW+'-wk avg <b>'+r1(avgView)+' '+unit+'</b></span><span>All-time avg <b>'+r1(avgAll)+' '+unit+'/wk</b></span></div>'
     +'</div>'; }
 /* Weekday distribution — most AND least common, stated neutrally. */
-function weekdayCard(){
-  const w=weekdayPattern();
-  if(!w) return '<div class="card"><div class="tiny">Training days</div><div class="empty" style="padding:14px">Log ~6 sessions to see your weekday pattern.</div></div>';
-  const bars=w.counts.map(function(n,i){
-    const isHi=w.names[i]===w.names[w.counts.indexOf(w.max)];
-    return '<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px">'
-      +'<div style="height:44px;width:100%;display:flex;align-items:flex-end">'
-      +'<i style="width:100%;height:'+Math.round(n/Math.max(1,w.max)*100)+'%;min-height:3px;background:'+(isHi?'var(--accent)':'var(--grey)')+';border-radius:4px 4px 0 0;display:block"></i></div>'
-      +'<span class="mono" style="font-size:10px;color:var(--muted)">'+w.names[i]+'</span>'
-      +'<span class="mono" style="font-size:10px;color:var(--faint)">'+n+'</span></div>'; }).join("");
-  return '<div class="card"><div class="tiny">Training days · all '+w.total+' sessions</div>'
-    +'<div style="display:flex;gap:4px;margin-top:10px;align-items:flex-end">'+bars+'</div>'
-    +'<div class="histline" style="margin-top:10px">Most: <b>'+w.most.day+'</b> · '+w.most.n+' sessions ('+Math.round(w.most.share*100)+'%)</div>'
-    +'<div class="histline">Least: <b>'+w.least.day+'</b> · '+w.least.n+' session'+(w.least.n===1?'':'s')+' ('+Math.round(w.least.share*100)+'%)</div></div>'; }
 /* Time-of-day distribution, as counts rather than a claim. */
-function timeOfDayCard(){
-  const b=timeOfDayCounts(); const total=b.reduce(function(a,x){ return a+x.n; },0);
-  if(!total) return "";
-  const max=Math.max.apply(null,[1].concat(b.map(function(x){ return x.n; })));
-  const rows=b.map(function(x){
-    return '<div class="exline" style="padding:6px 0"><div style="flex:1"><div class="nm" style="font-size:13px">'+x.label+'</div>'
-      +'<div class="bar" style="margin-top:5px"><i style="width:'+Math.round(x.n/max*100)+'%"></i></div></div>'
-      +'<span class="mono" style="margin-left:10px">'+x.n+'</span></div>'; }).join("");
-  const top=b.slice().sort(function(p,q){ return q.n-p.n; })[0];
-  return '<div class="card"><div class="tiny">Training time · all '+total+' sessions</div><div style="margin-top:6px">'+rows+'</div>'
-    +'<div class="histline" style="margin-top:8px">Most common: <b>'+top.label+'</b> · '+top.n+' of '+total+'</div></div>'; }
 /* Consistency stated as a verifiable record rather than a streak that is usually zero. */
-function consistencyCard(){
-  const c=consistencyRecord(8);
-  const col=c.hit>=c.weeks*0.75?"var(--green)":c.hit>=c.weeks*0.5?"var(--amber)":"var(--red)";
-  return '<div class="card"><div class="tiny">Consistency</div>'
-    +'<div style="margin-top:6px;font-weight:700;font-size:15px">Hit '+c.target+'+ sessions in <span style="color:'+col+'">'+c.hit+' of the last '+c.weeks+' weeks</span></div>'
-    +'<div class="histline" style="margin-top:4px">Target is '+c.target+' sessions per week (Settings).</div></div>'; }
 
 /* ============================================================================ v16 — ANALYTICS & DATA QUALITY ============================================================================
    Five questions the Stats screen now answers, each with its own pure engine (unit-tested against
@@ -4081,8 +3792,9 @@ function consistencyCard(){
      3. Am I progressing or quietly stalling?            → stallAssess()
      4. Am I training within the rep ranges we set?      → repRangeCompliance()   [exercise level only, v17]
      5. Is anything in the data wrong or suspicious?     → dataQualityScan() + review sheet + Settings centre
-   Plus two prototypes still under review: blockReport() and calendarStrip() with finer time-of-day
-   buckets. v17 review (Adam, 14 Sep 2026): the strength index prototype and the Stats-wide rep-range
+   v18 (Stats V2): the block-report prototype and the stall card are gone; calendarStrip() and the six
+   time-of-day buckets were promoted into Training pattern; stallAssess() now surfaces as one line under
+   the exercise chart. v17 review (Adam, 14 Sep 2026): the strength index prototype and the Stats-wide rep-range
    compliance board were removed — indexed numbers were not actionable, and a dashboard judging every
    exercise against its range does not fit double progression. The rep-range engine stays for the
    exercise detail sheet (a subtle mismatch note + range editor), the coverage matrix gained a
@@ -4242,9 +3954,6 @@ const STALL_META={
   below:{label:"Below baseline", c:"var(--red)", icon:"▼"},
   insufficient:{label:"Not enough data", c:"var(--muted)", icon:"○"},
   stale:{label:"Not recently trained", c:"var(--muted)", icon:"○"} };
-function stallBoard(){ const cnt={}; completedSessions().forEach(function(s){ (s.entries||[]).forEach(function(en){ if(workingSets(en).length) cnt[en.exId]=(cnt[en.exId]||0)+1; }); });
-  return Object.keys(cnt).map(function(id){ return stallAssess(id); }).filter(function(a){ return a.ex; })
-    .sort(function(a,b){ return (b.n-a.n)||a.ex.name.localeCompare(b.ex.name); }); }
 
 /* ---------------------------------------------------------------- 5 · DATA-QUALITY SCAN
    Runs over the WHOLE history every time Stats renders (cheap: a few hundred sets). Every flag says
@@ -4255,6 +3964,11 @@ function stallBoard(){ const cnt={}; completedSessions().forEach(function(s){ (s
 const DQ_OUTLIER=0.25, DQ_JUMP=0.40, DQ_SETCOUNT_X=2.5, DQ_ENTRY_SETS=8, DQ_REPS_MAX=30;
 function dqFlagId(kind,sessionId,exId,idx){ return kind+"|"+sessionId+"|"+(exId||"")+"|"+(idx==null?"":idx); }
 function dqDismissed(){ return (S.settings&&S.settings.dqDismissed)||{}; }
+/* v18 — the one user-initiated whole-session repair. Recorded with evidence "confirmed by you". */
+function dqCollapseSession(sessionId){ const s=(S.sessions||[]).find(function(x){ return x&&x.id===sessionId; }); if(!s) return false;
+  const c=collapseRepeatedEntries(s.entries||[]); if(c.k<=1) return false;
+  collapseSessionEntries(s,c,"confirmed by you in Data quality — "+c.k+" identical copies collapsed to one","manual"); flushIntegrityRepairs(); persistLocal();
+  try{ pushWorkout(s,"dq-collapse"); }catch(e){} plog("integrity.manual",{id:sessionId,k:c.k}); return true; }
 function dqDismiss(id){ S.settings.dqDismissed=Object.assign({},dqDismissed()); S.settings.dqDismissed[id]=iso(new Date()); persistLocal(); scheduleCloudPush(); }
 function dqRestore(id){ const d=Object.assign({},dqDismissed()); delete d[id]; S.settings.dqDismissed=d; persistLocal(); scheduleCloudPush(); }
 /* one consistent score per session: uncapped Epley on the top set (the app's e1RM stops at 10 reps,
@@ -4275,12 +3989,20 @@ function dataQualityScan(){
   sessions.forEach(function(s,si){
     const dateStr=fmtDate(s.completedAt);
     const nSets=(s.entries||[]).reduce(function(a,en){ return a+workingSets(en).length; },0);
+    /* v18 — whole-session k-fold repeat that normaliseSessions() found no evidence for: one flag for the
+       whole fault, with its own Collapse action. The per-entry duplicate and set-count flags are
+       suppressed for this session so one fault reads as one flag. */
+    const kf=collapseRepeatedEntries(s.entries||[]);
+    if(kf.k>1){ push({kind:"dup_kfold", sev:"warn", sessionId:s.id, date:s.completedAt, exId:null, idx:null,
+        title:dateStr+" · every exercise appears "+kf.k+"× in the same order", value:kf.k+" identical copies of "+kf.entries.length+" exercise"+(kf.entries.length===1?"":"s"),
+        why:"Each exercise is listed "+kf.k+" times in a row with byte-identical sets. A sync fault produces this shape; a workout almost never does. It was NOT collapsed automatically because nothing on this device proves the duplication — collapse it to one copy if you did not repeat the whole session, or dismiss if you really did.",
+        context:kf.entries.map(function(en){ return entryName(en)+" ×"+workingSets(en).length+" (×"+kf.k+")"; }).join(" · "), collapsible:true}); }
     /* implausible session size */
-    if(medSets>0&&nSets>medSets*DQ_SETCOUNT_X&&nSets>=20) push({kind:"setcount", sev:"warn", sessionId:s.id, date:s.completedAt, exId:null,
+    if(kf.k<=1&&medSets>0&&nSets>medSets*DQ_SETCOUNT_X&&nSets>=20) push({kind:"setcount", sev:"warn", sessionId:s.id, date:s.completedAt, exId:null,
       title:dateStr+" · "+nSets+" working sets in one session", value:nSets+" sets", why:"More than "+DQ_SETCOUNT_X+"× your median of "+Math.round(medSets)+" sets per session. Duplicated entries or a merged session are the usual causes.",
       context:(s.entries||[]).map(function(en){ return entryName(en)+" ×"+workingSets(en).length; }).join(" · ")});
     /* duplicate exercise entries in one session */
-    const seen={}; (s.entries||[]).forEach(function(en,i){ if(!workingSets(en).length) return; if(seen[en.exId]!=null){
+    const seen={}; if(kf.k<=1) (s.entries||[]).forEach(function(en,i){ if(!workingSets(en).length) return; if(seen[en.exId]!=null){
         push({kind:"dup_entry", sev:"warn", sessionId:s.id, date:s.completedAt, exId:en.exId, idx:i,
           title:dateStr+" · "+entryName(en)+" appears twice", value:"entries #"+(seen[en.exId]+1)+" and #"+(i+1),
           why:"The same exercise is listed twice in one workout. Both count toward volume. Legitimate if you returned to it; a sync fault if the sets match.",
@@ -4338,7 +4060,7 @@ function dataQualityScan(){
    shape training does not produce (swapped values, >30 reps, repeated blocks, a session saved
    twice, an implausible set count). "Appears twice" is left out — returning to an exercise is
    legitimate — and so is every info-level note. */
-const DQ_HIGH_KINDS={swapped:1, reps:1, dup_sets:1, dup_session:1, setcount:1, outlier:1};
+const DQ_HIGH_KINDS={swapped:1, reps:1, dup_sets:1, dup_session:1, dup_kfold:1, setcount:1, outlier:1};
 function dqHighConfidence(f){ return !f.dismissed&&(f.sev==="error"||(f.sev==="warn"&&!!DQ_HIGH_KINDS[f.kind])); }
 function dqForSession(sessionId,scan){ scan=scan||dataQualityScan(); return scan.flags.filter(function(f){ return f.sessionId===sessionId; }); }
 function dqNeighbours(list,sess){ if(!list) return ""; const i=list.findIndex(function(x){ return x.sess.id===sess.id; }); if(i<0) return "";
@@ -4367,9 +4089,10 @@ function dqRepairEvidence(s,ei,en,rep){
     const sig=function(x){ return (x.type||"work")+":"+(x.weight===""||x.weight==null?"-":+x.weight)+"x"+(x.reps===""||x.reps==null?"-":+x.reps); };
     if(je&&je.exId===en.exId&&Array.isArray(je.sets)&&je.sets.length===rep.len&&je.sets.map(sig).join("|")===(en.sets||[]).slice(0,rep.len).map(sig).join("|"))
       return "the journal copy written at Finish on this device holds one block of "+rep.len+" — the "+rep.k+"× repeat arrived through sync"; }catch(e){}
-  if(s.integrity&&s.integrity.collapsed===rep.k) return "this record already carried a proven "+rep.k+"× sync duplication (integrity marker, same k)";
+  /* v18 — a marker counts only with provenance (evidence + build) from the evidence-gated path; a legacy v15–v17 marker came from pattern matching */
+  if(s.integrity&&s.integrity.collapsed===rep.k&&s.integrity.evidence&&s.integrity.build) return "this record already carried a proven "+rep.k+"× sync duplication (evidence recorded by build "+s.integrity.build+")";
   return null; }
-function dqAutoRepair(){ let fixed=0; const items=[];
+function dqAutoRepair(){ let fixed=0; const items=[]; try{ flushIntegrityRepairs(); }catch(e){}
   completedSessions().forEach(function(s){ (s.entries||[]).forEach(function(en,ei){ const rep=repeatedBlock(en.sets||[]); if(!rep||rep.k<3) return;   /* three-fold or more only: the sync-race shape */
     const ev=dqRepairEvidence(s,ei,en,rep); if(!ev) return;                                                                            /* v17.1: no evidence → flag, never touch */
     const before=(en.sets||[]).map(function(x){ return x.type==="warm"?"W":fmtSet(x.weight,x.reps); }).join(" ");
@@ -4442,28 +4165,6 @@ function rangeSheet(exId){ const ex=exById(exId); if(!ex) return '<div class="em
 
 /* ---------------------------------------------------------------- 5 · FOUR-WEEK BLOCK REPORT (prototype)
    The last four COMPLETE weeks against the four before them. Only signals that change a decision. */
-function blockReport(){ const mx=coverageMatrix(); const pc=priorityCoverage(mx);
-  const weeks=mx.weeks.filter(function(w){ return !w.current; }); if(weeks.length<4) return null;
-  const recentW=weeks.slice(-4), prevW=weeks.slice(-8,-4);
-  const blk=function(ws){ if(!ws.length) return null; const sess=[]; ws.forEach(function(w){ sess.push.apply(sess,weekSessionsFor(w.start)); });
-    const sets=sess.reduce(function(a,s){ return a+sessionSets(s); },0); const vol=effectiveSetsByGroup(sess); const n=ws.length;
-    const cov=pc.per.filter(function(p){ return ws.some(function(w){ return w.start===p.week; }); }); const covHit=cov.filter(function(p){ return p.hit; }).length;
-    const from=new Date(ws[0].start), to=new Date(ws[ws.length-1].start); to.setDate(to.getDate()+6);
-    const bws=(S.bodyweight||[]).filter(function(b){ const t=new Date(b.date); return t>=from&&t<=to; }).map(function(b){ return +b.kg; });
-    return {weeks:n, from:from, to:to, sessions:sess.length, perWeek:Math.round(10*sess.length/n)/10, sets:sets, setsPerWeek:Math.round(10*sets/n)/10, byGroup:vol, groupPerWeek:Object.keys(vol).reduce(function(a,k){ a[k]=Math.round(10*vol[k]/n)/10; return a; },{}),
-      coverage:{hit:covHit, of:cov.length}, bodyweight:bws.length?Math.round(median(bws)*10)/10:null, sessionsList:sess}; };
-  const R=blk(recentW), P=blk(prevW); if(!R||!P) return null;
-  /* strength movers: best session score in each block, exercises with 2+ exposures in both */
-  const movers=[]; const idx={}; const collect=function(list,key){ list.forEach(function(s){ (s.entries||[]).forEach(function(en){ const ex=exById(en.exId); const ws=workingSets(en); if(!ex||!ws.length) return;
-      const o=(idx[en.exId]=idx[en.exId]||{ex:ex,R:[],P:[]}); o[key].push(sessionStrength(ex,ws,bodyweightAt(s.completedAt))); }); }); };
-  collect(R.sessionsList,"R"); collect(P.sessionsList,"P");
-  Object.values(idx).forEach(function(o){ if(o.R.length<2||o.P.length<2) return; const r=Math.max.apply(null,o.R), p=Math.max.apply(null,o.P); if(!(p>0)||!(r>0)) return;
-    movers.push({ex:o.ex, recent:r, prev:p, pct:Math.round(100*(r-p)/p), nR:o.R.length, nP:o.P.length}); });
-  movers.sort(function(a,b){ return b.pct-a.pct; });
-  const stalled=stallBoard().filter(function(a){ return a.state==="plateau"; });
-  const groupDelta=Object.keys(R.groupPerWeek).map(function(k){ return {key:k, label:groupLabel(k), r:R.groupPerWeek[k], p:P.groupPerWeek[k]||0, d:Math.round(10*(R.groupPerWeek[k]-(P.groupPerWeek[k]||0)))/10}; })
-    .filter(function(g){ return g.r>0||g.p>0; }).sort(function(a,b){ return Math.abs(b.d)-Math.abs(a.d); });
-  return {recent:R, prev:P, movers:movers, up:movers.filter(function(m){ return m.pct>=3; }).slice(0,3), down:movers.filter(function(m){ return m.pct<=-3; }).slice(-3).reverse(), stalled:stalled, groups:groupDelta}; }
 
 /* ---------------------------------------------------------------- 6 · CALENDAR STRIP + FINER TRAINING TIME (prototype) */
 const CAL_WEEKS=12;
@@ -4491,39 +4192,18 @@ function timeOfDayCounts6(){ const out=TOD6.map(function(b){ return {label:b[0],
    Stats is long by design now, so every area is a collapsible section. Open/closed state is kept per
    device (the same store Settings uses), with a per-section default: the four questions open, the
    prototypes closed. The body of a closed section is not rendered at all. */
-function sectionOpenD(k,def){ return Object.prototype.hasOwnProperty.call(setOpen,k)?!!setOpen[k]:!!def; }
-function statsSection(key,title,sub,bodyFn,defOpen,badge){
-  const open=sectionOpenD(key,defOpen);
-  return '<div class="card ssec'+(open?' open':'')+'" style="padding:0;overflow:hidden">'
-    +'<div data-section="'+key+'" data-secdef="'+(defOpen?1:0)+'" class="ssec-hd">'
-    +'<div style="flex:1;min-width:0"><div class="tiny" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'+title+(badge?'<span class="protobadge">'+badge+'</span>':'')+'</div>'+(sub?'<div class="histline" style="margin-top:2px">'+sub+'</div>':'')+'</div>'
-    +'<span class="muted" style="font-size:15px;flex:none">'+(open?'−':'+')+'</span></div>'
-    +(open?'<div class="ssec-bd">'+bodyFn()+'</div>':'')+'</div>'; }
 
 /* ---------------------------------------------------------------- COVERAGE MATRIX CARD */
 function fmtCov(v){ return v<=0?'·':(v>=10?String(Math.round(v)):String(v)); }
 const COV_GROUP_META={priority:{label:"Priority",sub:"priority tier · counts toward priority coverage",def:true},
   secondary:{label:"Secondary",sub:"secondary tier · shown, not scored",def:false},
   maintenance:{label:"Maintenance / out of scope",sub:"maintenance tier, or minimum set to 0",def:false}};
-function priorityCoverageBlock(pc){
-  if(!pc.active) return '<div class="empty" style="padding:12px">No muscle is set to the Priority tier with a minimum above 0, so there is nothing to score. Set priorities in Settings.</div>';
-  const col=pc.pct>=75?"var(--green)":pc.pct>=50?"var(--amber)":"var(--red)";
-  const cur=pc.current?('This week so far: <b>'+pc.current.covered+' of '+pc.current.of+'</b>'+(pc.current.missed.length&&!pc.current.hit?' · still to reach minimum: '+pc.current.missed.join(", "):' · all covered')):'';
-  const streak=pc.streaks.length?pc.streaks.slice(0,2).map(function(s){ return s.label+': missed the last '+s.misses+' week'+(s.misses===1?'':'s'); }).join(' · '):'Every priority muscle reached its minimum last week.';
-  return '<div class="pcov"><div class="pcov-n"><b style="color:'+col+'">'+pc.hit+'<i>/'+pc.weeks+'</i></b><span>complete weeks where every active priority muscle ('+pc.active+') reached its minimum · <b style="color:'+col+';font-size:13px">'+pc.pct+'%</b></span></div>'
-    +'<div class="pcov-grid">'
-    +'<div><b>'+pc.last4.hit+'/'+pc.last4.of+'</b><span>last 4 weeks</span></div>'
-    +(pc.last10.of>=10?'<div><b>'+pc.last10.hit+'/'+pc.last10.of+'</b><span>last 10 weeks</span></div>':'')
-    +'<div><b>'+pc.active+'</b><span>priority muscles scored</span></div></div>'
-    +'<div class="histline" style="margin-top:8px">'+streak+'</div>'
-    +(cur?'<div class="histline">'+cur+'</div>':'')
-    +'</div>'; }
 let covView="total";                                 /* v17 — Total | Direct | Indirect; resets to Total on reload */
 function covViewMeta(v){ return {total:{title:"Effective sets per muscle · week by week", note:"every credit: direct 1.0 + indirect 0.5 + minor indirect 0.25 · scored against each muscle’s minimum and cap"},
   direct:{title:"Direct sets per muscle · week by week", note:"1.0-credit work only — the sets where this muscle was the target · shown as numbers, not scored: your minimums were set for total effective sets"},
   indirect:{title:"Indirect sets per muscle · week by week", note:"0.5 and 0.25-credit work only — what other lifts contributed · shown as numbers, not scored: your minimums were set for total effective sets"}}[v]||{title:"",note:""}; }
 function covMatrixCard(){
-  const mxT=coverageMatrix("total"); const pc=priorityCoverage(mxT); const mx=covView==="total"?mxT:coverageMatrix(covView); const weeks=mx.weeks; const scored=mx.scored;
+  const mx=coverageMatrix(covView); const weeks=mx.weeks; const scored=mx.scored;
   const meta=covViewMeta(covView);
   const seg='<div class="seg mini" data-covseg style="margin-top:8px">'+COV_VIEWS.map(function(v){ return '<button data-covview="'+v[0]+'" class="'+(covView===v[0]?'on':'')+'">'+v[1]+'</button>'; }).join("")+'</div>';
   /* two columns: a fixed label rail on the left, the week cells in a horizontal scroller on the right.
@@ -4543,14 +4223,14 @@ function covMatrixCard(){
   const legend=scored
     ?'<div class="cov-legend"><span><i class="ok"></i>at or above minimum</span><span><i class="low"></i>below minimum</span><span><i class="over"></i>over cap</span><span><i class="zero"></i>not trained</span></div>'
     :'<div class="cov-legend"><span><i class="neutral"></i>'+covView+' sets logged</span><span><i class="zero"></i>none</span><span class="muted">no minimum applies to this view</span></div>';
-  return '<div class="card"><div class="tiny">Priority coverage</div>'+priorityCoverageBlock(pc)+'</div>'
-    +'<div class="card"><div class="tiny">'+meta.title+'</div>'
+  /* v18 — the matrix is the hero: no summary block above it, one line of orientation, the note moves under the legend */
+  return '<div class="card"><div class="tiny">'+meta.title+'</div>'
     +seg
-    +'<div class="histline" style="margin-top:6px">'+meta.note+'</div>'
-    +'<div class="histline" style="margin-top:2px">'+(weeks.length>COV_VIEW?'Latest weeks in view · swipe left for older · tap a cell for the exercises behind it':'Tap a cell for the exercises behind it')+'</div>'
+    +'<div class="histline" style="margin-top:6px">'+(weeks.length>COV_VIEW?'Latest weeks in view · swipe left for older · ':'')+'tap a cell for the exercises behind it</div>'
     +'<div class="cov-wrap"><div class="cov-labels">'+labels+'</div><div class="wscroll cov-scroll" data-wscroll><table class="cov">'+head+body+'</table></div></div>'
     +legend
-    +'<div class="histline" style="margin-top:8px">'+(scored?'hit = complete weeks at or above minimum · ':'')+'10-wk = average '+(scored?'effective':covView)+' sets over the last 10 complete weeks · the in-progress week is outlined and not scored</div></div>'; }
+    +'<div class="histline" style="margin-top:8px">'+meta.note+'</div>'
+    +'<div class="histline" style="margin-top:4px">'+(scored?'hit = complete weeks at or above minimum · ':'')+'10-wk = average '+(scored?'effective':covView)+' sets over the last 10 complete weeks · the in-progress week is outlined and not scored</div></div>'; }
 function covCellSheet(data){ const pr=data.split("|"); const m=pr[0], week=pr[1], view=(pr[2]==="direct"||pr[2]==="indirect")?pr[2]:"total"; const cfg=S.muscles[m]||{label:m,min:0,cap:0}; const c=cellContributors(m,week,view);
   const st=new Date(week); const en=new Date(st); en.setDate(en.getDate()+6);
   const viewWord=view==="total"?"effective":view;
@@ -4561,24 +4241,6 @@ function covCellSheet(data){ const pr=data.split("|"); const m=pr[0], week=pr[1]
     +'<div style="margin-top:8px">'+rows+'</div>'; }
 
 /* ---------------------------------------------------------------- STALL CARD */
-function stallRow(a,showNext){ const meta=STALL_META[a.state]||STALL_META.insufficient;
-  const evidence=a.state==="insufficient"?(a.n+' of '+STALL_MIN_N+' exposures'):(a.why&&a.why[0]||'');
-  return '<div class="stall" data-exhist="'+a.exId+'"><div class="stall-main"><div class="stall-nm">'+a.ex.name+' <span class="muted" style="font-weight:500;font-size:11px">· '+a.n+' exposures</span></div>'
-    +'<div class="stall-ev">'+evidence+'</div>'+(showNext&&a.next?'<div class="stall-next">→ '+a.next.text+'</div>':'')+'</div>'
-    +'<span class="statuspill" style="background:'+meta.c+'22;color:'+meta.c+';flex:none">'+meta.icon+' '+meta.label+'</span></div>'; }
-let stallShowAll=false;
-function stallCard(){ const all=stallBoard(); const by=function(st){ return all.filter(function(a){ return a.state===st; }); };
-  const plateau=by("plateau"), below=by("below"), belowCtx=by("below_context"), prog=by("progressing"), stable=by("stable"), thin=by("insufficient"), stale=by("stale");
-  const summary=[['plateau',plateau.length,'likely plateau'],['below',below.length,'below baseline'],['below_context',belowCtx.length,'below · context'],['progressing',prog.length,'progressing'],['stable',stable.length,'stable']]
-    .filter(function(x){ return x[1]>0; }).map(function(x){ const m=STALL_META[x[0]]; return '<span class="stall-sum" style="color:'+m.c+'"><b>'+x[1]+'</b> '+x[2]+'</span>'; }).join("");
-  const lead=plateau.concat(below,belowCtx); const rest=prog.concat(stable);
-  const body=(lead.length?lead.map(function(a){ return stallRow(a,a.state==="plateau"); }).join(""):'<div class="empty" style="padding:10px">No plateau or below-baseline pattern on any current exercise.</div>')
-    +(rest.length?'<div style="margin-top:8px"><button class="btn sm" data-stallall style="width:100%">'+(stallShowAll?'Hide':'Show')+' '+rest.length+' progressing / stable'+(thin.length?' · '+thin.length+' with too little data':'')+(stale.length?' · '+stale.length+' not recently trained':'')+'</button></div>':'')
-    +(stallShowAll?'<div style="margin-top:6px">'+rest.concat(thin,stale).map(function(a){ return stallRow(a,false); }).join("")+'</div>':'');
-  return '<div class="card"><div class="tiny">Progression &amp; stalls · top-set double progression</div>'
-    +'<div class="stall-sums">'+(summary||'<span class="muted">No exercise has 5 exposures yet.</span>')+'</div>'
-    +'<div class="histline" style="margin:4px 0 8px">A lift improves when its top set carries more load at comparable reps, or more reps at the same load. A plateau is '+STALL_SINCE+'+ sessions without an improvement and '+STALL_SAME+'+ in a row at the same top set. Tap a row for the full read and the suggested next step.</div>'
-    +body+'</div>'; }
 /* the block shown inside the exercise detail sheet — where a recommendation belongs */
 function stallDetailBlock(exId){ const a=stallAssess(exId); const meta=STALL_META[a.state]||STALL_META.insufficient;
   const why=(a.why||[]).map(function(w){ return '<div class="histline" style="margin-top:3px">'+w+'</div>'; }).join("");
@@ -4590,16 +4252,6 @@ function stallDetailBlock(exId){ const a=stallAssess(exId); const meta=STALL_MET
 /* ---------------------------------------------------------------- DATA QUALITY CARD + REVIEW SHEET */
 const DQ_SEV={error:{c:"var(--red)",label:"Likely error"},warn:{c:"var(--amber)",label:"Check"},info:{c:"var(--muted)",label:"Note"}};
 let dqShowDismissed=false;
-function dqCard(){ const scan=dataQualityScan(); const n=scan.open.length;
-  const sums=[['error',scan.counts.error],['warn',scan.counts.warn],['info',scan.counts.info]].filter(function(x){ return x[1]>0; }).map(function(x){ return '<span class="stall-sum" style="color:'+DQ_SEV[x[0]].c+'"><b>'+x[1]+'</b> '+DQ_SEV[x[0]].label.toLowerCase()+(x[1]===1?'':'s')+'</span>'; }).join("");
-  const top=scan.open.slice(0,3).map(function(f){ return '<div class="dq-row" data-dq="'+f.id+'"><span class="dq-dot" style="background:'+DQ_SEV[f.sev].c+'"></span><div style="flex:1;min-width:0"><div class="dq-t">'+f.title+'</div><div class="dq-w">'+f.why+'</div></div></div>'; }).join("");
-  const repairs=(S.settings.dqRepairs||[]).length;
-  return '<div class="card"><div class="tiny">Data quality · whole history scanned</div>'
-    +'<div class="stall-sums">'+(n?sums:'<span class="muted">Nothing suspicious in '+completedSessions().length+' workouts.</span>')+'</div>'
-    +(n?'<div class="histline" style="margin:4px 0 8px">Nothing here is changed automatically. Review each flag: edit the workout, or dismiss it if it is right as logged.</div>'+top:'')
-    +(n?'<button class="btn sm full" data-dq="all" style="margin-top:8px">Review '+n+' flag'+(n===1?'':'s')+(scan.flags.length>n?' · '+(scan.flags.length-n)+' dismissed':'')+'</button>':(scan.flags.length?'<button class="btn sm ghost full" data-dq="all" style="margin-top:6px">'+scan.flags.length+' dismissed flag'+(scan.flags.length===1?'':'s')+'</button>':''))
-    +(repairs?'<div class="histline" style="margin-top:8px">'+repairs+' automatic repair'+(repairs===1?'':'s')+' of exact repeated set blocks on record (Settings → Data quality).</div>':'')
-    +'</div>'; }
 /* one flag, rendered the same way in the review sheet, on the recap and in Settings → Data quality:
    date · workout · exercise · the value · the reason · surrounding sessions · Edit / Dismiss (or Restore) */
 function dqFlagItem(f){ const sv=DQ_SEV[f.sev];
@@ -4607,7 +4259,7 @@ function dqFlagItem(f){ const sv=DQ_SEV[f.sev];
     +'<div class="histline" style="margin-top:2px"><b style="color:'+sv.c+'">'+sv.label+'</b> · '+f.value+(f.workout?' · '+escAttr(f.workout):'')+(f.dismissed&&f.dismissedAt?' · dismissed '+fmtDate(f.dismissedAt):'')+'</div></div></div>'
     +'<div class="dq-w" style="margin-top:6px">'+f.why+'</div>'
     +(f.context?'<div class="dq-ctx">'+escAttr(f.context)+'</div>':'')
-    +'<div class="row" style="margin-top:8px;gap:6px"><button class="btn sm" data-dqedit="'+f.sessionId+'" style="flex:1">Edit workout</button>'
+    +'<div class="row" style="margin-top:8px;gap:6px">'+(f.collapsible&&!f.dismissed?'<button class="btn sm accent" data-dqcollapse="'+f.sessionId+'" style="flex:1">Collapse to one copy</button>':'')+'<button class="btn sm" data-dqedit="'+f.sessionId+'" style="flex:1">Edit workout</button>'
     +(f.dismissed?'<button class="btn sm ghost" data-dqrestore="'+escAttr(f.id)+'" style="flex:1">Reopen</button>':'<button class="btn sm ghost" data-dqdismiss="'+escAttr(f.id)+'" style="flex:1">Dismiss · it’s right</button>')+'</div></div>'; }
 function dqSheet(sessionId){ const scan=dataQualityScan(); const only=(sessionId&&sessionId!=="all")?sessionId:null;
   let list=dqShowDismissed?scan.flags:scan.open; if(only) list=list.filter(function(f){ return f.sessionId===only; });
@@ -4620,10 +4272,10 @@ function dqSheet(sessionId){ const scan=dataQualityScan(); const only=(sessionId
 /* v17 — Settings → Data quality: the permanent review centre. Open flags, dismissed flags (reopenable)
    and the automatic repairs, each with its evidence. */
 let dqCentreTab="open";
-function dqRepairsList(){ const reps=(S.settings.dqRepairs||[]).slice().reverse(); if(!reps.length) return '<div class="empty">No automatic repairs. A repeated set block is only ever collapsed without asking when the save record proves the duplication — the journal copy written at Finish, a proven sync-duplication marker on the record, or duplicate cloud rows at the same set position. A repeat with no such evidence is flagged for you instead.</div>';
+function dqRepairsList(){ try{ flushIntegrityRepairs(); }catch(e){} const reps=(S.settings.dqRepairs||[]).slice().reverse(); if(!reps.length) return '<div class="empty">No automatic repairs. A repeated set block, or a whole workout repeated k times over, is only ever collapsed without asking when the save record proves the duplication — the journal copy written at Finish, a proven sync-duplication marker on the record, or duplicate cloud rows at the same set position. A repeat with no such evidence is flagged for you instead.</div>';
   return reps.map(function(r){ const items=(r.items||[]);
-    return '<div class="dq-item"><div class="dq-t">'+fmtDate(r.at)+' · '+r.entries+' entr'+(r.entries===1?'y':'ies')+' repaired'+(r.source==="hydrate"?' · from cloud rows':'')+'</div>'
-      +(items.length?items.map(function(it){ return '<div class="histline" style="margin-top:4px"><b>'+escAttr(it.name||"")+'</b> · '+fmtDate(it.date)+(it.workout?' · '+escAttr(it.workout):'')+' · '+(it.k?it.k+' identical blocks of '+it.len+' collapsed to one':'duplicate set rows collapsed to '+it.len)+'</div>'+(it.evidence?'<div class="histline" style="margin-top:2px;color:var(--accent)">evidence: '+escAttr(it.evidence)+'</div>':'')+'<div class="dq-ctx">before: '+escAttr(it.before||"")+'\nafter:  '+escAttr(it.after||"")+'</div>'+(it.sessionId?'<div class="row" style="margin-top:6px"><button class="btn sm" data-dqedit="'+it.sessionId+'">Open workout</button></div>':''); }).join("")
+    return '<div class="dq-item"><div class="dq-t">'+fmtDate(r.at)+' · '+r.entries+' entr'+(r.entries===1?'y':'ies')+' repaired'+(r.source==="hydrate"?' · from cloud rows':r.source==="integrity"?' · whole workout':'')+'</div>'
+      +(items.length?items.map(function(it){ return '<div class="histline" style="margin-top:4px"><b>'+escAttr(it.name||"")+'</b> · '+fmtDate(it.date)+(it.workout?' · '+escAttr(it.workout):'')+' · '+(it.k?(it.exId?it.k+' identical blocks of '+it.len+' collapsed to one':it.k+' identical copies of the whole workout ('+it.len+' exercises) collapsed to one'):'duplicate set rows collapsed to '+it.len)+'</div>'+(it.evidence?'<div class="histline" style="margin-top:2px;color:var(--accent)">evidence: '+escAttr(it.evidence)+'</div>':'')+'<div class="dq-ctx">before: '+escAttr(it.before||"")+'\nafter:  '+escAttr(it.after||"")+'</div>'+(it.sessionId?'<div class="row" style="margin-top:6px"><button class="btn sm" data-dqedit="'+it.sessionId+'">Open workout</button></div>':''); }).join("")
         :'<div class="histline" style="margin-top:4px">Repeated set blocks collapsed (recorded before v17, no per-entry detail kept).</div>')+'</div>'; }).join(""); }
 function dqCentreCard(){ const scan=dataQualityScan(); const dismissed=scan.flags.filter(function(f){ return f.dismissed; }); const reps=(S.settings.dqRepairs||[]);
   const tabs=[["open","Open · "+scan.open.length],["dismissed","Dismissed · "+dismissed.length],["repairs","Repairs · "+reps.reduce(function(a,r){ return a+(r.entries||0); },0)]];
@@ -4633,62 +4285,18 @@ function dqCentreCard(){ const scan=dataQualityScan(); const dismissed=scan.flag
   else if(dqCentreTab==="repairs") body=dqRepairsList();
   else body=scan.open.length?scan.open.map(dqFlagItem).join(""):'<div class="empty">Nothing open — '+completedSessions().length+' workouts scanned.</div>';
   return '<div class="card"><div class="tiny">Data quality</div>'
-    +'<p class="muted" style="font-size:12px;margin:6px 0 0">Every workout is scanned on save and the whole history on every visit to Stats. Ambiguous entries are only ever flagged — you decide with <b>Edit workout</b> or <b>Dismiss</b>. A dismissed flag can be reopened here. The one automatic repair is a repeated set block that the save record itself proves to be a sync duplication; a repeat without that proof is flagged, not touched.</p>'
+    +'<p class="muted" style="font-size:12px;margin:6px 0 0">Every workout is scanned on save and the whole history on every visit to Stats. Ambiguous entries are only ever flagged — you decide with <b>Edit workout</b> or <b>Dismiss</b>. A dismissed flag can be reopened here. The only automatic repairs are a repeated set block, or a whole workout repeated k times over, that the save record itself proves to be a sync duplication; a repeat without that proof is flagged, not touched.</p>'
     +seg+'<div style="margin-top:8px">'+body+'</div></div>'; }
 
 /* ---------------------------------------------------------------- PROTOTYPE 5 · BLOCK REPORT */
-function fmtRange(a,b){ const f=function(d){ return new Date(d).toLocaleDateString("en-AU",{day:"numeric",month:"short"}); }; return f(a)+' – '+f(b); }
-function deltaStr(r,p,unit,dec){ const d=Math.round((r-p)*(dec?10:1))/(dec?10:1); if(!d) return '<span class="muted">no change</span>'; return '<span style="color:'+(d>0?'var(--green)':'var(--red)')+'">'+(d>0?'+':'')+d+(unit||'')+'</span>'; }
-function blockReportCard(){ const b=blockReport(); if(!b) return '<div class="card"><div class="empty">Needs 8 complete weeks (4 + 4) to compare blocks.</div></div>';
-  const R=b.recent, P=b.prev;
-  const kpi=function(label,rv,pv,unit,dec){ return '<div class="blk-k"><span>'+label+'</span><b>'+rv+(unit||'')+'</b><small>vs '+pv+(unit||'')+' · '+deltaStr(rv,pv,unit,dec)+'</small></div>'; };
-  const groups=b.groups.slice(0,6).map(function(g){ return '<div class="contrib" style="padding:6px 0"><div><b>'+g.label+'</b><div class="muted" style="font-size:12px">'+g.r+' vs '+g.p+' effective sets / week</div></div><span class="c-ef">'+deltaStr(g.r,g.p,'',true)+'</span></div>'; }).join("");
-  const mover=function(m){ return '<div class="contrib" style="padding:6px 0"><div><b>'+m.ex.name+'</b><div class="muted" style="font-size:12px">best '+Math.round(m.recent)+' vs '+Math.round(m.prev)+' ('+m.nR+' / '+m.nP+' exposures)</div></div><span class="c-ef" style="color:'+(m.pct>0?'var(--green)':'var(--red)')+'">'+(m.pct>0?'+':'')+m.pct+'%</span></div>'; };
-  return '<div class="card"><div class="tiny">Block report · '+fmtRange(R.from,R.to)+' vs '+fmtRange(P.from,P.to)+'</div>'
-    +'<div class="histline" style="margin-top:2px">Last four complete weeks against the four before them. Only what changed a lot is worth reading.</div>'
-    +'<div class="blk-grid">'+kpi('Sessions / wk',R.perWeek,P.perWeek,'',true)+kpi('Working sets / wk',R.setsPerWeek,P.setsPerWeek,'',true)+'<div class="blk-k"><span>Priority coverage</span><b>'+R.coverage.hit+'/'+R.coverage.of+'</b><small>vs '+P.coverage.hit+'/'+P.coverage.of+' · '+deltaStr(R.coverage.hit,P.coverage.hit,' wk',false)+'</small></div>'
-    +(R.bodyweight!=null&&P.bodyweight!=null?kpi('Bodyweight (median)',R.bodyweight,P.bodyweight,' kg',true):'<div class="blk-k"><span>Bodyweight</span><b>—</b><small>log bodyweight in both blocks to compare</small></div>')+'</div>'
-    +'<div class="tiny" style="margin-top:12px">Effective sets by group · biggest moves</div><div style="margin-top:4px">'+(groups||'<div class="empty" style="padding:8px">—</div>')+'</div>'
-    +'<div class="tiny" style="margin-top:12px">Strength movers · best session score, 2+ exposures in each block</div><div style="margin-top:4px">'+(b.up.map(mover).join("")+b.down.map(mover).join("")||'<div class="empty" style="padding:8px">No exercise moved 3% or more.</div>')+'</div>'
-    +(b.stalled.length?'<div class="tiny" style="margin-top:12px">Stalled lifts</div><div class="histline" style="margin-top:4px">'+b.stalled.map(function(a){ return a.ex.name+' ('+a.sinceBest+' sessions since best)'; }).join(' · ')+'</div>':'')
-    +'</div>'; }
 
 /* ---------------------------------------------------------------- PROTOTYPE 6 · CALENDAR STRIP + TRAINING TIME */
-function calendarCard(){ const cal=calendarStrip(CAL_WEEKS); const names=["M","T","W","T","F","S","S"];
-  const grid='<div class="cal"><div class="cal-days">'+names.map(function(n){ return '<span>'+n+'</span>'; }).join("")+'</div>'
-    +cal.cols.map(function(c){ return '<div class="cal-col'+(c.current?' cur':'')+'" title="Week of '+fmtDate(c.start)+' · '+c.sessions+' session'+(c.sessions===1?'':'s')+'"><span class="cal-w">'+fmtWeekLabel(c.start)+'</span>'
-      +c.days.map(function(d){ const lvl=d.n?(d.sets>=18?3:d.sets>=12?2:1):0; return '<i class="cal-d l'+lvl+(d.future?' fut':'')+(d.today?' today':'')+'" title="'+fmtDate(d.date)+(d.n?' · '+d.sets+' sets':'')+'"></i>'; }).join("")+'</div>'; }).join("")+'</div>';
-  const tod=timeOfDayCounts6(); const max=Math.max.apply(null,[1].concat(tod.buckets.map(function(b){ return b.n; })));
-  const todRows=tod.buckets.map(function(b){ return '<div class="exline" style="padding:5px 0"><div style="flex:1"><div class="nm" style="font-size:13px">'+b.label+'</div><div class="bar" style="margin-top:4px"><i style="width:'+Math.round(b.n/max*100)+'%"></i></div></div><span class="mono" style="margin-left:10px">'+b.n+'</span></div>'; }).join("");
-  const placed=tod.total-tod.unknown; const top=tod.buckets.slice().sort(function(p,q){ return q.n-p.n; })[0];
-  return '<div class="card"><div class="tiny">Training calendar · last '+CAL_WEEKS+' weeks</div>'
-    +'<div class="histline" style="margin-top:2px">Rhythm and gaps at a glance. Darker = more working sets. '+(cal.longestGap>=3?'Longest gap: <b>'+cal.longestGap+' days</b> ending '+fmtDate(cal.longestGapEnd)+'.':'')+(cal.currentGap>=2?' Currently '+cal.currentGap+' days since the last session.':'')+'</div>'
-    +'<div class="wscroll" data-wscroll style="margin-top:10px">'+grid+'</div>'
-    +'<div class="tiny" style="margin-top:14px">Training time · '+placed+' of '+tod.total+' sessions placed</div>'
-    +'<div style="margin-top:4px">'+todRows+'</div>'
-    +'<div class="histline" style="margin-top:6px">'+(top&&top.n?'Most common: <b>'+top.label+'</b> · '+top.n+' of '+placed+'. ':'')+(tod.unknown?tod.unknown+' session'+(tod.unknown===1?'':'s')+' carry the noon placeholder time from a re-dated edit or an older build and are left out rather than guessed.':'')+'</div></div>'; }
 
 /* ---------------------------------------------------------------- v11 INSIGHTS
    Cut back to insights that carry a number, a chart or a date. Removed outright: the 0-100
    momentum score and its ring, "Momentum: strong", "Best next move", and the all-time
    "best week so far" milestone — none of them changed a decision, and they pushed the
    comparative data further down the screen. */
-function insightsBlock(){ const cards=[];
-  const na=needsAttentionPrimary();
-  if(na.length) cards.push(insightCard({tier:"warn",badge:"Below weekly minimum",
-    title:na.slice(0,3).map(m=>S.muscles[m].label).join(", "),
-    body:na.slice(0,3).map(function(m){ const v=weeklyVolume()[m]||0; return S.muscles[m].label+" "+v.toFixed(1)+"/"+S.muscles[m].min+" sets"; }).join(" · "),muscle:na[0]}));
-  const sd=secondaryDominant()[0];
-  if(sd) cards.push(insightCard({tier:"warn",badge:"Mostly indirect volume",title:S.muscles[sd.m].label,
-    body:sd.con.direct.toFixed(1)+" direct vs <b>"+sd.con.secondary.toFixed(1)+" indirect</b> sets this week.",muscle:sd.m}));
-  let h=cards.join("");
-  const unlock=[];
-  if(!weekdayPattern()) unlock.push("weekday pattern (log ~6 sessions)");
-  if(completedSessions().length<8) unlock.push("time-of-day pattern (8+ sessions)");
-  const board=progressionBoard();
-  if(!board.graded) unlock.push("progression verdicts ("+TREND_MIN_N+"+ logs of an exercise)");
-  if(unlock.length) h+='<div class="card" style="background:var(--panel2)"><div class="ibody">Not yet available: '+unlock.join("; ")+'.</div></div>';
-  return h; }
 
 /* ---------------------------------------------------------------- v11 STATS
    Ordered by what is actually scannable and comparative:
@@ -4700,37 +4308,155 @@ function insightsBlock(){ const cards=[];
    Removed: the momentum score and ring, "Momentum: strong", "Best next move", the all-time
    "best week" milestone and the week streak. Each was interpretation or an all-time trophy
    rather than a number, a chart or a date. */
+
+/* ============================================================================ v18 — STATS V2 ============================================================================
+   Information architecture, not analytics. Four collapsible parents, each answering one question:
+     1  Recent achievements              "what did I just earn?"            achievementTimeline() → groupAchievements()
+     2  Training pattern & consistency   "how consistently, how much?"      weekSeriesAll() · calendarStrip() · timeOfDayCounts6()
+     3  Muscle load & coverage           "where did effort go / enough?"    Volume: muscleContrib() by group · Coverage: coverageMatrix()
+     4  Exercise progress                "am I getting better at this lift?" exerciseSeries() · exerciseRecords() · stallAssess()
+   Removed from Stats in v18: the legacy progression board, the insights block, the priority-coverage summary,
+   the stall card, the Stats copy of data quality, the dashboard KPIs, the this-week card, the per-muscle split
+   card, most-used exercises, the consistency / weekday / four-bucket time cards, the block report, Reports.
+   Every parent remembers its own open/closed state (setOpen, same store as Settings). Nothing here adds a
+   score, a card or an insight that v17 did not already compute. */
+
+/* ---------------------------------------------------------------- sections (unchanged mechanics, v16) */
+function sectionOpenD(k,def){ return Object.prototype.hasOwnProperty.call(setOpen,k)?!!setOpen[k]:!!def; }
+function statsSection(key,title,sub,bodyFn,defOpen,badge){
+  const open=sectionOpenD(key,defOpen);
+  return '<div class="card ssec'+(open?' open':'')+'" style="padding:0;overflow:hidden">'
+    +'<div data-section="'+key+'" data-secdef="'+(defOpen?1:0)+'" class="ssec-hd">'
+    +'<div style="flex:1;min-width:0"><div class="tiny" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'+title+(badge?'<span class="protobadge">'+badge+'</span>':'')+'</div>'+(sub?'<div class="histline" style="margin-top:2px">'+sub+'</div>':'')+'</div>'
+    +'<span class="muted" style="font-size:15px;flex:none">'+(open?'−':'+')+'</span></div>'
+    +(open?'<div class="ssec-bd">'+bodyFn()+'</div>':'')+'</div>'; }
+
+/* ---------------------------------------------------------------- window selector (one for all of Volume) */
+const VOL_PERIODS=[["week","Week"],["28","4W"],["84","12W"],["182","6M"],["all","All"]];
+function statsWindowLabel(){ return {week:"this week (Mon–Sun)","28":"last 4 weeks","84":"last 12 weeks","182":"last 6 months",all:"all time"}[statsPeriod]||"all time"; }
+function fmtDaysAgo(date){ if(!date) return "—"; const a=new Date(date); a.setHours(0,0,0,0); const b=new Date(); b.setHours(0,0,0,0); const d=Math.round((b-a)/86400000);
+  if(d<=0) return "today"; if(d===1) return "yesterday"; if(d<14) return d+" days ago"; if(d<70) return Math.round(d/7)+" weeks ago"; return Math.round(d/30.4)+" months ago"; }
+
+/* ---------------------------------------------------------------- 1 · RECENT ACHIEVEMENTS */
+const ACH_SHOW=5;
+function achRowHTML(g,opts){ opts=opts||{}; const a=g.primary;
+  return '<div class="achrow" data-exhist="'+g.exId+'" style="cursor:pointer"><div style="min-width:0"><div class="am">'+g.name+'</div>'
+    +'<div class="ad">'+achLoadStr(a)+' × '+a.reps+(opts.date===false?'':' · '+(opts.relative?fmtDaysAgo(g.date):fmtDate(g.date)))+'</div>'
+    +achSubLines(g).map(function(l){ return '<div class="ad" style="color:var(--faint)">'+l+'</div>'; }).join("")+'</div>'
+    +'<span class="badge '+achBadgeClass(a.type)+'">'+(a.first?"First ":"New ")+achLabel(a)+'</span></div>'; }
+function achievementsCard(){ const groups=groupAchievements(achievementTimeline(0));
+  if(!groups.length) return '<div class="card"><div class="empty" style="padding:14px">Log working sets to start earning 5RM, 10RM, load and rep PRs.</div></div>';
+  return '<div class="card"><div style="margin-top:-2px">'+groups.slice(0,ACH_SHOW).map(function(g){ return achRowHTML(g,{relative:true}); }).join("")+'</div>'
+    +(groups.length>ACH_SHOW?'<button class="btn ghost full sm" data-achall style="margin-top:8px">View all '+groups.length+'</button>':'')+'</div>'; }
+function achAllSheet(){ const groups=groupAchievements(achievementTimeline(0));
+  return '<div class="tiny">All achievements · '+groups.length+' · latest first</div>'
+    +'<div class="histline" style="margin:4px 0 8px">One row per exercise per workout. Load PR · 10RM · 5RM · rep PR, the best record leading. Tap a row for that exercise.</div>'
+    +'<div>'+groups.map(function(g){ return achRowHTML(g); }).join("")+'</div>'; }
+function achHeaderSub(groups){ const today=dayKey(new Date()); const n=groups.filter(function(g){ return dayKey(g.date)===today; }).length;
+  if(n) return n+' today · latest first'; if(!groups.length) return 'new 5RM · 10RM · load PR · rep PR'; return 'latest · '+groups[0].name+' · '+fmtDaysAgo(groups[0].date); }
+
+/* ---------------------------------------------------------------- 2 · TRAINING PATTERN & CONSISTENCY */
+function weekAverages(series,key){ const view=series.slice(-WEEK_SCROLL_VIEW); const r1=function(v){ return Math.round(v*10)/10; };
+  const avgView=view.reduce(function(a,x){ return a+(x[key]||0); },0)/Math.max(1,view.length);
+  const all=series.filter(function(x){ return x[key]>0; }); const avgAll=all.length?all.reduce(function(a,x){ return a+x[key]; },0)/all.length:0;
+  return {view:r1(avgView), all:r1(avgAll)}; }
+function calendarBlock(){ const n=Math.max(CAL_WEEKS,Math.min(WEEK_SCROLL_MAX,weeksLogged())); const cal=calendarStrip(n); const names=["M","T","W","T","F","S","S"];
+  const rail='<div class="cal-days">'+names.map(function(x){ return '<span>'+x+'</span>'; }).join("")+'</div>';
+  const cols=cal.cols.map(function(c){ return '<div class="cal-col'+(c.current?' cur':'')+'" title="Week of '+fmtDate(c.start)+' · '+c.sessions+' session'+(c.sessions===1?'':'s')+'"><span class="cal-w">'+fmtWeekLabel(c.start)+'</span>'
+      +c.days.map(function(d){ const lvl=d.n?(d.sets>=18?3:d.sets>=12?2:1):0; return '<i class="cal-d l'+lvl+(d.future?' fut':'')+(d.today?' today':'')+'" title="'+fmtDate(d.date)+(d.n?' · '+d.sets+' sets':'')+'"></i>'; }).join("")+'</div>'; }).join("");
+  return '<div class="card"><div class="tiny">Training calendar</div>'
+    +'<div class="histline" style="margin-top:2px">'+(n>CAL_WEEKS?'Latest '+CAL_WEEKS+' of '+n+' weeks in view · swipe left for older · ':'')+'darker = more working sets</div>'
+    +'<div class="cal-wrap">'+rail+'<div class="wscroll cal-scroll" data-wscroll><div class="cal">'+cols+'</div></div></div></div>'; }
+function trainingTimeBlock(){ const tod=timeOfDayCounts6(); const placed=tod.total-tod.unknown; if(!placed) return "";
+  const max=Math.max.apply(null,[1].concat(tod.buckets.map(function(b){ return b.n; })));
+  return '<div class="card"><div class="tiny">Training time · '+placed+' sessions</div><div style="margin-top:4px">'
+    +tod.buckets.map(function(b){ return '<div class="exline" style="padding:5px 0"><div style="flex:1"><div class="nm" style="font-size:13px">'+b.label+'</div><div class="bar" style="margin-top:4px"><i style="width:'+Math.round(b.n/max*100)+'%"></i></div></div><span class="mono" style="margin-left:10px">'+b.n+'</span></div>'; }).join("")
+    +'</div></div>'; }
+function patternBody(){ const ser=weekSeriesAll();
+  return weekScrollChartCard("Workouts per week",ser,"sessions","workouts")
+       + weekScrollChartCard("Working sets per week",ser,"sets","sets")
+       + calendarBlock() + trainingTimeBlock(); }
+function patternHeaderSub(){ const ser=weekSeriesAll(); const w=weekAverages(ser,"sessions"), s=weekAverages(ser,"sets");
+  return WEEK_SCROLL_VIEW+'-wk avg · '+w.view+' workouts · '+s.view+' sets / wk'; }
+
+/* ---------------------------------------------------------------- 3 · MUSCLE LOAD & COVERAGE */
+/* Adam's groups (v18): individual muscles roll up into these for the first-glance view; tap a group to
+   see its muscles. A muscle missing from the list lands in "Other" so nothing is silently dropped. */
+const VOL_GROUPS=[["shoulders","Shoulders",["side_delts","rear_delts","front_delts"]],["chest","Chest",["upper_chest","chest"]],["back","Back",["back_lats","upper_back"]],
+  ["biceps","Biceps / Forearms",["biceps","forearms"]],["triceps","Triceps",["triceps"]],["legs","Legs",["quads","hamstrings","glutes","calves"]],["core","Core",["abs","lower_back"]]];
+function volumeGroupsV2(sessions){ sessions=sessions||periodSessions(); const placed={}; const r1=function(v){ return Math.round(v*10)/10; };
+  const mk=function(key,label,list){ const muscles=list.map(function(m){ if(!S.muscles[m]) return null; placed[m]=1; const c=muscleContrib(m,sessions); return {m:m,label:S.muscles[m].label,total:r1(c.total),direct:r1(c.direct),indirect:r1(c.secondary)}; })
+      .filter(function(x){ return x&&x.total>0; }).sort(function(a,b){ return b.total-a.total; });
+    return {key:key,label:label,muscles:muscles,total:r1(muscles.reduce(function(a,x){ return a+x.total; },0))}; };
+  const groups=VOL_GROUPS.map(function(g){ return mk(g[0],g[1],g[2]); });
+  const rest=Object.keys(S.muscles).filter(function(m){ return !placed[m]; }); if(rest.length) groups.push(mk("other","Other",rest));
+  return groups.filter(function(g){ return g.total>0; }).sort(function(a,b){ return b.total-a.total; }); }
+function volumeCard(){ const groups=volumeGroupsV2(); const gmax=Math.max.apply(null,[1].concat(groups.map(function(g){ return g.total; })));
+  const seg='<div class="seg mini" style="margin-top:8px">'+VOL_PERIODS.map(function(p){ return '<button data-statsperiod="'+p[0]+'" class="'+(statsPeriod===p[0]?'on':'')+'">'+p[1]+'</button>'; }).join("")+'</div>';
+  const rows=groups.length?groups.map(function(g){ const key="vol:"+g.key; const open=sectionOpenD(key,false); const mmax=Math.max.apply(null,[1].concat(g.muscles.map(function(x){ return x.total; })));
+    return '<div class="vg'+(open?' open':'')+'"><div class="vg-hd" data-section="'+key+'" data-secdef="0"><span class="vg-ch">'+(open?'−':'+')+'</span><span class="vg-nm">'+g.label+'</span><span class="vg-v mono">'+g.total+'</span></div>'
+      +'<div class="vg-bar"><i style="width:'+Math.round(g.total/gmax*100)+'%"></i></div>'
+      +(open?'<div class="vg-bd">'+g.muscles.map(function(x){ const dp=Math.round(x.direct/mmax*100), sp=Math.round(x.indirect/mmax*100);
+          return '<div class="vm" data-muscle-stat="'+x.m+'"><span class="vm-nm">'+x.label+'</span><span class="vm-bar"><i style="width:'+dp+'%;background:var(--accent)"></i><i style="width:'+sp+'%;background:var(--grey)"></i></span><span class="vm-v mono">'+x.total+'</span></div>'; }).join("")
+        +'<div class="histline" style="margin:4px 0 6px 18px"><span style="color:var(--accent)">▮</span> direct (1.0) · <span style="color:var(--grey)">▮</span> indirect (0.5 / 0.25) · tap a muscle for the exercises behind it</div></div>':'')+'</div>'; }).join("")
+    :'<div class="empty" style="padding:16px">No working sets '+statsWindowLabel()+'.</div>';
+  return '<div class="card"><div class="tiny">Effective sets · '+statsWindowLabel()+'</div>'+seg+'<div style="margin-top:8px">'+rows+'</div></div>'; }
+function loadBody(){ const tabs='<div class="seg" style="margin:0 0 2px" data-loadtabs><button data-loadtab="volume" class="'+(statsPref.tab==="volume"?'on':'')+'">Volume</button><button data-loadtab="coverage" class="'+(statsPref.tab==="coverage"?'on':'')+'">Coverage</button></div>';
+  return '<div class="card" style="padding:10px 14px 8px">'+tabs+'</div>'+(statsPref.tab==="volume"?volumeCard():covMatrixCard()); }
+function loadHeaderSub(){
+  if(statsPref.tab==="volume"){ const g=volumeGroupsV2(); return 'volume · '+statsWindowLabel()+(g.length?' · '+g[0].label+' leads':''); }
+  const pc=priorityCoverage(coverageMatrix("total")); const done=(pc.per||[]).filter(function(x){ return !x.current; }); const last=done.length?done[done.length-1]:null;
+  return 'coverage · '+(last?'priority '+last.covered+' of '+last.of+' at minimum last week':(pc.active?'priority muscles vs minimum, week by week':'set priorities in Settings')); }
+
+/* ---------------------------------------------------------------- 4 · EXERCISE PROGRESS */
+/* the one sentence from stallAssess() that earns a place under the chart — plateau, progression, or a
+   genuine regression. Stable, stale, thin and context-explained states say nothing. */
+function stallLine(exId){ const a=stallAssess(exId); const exp=function(n){ return n+" exposure"+(n===1?"":"s"); };
+  if(a.state==="plateau") return exp(a.sinceBest)+" since your last load or rep best ("+fmtTop(a.ex,a.best)+").";
+  if(a.state==="progressing"){ if(a.sinceBest<=2) return "Top set improved "+(a.sinceBest===0?"last exposure":exp(a.sinceBest)+" ago")+" — now "+fmtTop(a.ex,a.best)+"."; return "Last "+exp(TREND_RECENT_N)+" average above the "+TREND_BASE_MIN+"–"+TREND_BASE_MAX+" before."; }
+  if(a.state==="below") return "Top set has sat below your recent baseline for "+exp(TREND_RECENT_N)+" ("+Math.round(Math.abs(a.trendPct||0))+"% under).";
+  return ""; }
+function exHistList(){ return S.exercises.map(function(e){ return {e:e,n:exerciseHistory(e.id).length}; }).filter(function(x){ return x.n>=1; }).sort(function(a,b){ return b.n-a.n; }); }
+function resolveRepExId(histList){ histList=histList||exHistList(); if(!repExId||!histList.find(function(x){ return x.e.id===repExId; })) repExId=histList.length?histList[0].e.id:null; return repExId; }
+function exerciseProgressCard(){
+  var histList=exHistList(); resolveRepExId(histList);
+  if(!repExId) return '<div class="card"><div class="empty" style="padding:18px">Log a few sessions to chart your progress.</div></div>';
+  var fq=(repSearch||"").toLowerCase();
+  var chips=histList.filter(function(x){ return !fq||exMatches(x.e,fq); }).slice(0,40).map(function(x){ return '<button data-repexid="'+x.e.id+'" class="'+(x.e.id===repExId?"on":"")+'">'+x.e.name+'</button>'; }).join("");
+  var ex=exById(repExId); var h=exerciseHistory(repExId); var last=h[0]; var top=last?topSetOf(ex,last.sets):null;
+  var pr=groupAchievements(achievementTimeline(0)).find(function(g){ return g.exId===repExId; });
+  var metrics=metricsFor(ex); if(!metricOK(ex,repMetric)) repMetric=defaultMetricFor(ex);
+  var seg='<div class="seg mini" style="margin-top:10px">'+metrics.map(function(mn){ return '<button data-repmetric="'+mn[0]+'" class="'+(repMetric===mn[0]?"on":"")+'">'+mn[1]+'</button>'; }).join("")+'</div>';
+  var chart=lineChartSVG(exerciseSeries(repExId,repMetric),{unit:metricUnit(repMetric),dirNote:dirNoteFor(ex,repMetric)});
+  var tile=function(lb,big,small){ return '<div class="ext"><span>'+lb+'</span><b>'+big+'</b>'+(small?'<small>'+small+'</small>':'')+'</div>'; };
+  var line=stallLine(repExId);
+  return '<div class="card">'
+    +'<input class="inp srch" id="repSearch" placeholder="Search exercises..." value="'+escAttr(repSearch||"")+'">'
+    +'<div class="chips" style="margin-top:8px">'+(chips||'<span class="muted" style="font-size:12px">No matches</span>')+'</div>'
+    +'<div style="font-weight:700;font-size:15px;margin-top:10px">'+ex.name+'</div>'
+    +'<div class="exgrid">'
+    +tile("Latest top set", top?fmtTop(ex,top):"—", last?fmtDate(last.date):"")
+    +tile("Recent PR", pr?((pr.primary.first?"First ":"New ")+achLabel(pr.primary)):"—", pr?(achLoadStr(pr.primary)+" × "+pr.primary.reps+" · "+fmtDaysAgo(pr.date)):"no record yet")
+    +tile("Last trained", last?fmtDaysAgo(last.date):"—", "")
+    +tile("Sessions logged", String(h.length), "")
+    +'</div>'
+    +'<div class="histline" style="margin-top:10px">'+metricLabel(repMetric,ex)+(repMetric==="e1rm"?' · a trend estimate, not a measured 1RM':'')+'</div>'
+    +seg+'<div class="chartwrap">'+chart+'</div>'
+    +(line?'<div class="exnote">'+line+'</div>':'')
+    +'</div>'; }
+function exHeaderSub(){ resolveRepExId(); if(!repExId) return 'select an exercise · weight · reps · 5RM · 10RM · e1RM · volume · sets'; const ex=exById(repExId); const h=exerciseHistory(repExId); if(!ex||!h.length) return 'select an exercise';
+  return ex.name+' · '+fmtTop(ex,topSetOf(ex,h[0].sets))+' · '+fmtDaysAgo(h[0].date); }
+
+/* ---------------------------------------------------------------- the page */
 function viewStats(){
   try{ dqAutoRepair(); }catch(e){}                                   /* v16: integrity before analytics */
-  const pBtns=[["week","Week"],["30","30d"],["90","90d"],["all","All"]].map(([v,l])=>'<button data-statsperiod="'+v+'" class="'+(statsPeriod===v?'on':'')+'">'+l+'</button>').join("");
-  /* most-used now carries usage count, sparkline AND the change, per the same row grammar */
-  const muRows=function(){ const mu=mostUsedExercises(6); const mumax=Math.max(1,...mu.map(x=>x.n));
-    return mu.length?mu.map(x=>'<div class="exline" data-exhist="'+x.ex.id+'" style="padding:7px 0;cursor:pointer">'
-    +'<div style="flex:1;min-width:0"><div class="nm" style="font-size:13px">'+(x.ex?x.ex.name:'?')+'</div>'
-    +'<div class="bar" style="margin-top:5px"><i style="width:'+Math.round(x.n/mumax*100)+'%"></i></div></div>'
-    +miniSpark(x.ex.id)+'<span class="sets" style="margin-left:8px">'+x.n+'</span><span style="margin-left:6px">'+trendBadge(x.ex.id)+'</span></div>').join(""):'<div class="empty" style="padding:16px">Nothing logged.</div>'; };
-  const dq=dataQualityScan();
-  /* v16 — every area is a section with a remembered open/closed state. The four questions open by
-     default; the prototypes, the legacy board and the low-use areas closed. Nothing from v11–v14 is removed. */
-  /* v17 — the legacy board starts collapsed (Progression & stalls carries the read now); a manual
-     open/close is remembered like every other section. Nothing inside it changed. */
-  return statsSection("stats:prog","Progression","legacy board: name → last 2 → previous 6 → sparkline → % · achievements · insights",function(){ return progressionBoardCard()+recentAchievementsCard(6)+insightsBlock(); },false)
-    +statsSection("stats:cov","Consistency & coverage","priority coverage · effective sets per muscle, week by week",covMatrixCard,true)
-    +statsSection("stats:stall","Progression & stalls","double progression on the top set · plateau and below-baseline patterns",stallCard,true)
-    +statsSection("stats:dq","Data quality",(dq.open.length?dq.open.length+' open flag'+(dq.open.length===1?'':'s')+' · nothing is edited automatically':'whole history scanned · nothing open'),dqCard,dq.counts.error+dq.counts.warn>0)
-    +statsSection("stats:dash","Training dashboard","rolling window vs the one before",dashboardCard,true)
-    +statsSection("stats:vol","Volume & distribution","by individual muscle · most-used exercises · exercise charts",function(){
-        return (statsPeriod==="week"?weekSummaryCard():"")
-          +'<div class="card" style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px"><span class="tiny">Window</span><div class="seg" style="width:60%">'+pBtns+'</div></div>'
-          +muscleSplitCard()
-          +'<div class="card"><div class="tiny">Most-used exercises · tap for records and trend</div><div style="margin-top:6px">'+muRows()+'</div></div>'
-          +exerciseTrendsCard(); },true)
-    +statsSection("stats:pattern","Training pattern","working sets and workouts per week · consistency · training days · training time",function(){ const ser=weekSeriesAll();
-        return weekScrollChartCard("Working sets per week",ser,"sets","sets")
-             + weekScrollChartCard("Workouts per week",ser,"sessions","workouts")
-             + consistencyCard()+weekdayCard()+timeOfDayCard(); },true)
-    +statsSection("stats:p-block","Four-week block report","last 4 complete weeks vs the 4 before",blockReportCard,false,"prototype")
-    +statsSection("stats:p-cal","Training calendar & time of day","12-week strip · six time-of-day buckets",calendarCard,false,"prototype"); }
+  const dq=dataQualityScan(); const groups=groupAchievements(achievementTimeline(0));
+  const head='<div class="stats-hd"><span class="tiny">Stats</span>'+(dq.open.length?'<button class="dqbadge" data-dq="all">Data quality · '+dq.open.length+' to review</button>':'')+'</div>';
+  return head
+    +statsSection("stats:ach","Recent achievements",achHeaderSub(groups),achievementsCard,true)
+    +statsSection("stats:pattern","Training pattern & consistency",patternHeaderSub(),patternBody,true)
+    +statsSection("stats:load","Muscle load & coverage",loadHeaderSub(),loadBody,false)
+    +statsSection("stats:ex","Exercise progress",exHeaderSub(),exerciseProgressCard,false); }
 
 /* ---------------- BODY (P6 two-layer + P7 grid + P5 attribution) ---------------- */
 const BODY_GROUPS=[["Chest & push",["upper_chest","chest","triceps","front_delts"]],["Back & pull",["back_lats","upper_back","biceps"]],["Delts",["side_delts","rear_delts"]],["Legs",["quads","hamstrings","glutes","calves"]],["Core & other",["abs","lower_back","forearms"]]];
@@ -5148,12 +4874,13 @@ function buildRecap(sess){ const setsN=sess.entries.reduce((a,en)=>a+workingSets
   /* v11 — the coach line leads with what actually moved on the exercises, not with tonnage. */
   let coach=""; const mom=momentumScore(); const na=needsAttentionPrimary();
   const movers=prog.rows.filter(function(x){ return x.state==="up"; }).slice(0,2).map(function(x){ return x.name+" "+x.text; });
-  if(prs.length) coach="🏆 "+prs.length+" new achievement"+(prs.length>1?"s":"")+" this session"+(movers.length?" — "+movers.join(", "):"")+".";
+  const achN=groupAchievements(ach).length;
+  if(achN) coach="🏆 "+achN+" achievement"+(achN>1?"s":"")+" today"+(movers.length?" — "+movers.join(", "):"")+".";
   else if(prog.up) coach=prog.up+" exercise"+(prog.up===1?"":"s")+" improved"+(movers.length?": "+movers.join(", "):"")+".";
   else if(prog.down&&!prog.up) coach="Nothing moved up this session — "+prog.down+" down, "+prog.same+" held. One flat session is normal; watch it next time.";
   else if(na.length) coach="Momentum "+mom.score+"/100. Still needs direct work this week: "+na.slice(0,2).map(m=>S.muscles[m].label.toLowerCase()).join(", ")+".";
   else coach="Momentum "+mom.score+"/100 — every priority muscle is on track this week. 🔥";
-  return {id:sess.id, setsN, exN:sess.entries.filter(en=>workingSets(en).length).length, dur, muscles, prs, ach, parts, title:sess.title, coach,
+  return {id:sess.id, setsN, exN:sess.entries.filter(en=>workingSets(en).length).length, dur, muscles, prs, ach, achGroups:groupAchievements(ach), parts, title:sess.title, coach,
           totals, cmp, cmpTotals, base4, prev4, customUsed, prog, composition:sessionComposition(sess), date:sess.completedAt}; }
 function editWorkout(id){ const s=S.sessions.find(x=>x.id===id); if(!s) return; loggerOpen={}; activeSession={ id:uid(), editingId:id, startedAt:s.startedAt||s.completedAt, dateISO:new Date(s.completedAt).toISOString().slice(0,10), title:s.title, mode:"edit", entries:JSON.parse(JSON.stringify(s.entries)) }; viewingLogger=true; saveActive(); go("today"); }
 function duplicateWorkout(id){ const s=S.sessions.find(x=>x.id===id); if(!s) return; loggerOpen={}; activeSession={ id:uid(), startedAt:iso(new Date()), dateISO:new Date().toISOString().slice(0,10), title:s.title, mode:"manual", entries:s.entries.map(en=>({exId:en.exId, sets:en.sets.map(()=>({weight:"",reps:"",type:"work",done:false}))})) }; viewingLogger=true; saveActive(); try{ history.pushState({iron:"workout"},""); }catch(e){} go("today"); }
@@ -5246,8 +4973,10 @@ function wireScreen(){
   document.querySelectorAll("[data-dupw]").forEach(b=>b.onclick=()=>duplicateWorkout(b.dataset.dupw));
   document.querySelectorAll("[data-delw]").forEach(b=>b.onclick=()=>deleteWorkout(b.dataset.delw));
   // stats drilldowns
-  document.querySelectorAll("[data-statsperiod]").forEach(b=>b.onclick=()=>{ statsPeriod=b.dataset.statsperiod; render(); });
-  document.querySelectorAll("[data-dashp]").forEach(b=>b.onclick=()=>{ dashPeriod=b.dataset.dashp; render(); });
+  document.querySelectorAll("[data-statsperiod]").forEach(b=>b.onclick=(e)=>{ e.stopPropagation(); statsPeriod=b.dataset.statsperiod; statsPref.period=statsPeriod; saveStatsPref(); render(); });
+  /* v18 — Stats V2 */
+  document.querySelectorAll("[data-loadtab]").forEach(b=>b.onclick=(e)=>{ e.stopPropagation(); statsPref.tab=b.dataset.loadtab; saveStatsPref(); render(); });
+  document.querySelectorAll("[data-achall]").forEach(b=>b.onclick=()=>openSheet("achall"));
   document.querySelectorAll("[data-muscle-group]").forEach(b=>b.onclick=()=>{ const g=MUSCLE_GROUPS.find(x=>x.key===b.dataset.muscleGroup); go("body");
     if(g&&g.muscles.length){ bodyDetail=g.muscles[0]; render(); setTimeout(()=>{ const el2=document.getElementById("bodydetail"); if(el2) el2.scrollIntoView({behavior:"smooth",block:"center"}); },60); } });
   /* v13 — a priority row is BOTH a drill-down and a container for the "+ Add" button. The row
@@ -5280,7 +5009,6 @@ function wireScreen(){
       const n=document.getElementById("bldSearch");
       if(n){ n.focus(); try{ n.setSelectionRange(n.value.length,n.value.length); }catch(e){} } }; })();
   document.querySelectorAll("[data-muscle-stat]").forEach(b=>b.onclick=()=>openSheet("mperiod",b.dataset.muscleStat));
-  document.querySelectorAll("[data-insight-muscle]").forEach(b=>b.onclick=()=>{ const cur=statsPeriod; statsPeriod="week"; openSheet("mperiod",b.dataset.insightMuscle); statsPeriod=cur; });
   document.querySelectorAll("[data-exhist]").forEach(b=>b.onclick=()=>openSheet("exhist",b.dataset.exhist));
   document.querySelectorAll("[data-cxreview]").forEach(b=>b.onclick=()=>{ reconcileSearch=""; openSheet("reconcile",b.dataset.cxreview); });
   document.querySelectorAll("[data-addcustom]").forEach(b=>b.onclick=()=>{ customDraft={name:b.dataset.addcustom||"",group:"",load:"ext",id:null}; openSheet("custom"); });
@@ -5294,11 +5022,10 @@ function wireScreen(){
   document.querySelectorAll("[data-dqtab]").forEach(b=>b.onclick=()=>{ dqCentreTab=b.dataset.dqtab; render(); });
   document.querySelectorAll("[data-dqedit]").forEach(b=>b.onclick=()=>editWorkout(b.dataset.dqedit));
   document.querySelectorAll("[data-dqdismiss]").forEach(b=>b.onclick=()=>{ dqDismiss(b.dataset.dqdismiss); render(); });
+  document.querySelectorAll("[data-dqcollapse]").forEach(b=>b.onclick=()=>{ dqCollapseSession(b.dataset.dqcollapse); render(); });
   document.querySelectorAll("[data-dqrestore]").forEach(b=>b.onclick=()=>{ dqRestore(b.dataset.dqrestore); render(); });
-  document.querySelectorAll("[data-stallall]").forEach(b=>b.onclick=()=>{ stallShowAll=!stallShowAll; render(); });
   document.querySelectorAll("[data-bodyview]").forEach(b=>b.onclick=()=>{ bodyView=b.dataset.bodyview;
     try{ localStorage.setItem("iron_arc_bodyview",bodyView); }catch(e){} render(); });
-  document.querySelectorAll("[data-showall]").forEach(b=>b.onclick=()=>{ showAllMuscles=!showAllMuscles; render(); });
   // settings
   // per-user training profile
   document.querySelectorAll("[data-tier]").forEach(b=>b.onclick=()=>{ const m=b.dataset.tier; const order=["primary","secondary","maintenance"]; S.muscles[m].tier=order[(order.indexOf(S.muscles[m].tier)+1)%3]; save(); render(); });
