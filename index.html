@@ -289,6 +289,73 @@ button{font-family:inherit; cursor:pointer; border:none; color:inherit;}
 .volrow .vnm{font-size:12.5px; width:82px; flex:none; color:var(--text);}
 .volrow .vbar{flex:1; height:8px; border-radius:4px; background:var(--panel2); overflow:hidden; display:flex;}
 .volrow .vbar i{display:block; height:100%; background:var(--accent);}
+/* ===== v16 — analytics & data quality ===== */
+.ssec-hd{display:flex; justify-content:space-between; align-items:center; gap:10px; padding:14px 16px; cursor:pointer;}
+.ssec-bd{padding:0 0 4px;} .ssec-bd>.card{margin:0 0 10px; border-radius:0; border-left:none; border-right:none; box-shadow:none;} .ssec-bd>.card:last-child{margin-bottom:0; border-bottom:none;}
+.protobadge{font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:.12em; text-transform:uppercase; padding:2px 6px; border-radius:5px; background:rgba(191,122,240,.16); color:var(--violet); font-weight:700;}
+/* priority coverage */
+.pcov{margin-top:6px;} .pcov-n{display:flex; align-items:baseline; gap:12px; flex-wrap:wrap;}
+.pcov-n b{font-family:'JetBrains Mono',monospace; font-size:30px; line-height:1;} .pcov-n b i{font-style:normal; font-size:16px; color:var(--muted);}
+.pcov-n>span{font-size:12px; color:var(--muted); max-width:34ch; line-height:1.4;}
+.pcov-grid{display:flex; gap:8px; margin-top:10px; flex-wrap:wrap;}
+.pcov-grid div{flex:1; min-width:90px; background:var(--panel2); border:1px solid var(--line); border-radius:10px; padding:8px 10px;}
+.pcov-grid b{display:block; font-family:'JetBrains Mono',monospace; font-size:17px;} .pcov-grid span{display:block; font-size:10.5px; color:var(--muted); margin-top:2px;}
+/* the matrix: fixed label rail + scrolling cells, rows locked to 30px on both sides */
+.cov-wrap{display:flex; align-items:flex-start; margin-top:10px;}
+.cov-labels{flex:none; width:100px; padding-right:6px;}
+.cov-lrow{height:30px; display:flex; flex-direction:column; justify-content:center; box-sizing:border-box;}
+.cov-lhead{height:20px;}
+.cov-lrow .cov-m{font-size:12px; font-weight:600; color:var(--text); line-height:1.1; font-family:var(--ui),system-ui,sans-serif; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.cov-lrow small{font-family:'JetBrains Mono',monospace; font-size:9px; color:var(--faint); line-height:1.2; white-space:nowrap;}
+.cov-lgrp{cursor:pointer; height:30px; justify-content:flex-end; padding-bottom:3px;}
+.cov-grp-t{font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); font-weight:700; white-space:nowrap;}
+.cov-grp-s{display:none;}
+.cov-scroll{flex:1; min-width:0; margin:0; padding:0;}
+table.cov{border-collapse:separate; border-spacing:2px 0; font-family:'JetBrains Mono',monospace; font-size:10px; table-layout:fixed;}
+table.cov tr.cov-r{height:30px;} table.cov tr.cov-head{height:20px;} table.cov tr.cov-grow td{height:30px; cursor:pointer;}
+table.cov th{font-weight:600; color:var(--faint); text-align:center; padding:0; white-space:nowrap; vertical-align:bottom;}
+table.cov th.cov-wk{min-width:30px; width:30px;} table.cov th.cov-wk.cur{color:var(--accent);}
+table.cov td{padding:0;} table.cov td:first-child, table.cov th:first-child{width:0; min-width:0; padding:0;}
+table.cov td.cov-c{min-width:30px; width:30px; height:24px; border-radius:4px; text-align:center; font-weight:700; cursor:pointer; box-sizing:border-box;}
+table.cov td.cov-c{background-clip:padding-box; border-top:3px solid transparent; border-bottom:3px solid transparent;}
+table.cov td.cov-c.ok{background:rgba(52,199,89,.16); color:var(--green);} table.cov td.cov-c.low{background:rgba(255,90,82,.15); color:var(--red);}
+table.cov td.cov-c.over{background:rgba(255,159,10,.18); color:var(--amber);} table.cov td.cov-c.zero{box-shadow:inset 0 0 0 1px var(--line); color:var(--faint); font-weight:500;}
+table.cov td.cov-c.cur{box-shadow:inset 0 0 0 1.5px var(--accent);}
+table.cov .cov-end{color:var(--muted); font-weight:600; padding:0 0 0 6px; text-align:right; white-space:nowrap; min-width:36px;}
+.cov-legend{display:flex; gap:12px; flex-wrap:wrap; margin-top:10px; font-size:11px; color:var(--muted);}
+.cov-legend i{display:inline-block; width:12px; height:12px; border-radius:3px; vertical-align:-2px; margin-right:5px;}
+.cov-legend i.ok{background:rgba(52,199,89,.16); box-shadow:inset 0 0 0 1px var(--green);} .cov-legend i.low{background:rgba(255,90,82,.15); box-shadow:inset 0 0 0 1px var(--red);}
+.cov-legend i.over{background:rgba(255,159,10,.18); box-shadow:inset 0 0 0 1px var(--amber);} .cov-legend i.zero{box-shadow:inset 0 0 0 1px var(--line2);}
+/* stalls */
+.stall-sums{display:flex; gap:12px; flex-wrap:wrap; margin-top:6px; font-size:12px;} .stall-sum b{font-family:'JetBrains Mono',monospace; font-size:15px; margin-right:3px;}
+.stall{display:flex; align-items:center; gap:10px; padding:9px 0; border-top:1px solid var(--line); cursor:pointer;} .stall:first-child{border-top:none;}
+.stall-main{flex:1; min-width:0;} .stall-nm{font-size:13.5px; font-weight:600;} .stall-ev{font-size:11.5px; color:var(--muted); margin-top:2px;} .stall-next{font-size:11.5px; color:var(--accent); margin-top:3px;}
+/* data quality */
+.dq-row{display:flex; gap:9px; align-items:flex-start; padding:8px 0; border-top:1px solid var(--line); cursor:pointer;} .dq-row:first-child{border-top:none;}
+.dq-dot{width:8px; height:8px; border-radius:50%; flex:none; margin-top:6px;}
+.dq-t{font-size:13px; font-weight:600;} .dq-w{font-size:11.5px; color:var(--muted); margin-top:2px; line-height:1.45;}
+.dq-item{background:var(--panel2); border:1px solid var(--line); border-radius:12px; padding:11px 12px; margin-bottom:8px;} .dq-item.dismissed{opacity:.6;}
+.dq-ctx{font-family:'JetBrains Mono',monospace; font-size:11px; color:#C6D0DC; white-space:pre-wrap; background:var(--panel); border-radius:8px; padding:7px 9px; margin-top:6px; line-height:1.5;}
+/* rep-range */
+.rr{padding:9px 0; border-top:1px solid var(--line); cursor:pointer;} .rr:first-child{border-top:none;}
+.rr-hd{display:flex; flex-direction:column; gap:4px; align-items:flex-start;} .rr-hd .statuspill{align-self:flex-start;}
+.rr-bar{display:flex; height:8px; border-radius:4px; overflow:hidden; background:var(--panel2); margin-top:7px; gap:2px;}
+.rr-bar i{display:block; height:100%;} .rr-bar i.b{background:var(--red);} .rr-bar i.w{background:var(--green);} .rr-bar i.a{background:var(--blue);}
+.rr-nums{display:flex; gap:10px; flex-wrap:wrap; font-family:'JetBrains Mono',monospace; font-size:10.5px; margin-top:5px;}
+/* block report */
+.blk-grid{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px;}
+.blk-k{background:var(--panel2); border:1px solid var(--line); border-radius:10px; padding:9px 10px;} .blk-k span{display:block; font-size:10px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted);}
+.blk-k b{display:block; font-family:'JetBrains Mono',monospace; font-size:18px; margin-top:2px;} .blk-k small{display:block; font-size:10.5px; color:var(--muted); margin-top:2px;}
+/* calendar */
+.cal{display:flex; gap:3px; align-items:flex-start; padding-bottom:2px;}
+.cal-days{display:flex; flex-direction:column; gap:3px; padding-top:16px; margin-right:3px;} .cal-days span{height:13px; font-size:9px; color:var(--faint); font-family:'JetBrains Mono',monospace; line-height:13px; width:10px;}
+.cal-col{display:flex; flex-direction:column; gap:3px; align-items:center;} .cal-w{font-size:8.5px; color:var(--faint); font-family:'JetBrains Mono',monospace; height:13px; line-height:13px; white-space:nowrap;} .cal-col.cur .cal-w{color:var(--accent);}
+.cal-d{display:block; width:13px; height:13px; border-radius:3px; background:var(--panel2); box-shadow:inset 0 0 0 1px var(--line);}
+.cal-d.l1{background:rgba(59,130,246,.38); box-shadow:none;} .cal-d.l2{background:rgba(59,130,246,.65); box-shadow:none;} .cal-d.l3{background:var(--accent); box-shadow:none;}
+.cal-d.fut{background:transparent; box-shadow:inset 0 0 0 1px var(--line); opacity:.5;} .cal-d.today{box-shadow:inset 0 0 0 1.5px var(--accent);}
+/* strength index */
+.si{padding:10px 0; border-top:1px solid var(--line);} .si:first-child{border-top:none;}
+.si-hd{display:flex; justify-content:space-between; align-items:center; gap:10px;} .si-n{font-family:'JetBrains Mono',monospace; font-size:22px; font-weight:700;}
 </style>
 </head>
 <body>
@@ -325,9 +392,9 @@ const APP_TAGLINE = "Training Command";
    recover.html on a v10 build is expected and correct.
    BUILD is shown in Settings and is what the deployed-version check compares against, so
    it must be bumped on every deploy. */
-const BUILD = "v15";
+const BUILD = "v16";
 const BUILD_DATE = "2026-09-14";
-const BUILD_NOTE = "bullet-proof workout saving: atomic cloud writes, verified finish, draft recovery, integrity checks, diagnostics";
+const BUILD_NOTE = "analytics & data quality: coverage matrix, stall detector, data-quality review, four prototypes, collapsible Stats";
 
 /* Approved users (client-side UX gate; the real gate is Supabase signup settings — see DEPLOY).
    To add a person: add one line below with their real email (lowercase), display name and role.
@@ -1196,6 +1263,7 @@ async function hydrateFromCloud(){
     persistLocal();
     for(const s of needPush){ await pushWorkout(s,"hydrate"); }
     if(needPush.length) pushSettings();             // tombstones + settings back up
+    try{ dqAutoRepair(); }catch(e){}               // v16: exact repeated set blocks from a racing sync
   }catch(e){}
   syncing=false; render();
 }
@@ -3016,7 +3084,7 @@ let route="today", activeSession=null, viewingLogger=false, pendingRec=null, res
    library gated behind search + filters so it never renders 119 rows unasked. */
 let setOpen=(function(){ try{ return JSON.parse(localStorage.getItem("iron_arc_setopen")||'{}')||{}; }catch(e){ return {}; } })();
 function setSectionOpen(k){ return !!setOpen[k]; }
-function toggleSection(k){ setOpen[k]=!setOpen[k]; try{ localStorage.setItem("iron_arc_setopen",JSON.stringify(setOpen)); }catch(e){} }
+function toggleSection(k,def){ const cur=Object.prototype.hasOwnProperty.call(setOpen,k)?!!setOpen[k]:!!def; setOpen[k]=!cur; try{ localStorage.setItem("iron_arc_setopen",JSON.stringify(setOpen)); }catch(e){} }
 function section(key,title,sub,bodyFn){
   const open=setSectionOpen(key);
   return '<div class="card" style="padding:0;overflow:hidden">'
@@ -3547,7 +3615,8 @@ function renderSheet(){ const m=document.getElementById("sheetmount"); if(!sheet
       /* v11 — the verdict shows its evidence and its next action right where it is asserted */
       +'<div class="card" style="margin:8px 0 0;padding:10px 12px;background:var(--panel2)"><div class="tiny">Why this verdict</div>'
       +'<div class="histline" style="margin-top:3px">'+((trendEvidence(id)||{}).text||'Not enough history yet.')+'</div>'
-      +(trendAction(id)?'<div class="histline" style="margin-top:5px;color:var(--accent)">\u2192 '+trendAction(id)+'</div>':'')+'</div>'
+      +((trendAction(id)&&!stallAssess(id).next)?'<div class="histline" style="margin-top:5px;color:var(--accent)">\u2192 '+trendAction(id)+'</div>':'')+'</div>'
+      +stallDetailBlock(id)
       +muscleCreditBlock(ex,DEFAULT_WORK_SETS)
       +setupStrip(id)
       +recGrid
@@ -3615,6 +3684,8 @@ function renderSheet(){ const m=document.getElementById("sheetmount"); if(!sheet
   else if(sheet.type==="mperiod"){ const m=sheet.data; const cfg=S.muscles[m]; const sess=periodSessions(); const con=muscleContrib(m,sess); const plabel=statsPeriod==="week"?"this week (Mon–Sun)":statsPeriod==="all"?"all time":"last "+statsPeriod+" days";
     inner='<div class="tiny">'+cfg.label+' · '+plabel+'</div><div class="kpi" style="margin-top:10px"><div class="k"><b>'+con.total.toFixed(1)+'</b><span>effective sets</span></div><div class="k"><b>'+con.direct.toFixed(1)+'</b><span>direct</span></div><div class="k"><b>'+con.secondary.toFixed(1)+'</b><span>secondary</span></div></div>'
       +'<div class="tiny" style="margin-top:14px">What made this number</div><div style="margin-top:6px">'+(con.rows.length?con.rows.map(r=>'<div class="contrib"><div><b>'+r.name+'</b><div class="muted" style="font-size:11px">'+r.sets+' sets × '+r.credit+' credit · '+(r.credit>=1?"direct":"secondary")+' · last '+fmtAgo(r.dates.sort().slice(-1)[0])+'</div></div><span class="c-ef">'+r.effective.toFixed(1)+'</span></div>').join(""):'<div class="empty" style="padding:10px">No sets in this period.</div>')+'</div>'; }
+  else if(sheet.type==="covcell"){ inner=covCellSheet(sheet.data); }
+  else if(sheet.type==="dq"){ inner=dqSheet(); }
   else if(sheet.type==="tips"){ const id=sheet.data; const ex=exById(id); const t=TIPS[id];
     inner='<div class="tiny">'+(ex?ex.name:id)+' · form & coaching</div>'+(ex?muscleCreditBlock(ex,DEFAULT_WORK_SETS):'')+(t?
       '<div class="field" style="margin-top:10px"><label style="color:var(--green)">✅ Should feel</label><div class="ibody">'+t.feel+'</div></div>'
@@ -3677,6 +3748,12 @@ function renderSheet(){ const m=document.getElementById("sheetmount"); if(!sheet
   const dc=m.querySelector('[data-diagcopy]'); if(dc) dc.onclick=()=>{ const txt=JSON.stringify({build:BUILD, user:authUser&&authUser.id, at:iso(new Date()), inflight:Object.keys(pushInFlight), log:plogRead()},null,1); try{ navigator.clipboard.writeText(txt).then(()=>{ dc.textContent="Copied ✓"; }); }catch(e){ dc.textContent="Copy failed"; } };
   const dx=m.querySelector('[data-diagclear]'); if(dx) dx.onclick=()=>{ plogClear(); renderSheet(); };
   m.querySelectorAll('[data-tips]').forEach(b=>b.onclick=()=>openSheet("tips",b.dataset.tips));
+  /* v16 data-quality review actions */
+  m.querySelectorAll('[data-dqedit]').forEach(b=>b.onclick=()=>{ const id=b.dataset.dqedit; closeSheet(); editWorkout(id); });
+  m.querySelectorAll('[data-dqdismiss]').forEach(b=>b.onclick=()=>{ dqDismiss(b.dataset.dqdismiss); renderSheet(); });
+  m.querySelectorAll('[data-dqrestore]').forEach(b=>b.onclick=()=>{ dqRestore(b.dataset.dqrestore); renderSheet(); });
+  m.querySelectorAll('[data-dqtoggle]').forEach(b=>b.onclick=()=>{ dqShowDismissed=!dqShowDismissed; renderSheet(); });
+  m.querySelectorAll('[data-exhist]').forEach(b=>b.onclick=()=>openSheet("exhist",b.dataset.exhist));
   m.querySelectorAll('[data-setup]').forEach(b=>b.onclick=()=>openSheet("setup",b.dataset.setup));
   m.querySelectorAll('[data-faddg]').forEach(b=>b.onclick=()=>{ addGroup=b.dataset.faddg||""; renderSheet(); });
   m.querySelectorAll('[data-fadde]').forEach(b=>b.onclick=()=>{ addEquip=b.dataset.fadde||""; renderSheet(); });
@@ -3940,6 +4017,538 @@ function consistencyCard(){
     +'<div style="margin-top:6px;font-weight:700;font-size:15px">Hit '+c.target+'+ sessions in <span style="color:'+col+'">'+c.hit+' of the last '+c.weeks+' weeks</span></div>'
     +'<div class="histline" style="margin-top:4px">Target is '+c.target+' sessions per week (Settings).</div></div>'; }
 
+/* ============================================================================ v16 — ANALYTICS & DATA QUALITY ============================================================================
+   Five questions the Stats screen now answers, each with its own pure engine (unit-tested against
+   synthetic AND real history) and a card:
+     1. Am I training consistently?                      → priorityCoverage() + coverageMatrix()
+     2. Are the muscles I care about getting enough work? → coverageMatrix() (muscle × week, banded)
+     3. Am I progressing or quietly stalling?            → stallAssess()
+     4. Am I training within the rep ranges we set?      → repRangeCompliance()   [prototype]
+     5. Is anything in the data wrong or suspicious?     → dataQualityScan() + review sheet
+   Plus three prototypes to judge before they become permanent: blockReport(), calendarStrip() with
+   finer time-of-day buckets, and strengthIndex().
+   House rules carried over from v11: numbers not verdicts, evidence beside every claim, no invented
+   coefficients, and "not enough data" is a legitimate answer. */
+
+/* ---------------------------------------------------------------- 1+2 · COVERAGE MATRIX
+   One row per muscle, one column per week since the first logged session (same window and scroll
+   behaviour as the v14 week charts), each cell = effective sets that week from the ONE canonical
+   credit sum, banded against the muscle's own minimum and cap. */
+const COV_MIN_WEEKS=WEEK_SCROLL_MIN, COV_MAX_WEEKS=WEEK_SCROLL_MAX, COV_VIEW=WEEK_SCROLL_VIEW;
+/* Where a muscle sits in the matrix. A muscle you have set to minimum 0 is "out of scope" whatever
+   its tier — it can never count against you. */
+function muscleGroupOf(m){ const c=S.muscles[m]; if(!c) return "maintenance";
+  if(!(c.min>0)) return "maintenance";
+  return c.tier==="primary"?"priority":(c.tier==="secondary"?"secondary":"maintenance"); }
+function weekSessionsFor(start){ const st=new Date(start); const en=new Date(st); en.setDate(en.getDate()+7);
+  return completedSessions().filter(function(x){ const t=new Date(x.completedAt); return t>=st&&t<en; }); }
+function cellStatus(v,cfg){ if(!(v>0.01)) return "zero"; if(v>cfg.cap) return "over"; if(v>=cfg.min) return "ok"; return "low"; }
+function coverageMatrix(){
+  const weeks=weekSeriesAll().map(function(w){ return {start:w.start, current:w.current, sessions:w.sessions}; });
+  const perWeek=weeks.map(function(w){ return effectiveSetsByMuscle(weekSessionsFor(w.start)); });
+  const groups={priority:[], secondary:[], maintenance:[]};
+  Object.keys(S.muscles).forEach(function(m){ const cfg=S.muscles[m]; const g=muscleGroupOf(m);
+    const cells=perWeek.map(function(vol,i){ const v=Math.round((vol[m]||0)*10)/10;
+      return {v:v, status:cellStatus(v,cfg), week:weeks[i].start, current:!!weeks[i].current}; });
+    const complete=cells.filter(function(c){ return !c.current; });
+    const hit=complete.filter(function(c){ return c.status==="ok"||c.status==="over"; }).length;
+    const trained=complete.filter(function(c){ return c.status!=="zero"; }).length;
+    const last10=complete.slice(-COV_VIEW); const avg10=last10.length?last10.reduce(function(a,c){ return a+c.v; },0)/last10.length:0;
+    groups[g].push({m:m, label:cfg.label, min:cfg.min, cap:cfg.cap, tier:cfg.tier, outOfScope:!(cfg.min>0),
+      cells:cells, hit:hit, complete:complete.length, trained:trained, avg10:Math.round(avg10*10)/10}); });
+  return {weeks:weeks, groups:groups}; }
+/* The headline consistency number. A week counts as covered when EVERY active priority muscle
+   (tier primary, minimum > 0) reached its minimum. The in-progress week is reported separately so
+   a Tuesday never reads as a missed week. */
+function priorityCoverage(mx){ mx=mx||coverageMatrix();
+  const rows=mx.groups.priority; const weeks=mx.weeks;
+  const per=weeks.map(function(w,i){ if(!rows.length) return null;
+    const covered=rows.filter(function(r){ const s=r.cells[i].status; return s==="ok"||s==="over"; }).length;
+    return {week:w.start, current:!!w.current, covered:covered, of:rows.length, hit:covered===rows.length,
+      missed:rows.filter(function(r){ const s=r.cells[i].status; return !(s==="ok"||s==="over"); }).map(function(r){ return r.label; })}; }).filter(Boolean);
+  const complete=per.filter(function(p){ return !p.current; });
+  const cur=per.find(function(p){ return p.current; })||null;
+  const hit=complete.filter(function(p){ return p.hit; }).length;
+  const last4=complete.slice(-4), last4hit=last4.filter(function(p){ return p.hit; }).length;
+  const last10=complete.slice(-10), last10hit=last10.filter(function(p){ return p.hit; }).length;
+  /* per-muscle streak of misses ending at the latest complete week — the sentence under the number */
+  const streaks=rows.map(function(r){ const cc=r.cells.filter(function(c){ return !c.current; }); let k=0;
+    for(let i=cc.length-1;i>=0;i--){ const s=cc[i].status; if(s==="ok"||s==="over") break; k++; }
+    return {label:r.label, misses:k}; }).filter(function(x){ return x.misses>0; }).sort(function(a,b){ return b.misses-a.misses; });
+  return {active:rows.length, weeks:complete.length, hit:hit, pct:complete.length?Math.round(100*hit/complete.length):0,
+    last4:{hit:last4hit, of:last4.length}, last10:{hit:last10hit, of:last10.length}, current:cur, per:per, streaks:streaks}; }
+/* Which exercises produced a cell's number — the app's own attribution helper on that week's sessions. */
+function cellContributors(m,weekStart){ const sess=weekSessionsFor(weekStart); const con=muscleContrib(m,sess);
+  return {rows:con.rows, direct:con.direct, secondary:con.secondary, total:con.total, sessions:sess.length}; }
+
+/* ---------------------------------------------------------------- 3 · STALL DETECTOR
+   Double-progression is the yardstick: a session IMPROVES an exercise when the top set carries
+   more load (less assistance) at comparable reps, or more reps at the same load. That works for a
+   12–20-rep lateral raise exactly as it does for a 6-rep press, which e1RM (capped at 10 reps in
+   this app) does not. e1RM bests are tracked alongside as the secondary signal.
+   States describe the number, never the athlete:
+     progressing            improved the top set within the last 3 exposures, or above baseline
+     stable                 5+ exposures, no plateau pattern, no improvement in the last 3
+     plateau                6+ exposures without a top-set improvement AND 4+ at effectively the same top set
+     below_context          below baseline, with a plausible contextual explanation on record
+     below                  below baseline, no context on record
+     insufficient           fewer than 5 exposures
+     stale                  no exposure in the last 28 days — history, not current training */
+const STALL_MIN_N=TREND_MIN_N, STALL_SINCE=6, STALL_SAME=4, STALL_E1_MEANINGFUL=0.02;
+function topSetOf(ex,sets){ const w=bestRawLoad(ex,sets); let r=0;
+  (sets||[]).forEach(function(s){ if((+s.weight||0)===w) r=Math.max(r,+s.reps||0); }); return {w:w, r:r}; }
+/* One comparable number for a top set: direction-aware load × Epley rep factor, UNCAPPED so a
+   15-rep lateral raise can improve as well as a 6-rep press. Assisted work with no bodyweight on
+   record cannot be scored honestly, so it falls back to an ordering (less assistance, then reps). */
+function topScore(ex,t,bw){ const L=setLoadScore(ex,t.w,bw); if(isAssisted(ex)&&bw==null) return L+(t.r||0)*0.01; return Math.max(0,L)*(1+(t.r||0)/30); }
+/* did `cur` beat `best` by the double-progression rule? more reps at the same load, or a heavier
+   load that keeps the score up — either way the score rises by more than rounding noise */
+function topSetBeats(ex,cur,best,bw){ if(!best) return true; const a=topScore(ex,cur,bw), b=topScore(ex,best,bw);
+  if(b<=0) return a>b+0.05; return a>b*1.01; }
+function sameTopSet(ex,a,b){ return a.w===b.w && Math.abs(a.r-b.r)<=2; }
+function stallAssess(exId){
+  const ex=exById(exId); const h=exerciseHistory(exId);            /* newest first */
+  const n=h.length; const tr=exerciseTrendData(exId); const oc=orderContext(exId);
+  const base={exId:exId, ex:ex, n:n, days:tr.days, stale:!!tr.stale};
+  if(!ex||n<STALL_MIN_N) return Object.assign(base,{state:"insufficient", need:STALL_MIN_N-n, tops:[], next:null});
+  const asc=h.slice().reverse();                                     /* oldest first */
+  const tops=asc.map(function(x){ const t=topSetOf(ex,x.sets); return {date:x.date, w:t.w, r:t.r, e1:sessionStrength(ex,x.sets,x.bw), bw:x.bw}; });
+  /* running best by double progression */
+  let best=null, sinceBest=0, lastImproveIdx=-1;
+  tops.forEach(function(t,i){ if(topSetBeats(ex,t,best,t.bw)){ best={w:t.w,r:t.r,date:t.date}; lastImproveIdx=i; } });
+  sinceBest=(tops.length-1)-lastImproveIdx;
+  /* e1RM best (app definition) and sessions since a meaningful one */
+  let e1best=0, e1idx=-1; tops.forEach(function(t,i){ if(t.e1>e1best*(1+STALL_E1_MEANINGFUL)&&t.e1>0){ e1best=t.e1; e1idx=i; } });
+  const sinceE1=(e1idx>=0)?(tops.length-1)-e1idx:null;
+  /* consecutive recent sessions at effectively the same top set */
+  let same=1; for(let i=tops.length-1;i>0;i--){ if(sameTopSet(ex,tops[i],tops[i-1])) same++; else break; }
+  const last=tops[tops.length-1];
+  const streak=tops.slice(tops.length-same); const repLo=Math.min.apply(null,streak.map(function(t){ return t.r; })), repHi=Math.max.apply(null,streak.map(function(t){ return t.r; }));
+  const streakStr=(isAssisted(ex)?last.w+" kg assist":isBodyweightLoaded(ex)?(last.w>0?"+"+last.w+" kg":"bodyweight"):last.w+" kg")+(repLo===repHi?" × "+repLo:" (top set "+repLo+"–"+repHi+" reps)");
+  /* single-session outlier check: last e1/top score vs median of the previous 4 */
+  const prevScores=tops.slice(Math.max(0,tops.length-5),tops.length-1).map(function(t){ return t.e1>0?t.e1:setLoadScore(ex,t.w,t.bw); }).filter(function(v){ return v>0; });
+  const med=prevScores.length?median(prevScores):0; const lastScore=last.e1>0?last.e1:setLoadScore(ex,last.w,last.bw);
+  const lastDrop=(med>0&&lastScore>0)?(lastScore-med)/med:0;
+  let state="stable"; const why=[];
+  if(tr.stale){ state="stale"; why.push("No exposure in the last "+TREND_STALE_DAYS+" days."); }
+  else if(sinceBest<=2||tr.state==="above"){ state="progressing";
+    if(sinceBest<=2) why.push("Top set improved "+(sinceBest===0?"last session":sinceBest+" session"+(sinceBest===1?"":"s")+" ago")+".");
+    if(tr.state==="above") why.push("Last "+tr.recentN+" exposures average above the previous "+tr.baseN+"."); }
+  else if(tr.state==="below"){
+    const ctx=[]; if(oc&&oc.dir==="later") ctx.push(oc.text.toLowerCase());
+    if(lastDrop<=-0.2) ctx.push("the last session alone is "+Math.round(Math.abs(lastDrop)*100)+"% under the previous four — one session, not a trend yet");
+    state=ctx.length?"below_context":"below";
+    why.push("Last "+tr.recentN+" exposures average "+Math.round(Math.abs(tr.pct))+"% below the previous "+tr.baseN+".");
+    ctx.forEach(function(c){ why.push("Context: "+c+"."); }); }
+  else if(sinceBest>=STALL_SINCE&&same>=STALL_SAME){ state="plateau";
+    why.push(sinceBest+" sessions since the top set last improved ("+fmtTop(ex,best)+").");
+    why.push(same+" sessions in a row at "+streakStr+"."); }
+  else { if(sinceBest>=3) why.push(sinceBest+" sessions since the top set last improved."); else why.push("Holding — no improvement in the last "+sinceBest+" sessions, no plateau pattern yet."); }
+  return Object.assign(base,{state:state, why:why, tops:tops, best:best, sinceBest:sinceBest, e1best:e1best, sinceE1:sinceE1,
+    same:same, last:last, trendPct:tr.pct, trendState:tr.state, order:oc, lastDrop:lastDrop, next:stallNextStep(ex,state,tops,best,same,sinceBest)}); }
+function median(a){ const s=a.slice().sort(function(x,y){ return x-y; }); const m=Math.floor(s.length/2); return s.length%2?s[m]:(s[m-1]+s[m])/2; }
+function fmtTop(ex,t){ if(!t) return "—"; return (isAssisted(ex)?t.w+" kg assist":isBodyweightLoaded(ex)?(t.w>0?"+"+t.w+" kg":"bodyweight"):t.w+" kg")+" × "+t.r; }
+/* The suggestion, in the exercise's own terms: its configured rep range, its increment, and its
+   load direction. Double progression first (reps to the top of the range, then load), and for a
+   plateau the smallest change that breaks the pattern. Never a coefficient, never a guess at cause. */
+function stallNextStep(ex,state,tops,best,same,sinceBest){
+  if(!ex||!tops.length) return null; const last=tops[tops.length-1]; const rl=ex.rl||8, rh=ex.rh||12; const inc=incrementFor(ex);
+  const dir=progDir(ex); const asst=isAssisted(ex); const step=asst?-inc:inc;
+  const nextLoad=Math.max(0,Math.round((last.w+step)*10)/10);
+  const loadStr=function(w){ return asst?(w+" kg assist"):(isBodyweightLoaded(ex)?(w>0?"+"+w+" kg":"bodyweight"):w+" kg"); };
+  if(state==="insufficient"||state==="stale") return null;
+  if(state==="progressing"){ const p=progressionFor(ex.id); return {kind:"keep", text:(p&&p.note)?p.note:"Keep the progression going — match the load, beat the reps."}; }
+  if(state==="below_context") return {kind:"repeat", text:"Repeat "+fmtTop(ex,tops[tops.length-2]||last)+" next time before reading anything into one session."};
+  if(state==="below") return {kind:"hold", text:"Hold "+loadStr(last.w)+" and rebuild the reps toward "+rh+" before adding load."};
+  if(last.r>=rh) return {kind:"load", text:"Top set is at the top of the "+rl+"–"+rh+" range → "+(asst?"drop to ":"move to ")+loadStr(nextLoad)+", aim "+rl+"+ reps."};
+  if(last.r<rl) return {kind:"reps", text:"Top set ("+fmtTop(ex,last)+") is under the "+rl+"–"+rh+" range. Hold "+loadStr(last.w)+" and build to "+rl+" reps, or "+(asst?"add ":"drop to ")+loadStr(Math.max(0,Math.round((last.w-step)*10)/10))+" and work "+rl+"–"+rh+"."};
+  if(state==="plateau"){
+    const target=Math.min(rh,last.r+1);
+    return {kind:"break", text:same+" sessions at "+loadStr(last.w)+". Break the pattern: "+(last.r+1<=rh?"take the top set to "+loadStr(last.w)+" × "+target+" next time, then ":"")+(asst?"drop to ":"move to ")+loadStr(nextLoad)+" for "+rl+" reps"+(sinceBest>=10?" — or swap in a different variation for a block":"")+"."};
+  }
+  return {kind:"reps", text:"Hold "+loadStr(last.w)+", add a rep: target "+Math.min(rh,last.r+1)+" on the top set (range "+rl+"–"+rh+")."};
+}
+const STALL_META={
+  progressing:{label:"Progressing", c:"var(--green)", icon:"▲"},
+  stable:{label:"Stable", c:"var(--accent)", icon:"▬"},
+  plateau:{label:"Likely plateau", c:"var(--amber)", icon:"■"},
+  below_context:{label:"Below baseline · context", c:"var(--gold)", icon:"▼"},
+  below:{label:"Below baseline", c:"var(--red)", icon:"▼"},
+  insufficient:{label:"Not enough data", c:"var(--muted)", icon:"○"},
+  stale:{label:"Not recently trained", c:"var(--muted)", icon:"○"} };
+function stallBoard(){ const cnt={}; completedSessions().forEach(function(s){ (s.entries||[]).forEach(function(en){ if(workingSets(en).length) cnt[en.exId]=(cnt[en.exId]||0)+1; }); });
+  return Object.keys(cnt).map(function(id){ return stallAssess(id); }).filter(function(a){ return a.ex; })
+    .sort(function(a,b){ return (b.n-a.n)||a.ex.name.localeCompare(b.ex.name); }); }
+
+/* ---------------------------------------------------------------- 5 · DATA-QUALITY SCAN
+   Runs over the WHOLE history every time Stats renders (cheap: a few hundred sets). Every flag says
+   what was seen, why it is suspicious, and what sits either side of it. Nothing is edited here — the
+   review sheet hands you Edit and Dismiss. The one automatic repair is the exact k-fold repeated set
+   block a racing sync leaves behind (see dqAutoRepair), because that shape cannot occur by training. */
+const DQ_OUTLIER=0.25, DQ_JUMP=0.40, DQ_SETCOUNT_X=2.5, DQ_ENTRY_SETS=8, DQ_REPS_MAX=30;
+function dqFlagId(kind,sessionId,exId,idx){ return kind+"|"+sessionId+"|"+(exId||"")+"|"+(idx==null?"":idx); }
+function dqDismissed(){ return (S.settings&&S.settings.dqDismissed)||{}; }
+function dqDismiss(id){ S.settings.dqDismissed=Object.assign({},dqDismissed()); S.settings.dqDismissed[id]=iso(new Date()); persistLocal(); scheduleCloudPush(); }
+function dqRestore(id){ const d=Object.assign({},dqDismissed()); delete d[id]; S.settings.dqDismissed=d; persistLocal(); scheduleCloudPush(); }
+/* one consistent score per session: uncapped Epley on the top set (the app's e1RM stops at 10 reps,
+   which made a 10×16 session and a 15×5 session of the same lift look 40% apart). Assisted work
+   without a bodyweight on record is not scored. */
+function dqSessionScore(ex,sets,bw){ if(isAssisted(ex)&&bw==null) return 0; const v=topScore(ex,topSetOf(ex,sets),bw); return v>0?v:0; }
+function dataQualityScan(){
+  const flags=[]; const sessions=completedSessions().slice().sort(function(a,b){ return new Date(a.completedAt)-new Date(b.completedAt); });
+  const setsPer=sessions.map(function(s){ return (s.entries||[]).reduce(function(a,en){ return a+workingSets(en).length; },0); }).filter(function(n){ return n>0; });
+  const medSets=setsPer.length?median(setsPer):0;
+  const typicalLoad={};                                             /* per exercise: median top load over all sessions */
+  const byEx={};
+  sessions.forEach(function(s){ (s.entries||[]).forEach(function(en){ const ex=exById(en.exId); const ws=workingSets(en); if(!ex||!ws.length) return;
+    (byEx[en.exId]=byEx[en.exId]||[]).push({sess:s, en:en, ws:ws, top:topSetOf(ex,ws), score:dqSessionScore(ex,ws,bodyweightAt(s.completedAt))}); }); });
+  Object.keys(byEx).forEach(function(id){ typicalLoad[id]=median(byEx[id].map(function(x){ return x.top.w; })); });
+  const push=function(f){ f.id=dqFlagId(f.kind,f.sessionId,f.exId,f.idx); f.dismissed=!!dqDismissed()[f.id]; flags.push(f); };
+  sessions.forEach(function(s,si){
+    const dateStr=fmtDate(s.completedAt);
+    const nSets=(s.entries||[]).reduce(function(a,en){ return a+workingSets(en).length; },0);
+    /* implausible session size */
+    if(medSets>0&&nSets>medSets*DQ_SETCOUNT_X&&nSets>=20) push({kind:"setcount", sev:"warn", sessionId:s.id, date:s.completedAt, exId:null,
+      title:dateStr+" · "+nSets+" working sets in one session", value:nSets+" sets", why:"More than "+DQ_SETCOUNT_X+"× your median of "+Math.round(medSets)+" sets per session. Duplicated entries or a merged session are the usual causes.",
+      context:(s.entries||[]).map(function(en){ return entryName(en)+" ×"+workingSets(en).length; }).join(" · ")});
+    /* duplicate exercise entries in one session */
+    const seen={}; (s.entries||[]).forEach(function(en,i){ if(!workingSets(en).length) return; if(seen[en.exId]!=null){
+        push({kind:"dup_entry", sev:"warn", sessionId:s.id, date:s.completedAt, exId:en.exId, idx:i,
+          title:dateStr+" · "+entryName(en)+" appears twice", value:"entries #"+(seen[en.exId]+1)+" and #"+(i+1),
+          why:"The same exercise is listed twice in one workout. Both count toward volume. Legitimate if you returned to it; a sync fault if the sets match.",
+          context:workingSets(s.entries[seen[en.exId]]).map(function(x){ return fmtSet(x.weight,x.reps); }).join(" ")+"  vs  "+workingSets(en).map(function(x){ return fmtSet(x.weight,x.reps); }).join(" ")}); }
+      else seen[en.exId]=i; });
+    /* duplicate session: another workout the same day with the same logged sets */
+    for(let j=si+1;j<sessions.length;j++){ const o=sessions[j]; if(dayKey(o.completedAt)!==dayKey(s.completedAt)) break;
+      if(sameLoggedSets(s,o)) push({kind:"dup_session", sev:"warn", sessionId:o.id, date:o.completedAt, exId:null,
+        title:dateStr+" · two workouts with identical sets", value:"2 workouts", why:"Same day, same exercises, same weights and reps. Almost certainly the one session saved twice.",
+        context:(s.entries||[]).map(function(en){ return entryName(en); }).join(" · ")}); }
+    (s.entries||[]).forEach(function(en,ei){ const ex=exById(en.exId); const ws=workingSets(en); if(!ex||!ws.length) return;
+      /* repeated identical set blocks (the 13 Sep 2026 shape) */
+      const rep=repeatedBlock(en.sets||[]); if(rep) push({kind:"dup_sets", sev:"warn", sessionId:s.id, date:s.completedAt, exId:en.exId, idx:ei,
+        title:dateStr+" · "+entryName(en)+" sets repeat "+rep.k+"×", value:rep.k+" identical blocks of "+rep.len,
+        why:"The set list is the same block written "+rep.k+" times over. Training does not produce that pattern; a sync race does. Fixed automatically on reload (dqAutoRepair) — or edit to confirm.",
+        context:(en.sets||[]).map(function(x){ return x.type==="warm"?"W":fmtSet(x.weight,x.reps); }).join(" ")});
+      /* too many sets on one entry */
+      if(ws.length>DQ_ENTRY_SETS&&!rep) push({kind:"entry_sets", sev:"info", sessionId:s.id, date:s.completedAt, exId:en.exId, idx:ei,
+        title:dateStr+" · "+entryName(en)+" · "+ws.length+" working sets", value:ws.length+" sets", why:"More than "+DQ_ENTRY_SETS+" logged sets on one exercise is unusual for this log.",
+        context:ws.map(function(x){ return fmtSet(x.weight,x.reps); }).join(" ")});
+      /* swapped reps/weight (all offending sets of an entry in ONE flag), implausible reps */
+      if(loadKind(ex)==="ext"){ const typ=typicalLoad[en.exId]||0; const swapped=[];
+        ws.forEach(function(st,k){ const w=+st.weight||0, r=+st.reps||0;
+        const swappedFits=typ>0&&r>=typ*0.6&&r<=typ*1.6&&w<=DQ_REPS_MAX&&w>0;
+        if(r>DQ_REPS_MAX&&swappedFits&&w<typ*0.5) swapped.push({w:w,r:r});
+        else if(r>DQ_REPS_MAX) push({kind:"reps", sev:"warn", sessionId:s.id, date:s.completedAt, exId:en.exId, idx:ei*100+k,
+          title:dateStr+" · "+entryName(en)+" · "+r+" reps", value:w+" kg × "+r, why:"More than "+DQ_REPS_MAX+" reps on a loaded set. Possible, but worth a look.", context:dqNeighbours(byEx[en.exId],s)});
+        if(r>0&&w===0) push({kind:"zero_load", sev:"info", sessionId:s.id, date:s.completedAt, exId:en.exId, idx:ei*100+k,
+          title:dateStr+" · "+entryName(en)+" · 0 kg × "+r, value:"0 kg", why:"A loaded exercise logged at 0 kg. It counts as a set but carries no strength signal.", context:dqNeighbours(byEx[en.exId],s)}); });
+        if(swapped.length) push({kind:"swapped", sev:"error", sessionId:s.id, date:s.completedAt, exId:en.exId, idx:ei,
+          title:dateStr+" · "+entryName(en)+" · "+swapped.map(function(x){ return x.w+" kg × "+x.r; }).join(", "), value:swapped.length+" set"+(swapped.length===1?"":"s")+" · "+swapped.map(function(x){ return x.w+"×"+x.r; }).join(" "),
+          why:"Reads as reps and weight swapped: "+swapped.map(function(x){ return x.r+" kg × "+x.w; }).join(", ")+" would sit right beside your usual "+Math.round(typ)+" kg on this exercise. Input order is reps → weight. Until fixed, the "+swapped[0].r+"-rep set counts as your best-volume record and the session drags every trend on this lift.",
+          context:dqNeighbours(byEx[en.exId],s)}); }
+    });
+  });
+  /* per-exercise: outliers vs the trailing median, and jumps vs the adjacent session */
+  Object.keys(byEx).forEach(function(id){ const ex=exById(id); const list=byEx[id];
+    list.forEach(function(x,i){ if(i<3) return;
+      const prev=list.slice(Math.max(0,i-5),i).map(function(p){ return p.score; }).filter(function(v){ return v>0; }); if(prev.length<3||!(x.score>0)) return;
+      const med=median(prev); const dev=(x.score-med)/med; const adj=list[i-1]; const jump=(adj&&adj.top.w>0)?(x.top.w-adj.top.w)/adj.top.w:0;
+      const reasons=[];
+      if(Math.abs(dev)>=DQ_OUTLIER) reasons.push("top-set score "+Math.round(x.score)+" is "+Math.round(Math.abs(dev)*100)+"% "+(dev>0?"above":"below")+" the median of the previous "+prev.length+" ("+Math.round(med)+")");
+      /* a big jump that lands back on the exercise's own median is a return from a dip, not an anomaly */
+      if(Math.abs(jump)>=DQ_JUMP&&!isAssisted(ex)&&Math.abs(dev)>=0.15) reasons.push("top load "+x.top.w+" kg vs "+adj.top.w+" kg the session before ("+(jump>0?"+":"")+Math.round(jump*100)+"%)");
+      if(reasons.length){ const already=flags.some(function(f){ return f.kind==="swapped"&&f.sessionId===x.sess.id&&f.exId===id; }); if(already) return;
+        push({kind:"outlier", sev:Math.abs(dev)>=0.4||Math.abs(jump)>=0.6?"warn":"info", sessionId:x.sess.id, date:x.sess.completedAt, exId:id, idx:null,
+          title:fmtDate(x.sess.completedAt)+" · "+ex.name+" · "+fmtTop(ex,x.top), value:fmtTop(ex,x.top),
+          why:reasons.join("; ")+". A different machine, a deload or a typo all look like this — the trend treats it as signal until you say otherwise.",
+          context:dqNeighbours(list,x.sess)}); } }); });
+  const sevRank={error:0,warn:1,info:2};
+  flags.sort(function(a,b){ return (sevRank[a.sev]-sevRank[b.sev])||(new Date(b.date)-new Date(a.date)); });
+  const open=flags.filter(function(f){ return !f.dismissed; });
+  return {flags:flags, open:open, counts:{error:open.filter(function(f){ return f.sev==="error"; }).length, warn:open.filter(function(f){ return f.sev==="warn"; }).length, info:open.filter(function(f){ return f.sev==="info"; }).length}}; }
+function dqNeighbours(list,sess){ if(!list) return ""; const i=list.findIndex(function(x){ return x.sess.id===sess.id; }); if(i<0) return "";
+  const pick=list.slice(Math.max(0,i-2),Math.min(list.length,i+3));
+  return pick.map(function(x){ const me=x.sess.id===sess.id; return (me?"▶ ":"")+fmtDate(x.sess.completedAt).replace(/^\w+ /,"")+": "+x.ws.map(function(st){ return fmtSet(st.weight,st.reps); }).join(" "); }).join("\n"); }
+function sameLoggedSets(a,b){ const key=function(s){ return (s.entries||[]).map(function(en){ return en.exId+":"+workingSets(en).map(function(x){ return (+x.weight)+"x"+(+x.reps); }).join(","); }).filter(function(k){ return !/:$/.test(k); }).sort().join("|"); };
+  const ka=key(a), kb=key(b); return !!ka&&ka===kb; }
+/* [a,b,c,a,b,c,a,b,c] → {k:3,len:3}; requires k>=2 and at least 2 sets per block, warm-ups included */
+function repeatedBlock(sets){ const n=sets.length; if(n<4) return null; const sig=function(s){ return (s.type||"work")+":"+(s.weight===""||s.weight==null?"-":+s.weight)+"x"+(s.reps===""||s.reps==null?"-":+s.reps); };
+  const sigs=sets.map(sig);
+  for(let len=2;len<=n/2;len++){ if(n%len) continue; const k=n/len; let ok=true;
+    for(let i=len;i<n&&ok;i++){ if(sigs[i]!==sigs[i%len]) ok=false; }
+    if(ok){ /* a genuine 3×(10×10) straight-set scheme is [a,a,a]; that has len 1 and is excluded. Alternating
+      pairs like [50×10,40×10,50×10,40×10] are real training, so a two-fold repeat needs 3+ distinct sets */
+      const distinct=new Set(sigs.slice(0,len)).size; if(distinct>=2&&(k>=3||len>=3)) return {k:k,len:len}; } }
+  return null; }
+/* Deterministic repair only: collapse an exact k-fold repeated set block to one block. Returns the
+   number of entries repaired; the session is marked unsynced so the cloud copy is rewritten too. */
+function dqAutoRepair(){ let fixed=0;
+  completedSessions().forEach(function(s){ (s.entries||[]).forEach(function(en){ const rep=repeatedBlock(en.sets||[]); if(!rep||rep.k<3) return;   /* three-fold or more only: the sync-race shape */
+    en.sets=en.sets.slice(0,rep.len); s.synced=false; fixed++; }); });
+  if(fixed){ persistLocal(); try{ S.settings.dqRepairs=(S.settings.dqRepairs||[]).concat([{at:iso(new Date()),entries:fixed}]).slice(-20); }catch(e){} try{ retryUnsynced(); }catch(e){} }
+  return fixed; }
+
+/* ---------------------------------------------------------------- 4 · REP-RANGE COMPLIANCE (prototype)
+   Per exercise, the last 8 exposures: how many working sets fell under, inside and over its own
+   configured range, and a reading that separates "load is too high" from "the range is not how you
+   actually train this". Neither is changed automatically. */
+const RR_WINDOW=8, RR_MIN_EXPOSURES=3;
+function repRangeCompliance(exId){ const ex=exById(exId); if(!ex) return null;
+  const h=exerciseHistory(exId).slice(0,RR_WINDOW); if(h.length<RR_MIN_EXPOSURES) return null;
+  const rl=ex.rl||8, rh=ex.rh||12; let below=0, within=0, above=0, n=0; const repsAll=[]; const tops=[];
+  h.forEach(function(x){ x.sets.forEach(function(s){ const r=+s.reps||0; n++; repsAll.push(r); if(r<rl) below++; else if(r>rh) above++; else within++; }); tops.push(topSetOf(ex,x.sets)); });
+  const pb=Math.round(100*below/n), pw=Math.round(100*within/n), pa=Math.round(100*above/n);
+  const medReps=median(repsAll); const loads=tops.map(function(t){ return t.w; }); const distinctLoads=new Set(loads).size;
+  const newestLoad=loads[0], oldestLoad=loads[loads.length-1]; const loadRose=isAssisted(ex)?newestLoad<oldestLoad:newestLoad>oldestLoad;
+  let reading, lean;
+  if(pb>=50){ if(loadRose&&distinctLoads>=2){ lean="load"; reading="Reps fell under "+rl+" as the load moved from "+oldestLoad+" to "+newestLoad+" kg — the load is probably ahead of the range."; }
+    else if(distinctLoads<=2){ lean="range"; reading="You have trained this at ~"+Math.round(medReps)+" reps on a steady load for "+h.length+" exposures — the "+rl+"–"+rh+" range may not reflect how you want to train it."; }
+    else { lean="mixed"; reading="Mostly under the range with the load moving around — could be either; check the top sets below."; } }
+  else if(pa>=50){ lean="light"; reading="Most sets run past "+rh+" reps — room to add load while staying in range."; }
+  else { lean="ok"; reading="Mostly inside "+rl+"–"+rh+"."; }
+  return {ex:ex, n:n, exposures:h.length, rl:rl, rh:rh, below:below, within:within, above:above, pb:pb, pw:pw, pa:pa, medReps:medReps, tops:tops, lean:lean, reading:reading}; }
+function repRangeBoard(){ const cnt={}; completedSessions().forEach(function(s){ (s.entries||[]).forEach(function(en){ if(workingSets(en).length) cnt[en.exId]=(cnt[en.exId]||0)+1; }); });
+  return Object.keys(cnt).map(function(id){ return repRangeCompliance(id); }).filter(Boolean).sort(function(a,b){ return (b.pb-a.pb)||(b.n-a.n); }); }
+
+/* ---------------------------------------------------------------- 5 · FOUR-WEEK BLOCK REPORT (prototype)
+   The last four COMPLETE weeks against the four before them. Only signals that change a decision. */
+function blockReport(){ const mx=coverageMatrix(); const pc=priorityCoverage(mx);
+  const weeks=mx.weeks.filter(function(w){ return !w.current; }); if(weeks.length<4) return null;
+  const recentW=weeks.slice(-4), prevW=weeks.slice(-8,-4);
+  const blk=function(ws){ if(!ws.length) return null; const sess=[]; ws.forEach(function(w){ sess.push.apply(sess,weekSessionsFor(w.start)); });
+    const sets=sess.reduce(function(a,s){ return a+sessionSets(s); },0); const vol=effectiveSetsByGroup(sess); const n=ws.length;
+    const cov=pc.per.filter(function(p){ return ws.some(function(w){ return w.start===p.week; }); }); const covHit=cov.filter(function(p){ return p.hit; }).length;
+    const from=new Date(ws[0].start), to=new Date(ws[ws.length-1].start); to.setDate(to.getDate()+6);
+    const bws=(S.bodyweight||[]).filter(function(b){ const t=new Date(b.date); return t>=from&&t<=to; }).map(function(b){ return +b.kg; });
+    return {weeks:n, from:from, to:to, sessions:sess.length, perWeek:Math.round(10*sess.length/n)/10, sets:sets, setsPerWeek:Math.round(10*sets/n)/10, byGroup:vol, groupPerWeek:Object.keys(vol).reduce(function(a,k){ a[k]=Math.round(10*vol[k]/n)/10; return a; },{}),
+      coverage:{hit:covHit, of:cov.length}, bodyweight:bws.length?Math.round(median(bws)*10)/10:null, sessionsList:sess}; };
+  const R=blk(recentW), P=blk(prevW); if(!R||!P) return null;
+  /* strength movers: best session score in each block, exercises with 2+ exposures in both */
+  const movers=[]; const idx={}; const collect=function(list,key){ list.forEach(function(s){ (s.entries||[]).forEach(function(en){ const ex=exById(en.exId); const ws=workingSets(en); if(!ex||!ws.length) return;
+      const o=(idx[en.exId]=idx[en.exId]||{ex:ex,R:[],P:[]}); o[key].push(sessionStrength(ex,ws,bodyweightAt(s.completedAt))); }); }); };
+  collect(R.sessionsList,"R"); collect(P.sessionsList,"P");
+  Object.values(idx).forEach(function(o){ if(o.R.length<2||o.P.length<2) return; const r=Math.max.apply(null,o.R), p=Math.max.apply(null,o.P); if(!(p>0)||!(r>0)) return;
+    movers.push({ex:o.ex, recent:r, prev:p, pct:Math.round(100*(r-p)/p), nR:o.R.length, nP:o.P.length}); });
+  movers.sort(function(a,b){ return b.pct-a.pct; });
+  const stalled=stallBoard().filter(function(a){ return a.state==="plateau"; });
+  const groupDelta=Object.keys(R.groupPerWeek).map(function(k){ return {key:k, label:groupLabel(k), r:R.groupPerWeek[k], p:P.groupPerWeek[k]||0, d:Math.round(10*(R.groupPerWeek[k]-(P.groupPerWeek[k]||0)))/10}; })
+    .filter(function(g){ return g.r>0||g.p>0; }).sort(function(a,b){ return Math.abs(b.d)-Math.abs(a.d); });
+  return {recent:R, prev:P, movers:movers, up:movers.filter(function(m){ return m.pct>=3; }).slice(0,3), down:movers.filter(function(m){ return m.pct<=-3; }).slice(-3).reverse(), stalled:stalled, groups:groupDelta}; }
+
+/* ---------------------------------------------------------------- 6 · CALENDAR STRIP + FINER TRAINING TIME (prototype) */
+const CAL_WEEKS=12;
+function calendarStrip(nWeeks){ const n=nWeeks||CAL_WEEKS; const base=startOfWeek(); const cols=[];
+  const byDay={}; completedSessions().forEach(function(s){ const k=dayKey(s.completedAt); (byDay[k]=byDay[k]||[]).push(s); });
+  for(let i=n-1;i>=0;i--){ const st=new Date(base); st.setDate(st.getDate()-i*7); const days=[];
+    for(let d=0;d<7;d++){ const dt=new Date(st); dt.setDate(dt.getDate()+d); const list=byDay[dayKey(dt)]||[]; const sets=list.reduce(function(a,s){ return a+sessionSets(s); },0);
+      days.push({date:dt, n:list.length, sets:sets, future:dt>new Date(), today:dayKey(dt)===dayKey(new Date())}); }
+    cols.push({start:st, current:i===0, days:days, sessions:days.reduce(function(a,d){ return a+d.n; },0)}); }
+  /* gaps: longest run of days without training inside the window, ending in the past */
+  let gap=0, best=0, bestEnd=null; cols.forEach(function(c){ c.days.forEach(function(d){ if(d.future) return; if(d.n) gap=0; else { gap++; if(gap>best){ best=gap; bestEnd=d.date; } } }); });
+  return {cols:cols, longestGap:best, longestGapEnd:bestEnd, currentGap:gap}; }
+/* Six buckets instead of four. A session whose recorded time is the exact-noon placeholder that
+   old builds and re-dated edits write is only placed when its logging time falls on the same day;
+   otherwise it is counted as "time unknown" rather than pretending. */
+const TOD6=[["Before 9am",0,9],["9am–12pm",9,12],["12–3pm",12,15],["3–6pm",15,18],["6–9pm",18,21],["After 9pm",21,24]];
+function sessionClock(s){ const c=new Date(s.completedAt); const placeholder=c.getHours()===12&&c.getMinutes()===0&&c.getSeconds()===0;
+  if(!placeholder) return c; const st=s.startedAt?new Date(s.startedAt):null;
+  if(st&&dayKey(st)===dayKey(c)&&!(st.getHours()===12&&st.getMinutes()===0&&st.getSeconds()===0)) return st; return null; }
+function timeOfDayCounts6(){ const out=TOD6.map(function(b){ return {label:b[0], n:0}; }); let unknown=0;
+  completedSessions().forEach(function(s){ const t=sessionClock(s); if(!t){ unknown++; return; } const h=t.getHours(); TOD6.forEach(function(b,i){ if(h>=b[1]&&h<b[2]) out[i].n++; }); });
+  return {buckets:out, unknown:unknown, total:completedSessions().length}; }
+
+/* ---------------------------------------------------------------- 7 · STRENGTH INDEX BY MUSCLE GROUP (prototype)
+   Each exercise's session strength (direction-aware e1RM, or top-set score for high-rep work) is
+   indexed to the median of its first three exposures = 100 (a median, so one mis-typed early session
+   cannot set the baseline). A group's index is the median of the CURRENT
+   index of its member exercises (primary muscle in the group, 5+ exposures). Confidence is stated,
+   and a group with one member or under 10 supporting exposures is shown as such, not as a number
+   to trust. */
+const SI_MIN_EXPOSURES=5, SI_LOW_EXPOSURES=10;
+function strengthIndex(){ const groups={};
+  MUSCLE_GROUPS.forEach(function(g){ groups[g.key]={key:g.key, label:g.label, members:[], exposures:0}; });
+  const cnt={}; completedSessions().forEach(function(s){ (s.entries||[]).forEach(function(en){ if(workingSets(en).length) cnt[en.exId]=(cnt[en.exId]||0)+1; }); });
+  Object.keys(cnt).forEach(function(id){ const ex=exById(id); if(!ex) return; const g=exGroup(ex); if(!g||!groups[g]) return;
+    const h=exerciseHistory(id).slice().reverse(); const ser=h.map(function(x){ return sessionStrength(ex,x.sets,x.bw); }).filter(function(v){ return v>0; });
+    if(ser.length<SI_MIN_EXPOSURES) { groups[g].members.push({ex:ex, n:ser.length, index:null, thin:true}); return; }
+    const base=median(ser.slice(0,3)); if(!(base>0)) return;          /* median of the first three: one bad early entry cannot set the baseline */
+    const cur=median(ser.slice(-3));                                   /* median of the last three, so one session cannot swing it */
+    const stale=exerciseTrendData(id).stale;
+    groups[g].members.push({ex:ex, n:ser.length, index:Math.round(100*cur/base), peak:Math.round(100*Math.max.apply(null,ser)/base), stale:stale, thin:false});
+    if(!stale) groups[g].exposures+=ser.length; });
+  return Object.values(groups).map(function(g){ const live=g.members.filter(function(m){ return m.index!=null&&!m.stale; });
+    const idx=live.length?Math.round(median(live.map(function(m){ return m.index; }))):null;
+    const conf=!live.length?"none":(live.length<2||g.exposures<SI_LOW_EXPOSURES)?"low":"ok";
+    return Object.assign(g,{index:idx, live:live.length, conf:conf}); }).filter(function(g){ return g.members.length; })
+    .sort(function(a,b){ return (b.live-a.live)||(b.exposures-a.exposures); }); }
+
+/* ---------------------------------------------------------------- v16 · STATS SECTIONS
+   Stats is long by design now, so every area is a collapsible section. Open/closed state is kept per
+   device (the same store Settings uses), with a per-section default: the four questions open, the
+   prototypes closed. The body of a closed section is not rendered at all. */
+function sectionOpenD(k,def){ return Object.prototype.hasOwnProperty.call(setOpen,k)?!!setOpen[k]:!!def; }
+function statsSection(key,title,sub,bodyFn,defOpen,badge){
+  const open=sectionOpenD(key,defOpen);
+  return '<div class="card ssec'+(open?' open':'')+'" style="padding:0;overflow:hidden">'
+    +'<div data-section="'+key+'" data-secdef="'+(defOpen?1:0)+'" class="ssec-hd">'
+    +'<div style="flex:1;min-width:0"><div class="tiny" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'+title+(badge?'<span class="protobadge">'+badge+'</span>':'')+'</div>'+(sub?'<div class="histline" style="margin-top:2px">'+sub+'</div>':'')+'</div>'
+    +'<span class="muted" style="font-size:15px;flex:none">'+(open?'−':'+')+'</span></div>'
+    +(open?'<div class="ssec-bd">'+bodyFn()+'</div>':'')+'</div>'; }
+
+/* ---------------------------------------------------------------- COVERAGE MATRIX CARD */
+function fmtCov(v){ return v<=0?'·':(v>=10?String(Math.round(v)):String(v)); }
+const COV_GROUP_META={priority:{label:"Priority",sub:"tier: primary focus · counts toward priority coverage",def:true},
+  secondary:{label:"Secondary",sub:"tier: secondary · shown, not scored",def:false},
+  maintenance:{label:"Maintenance / out of scope",sub:"maintenance tier, or minimum set to 0",def:false}};
+function priorityCoverageBlock(pc){
+  if(!pc.active) return '<div class="empty" style="padding:12px">No muscle is set to the primary tier with a minimum above 0, so there is nothing to score. Set priorities in Settings.</div>';
+  const col=pc.pct>=75?"var(--green)":pc.pct>=50?"var(--amber)":"var(--red)";
+  const cur=pc.current?('This week so far: <b>'+pc.current.covered+' of '+pc.current.of+'</b>'+(pc.current.missed.length&&!pc.current.hit?' · still to reach minimum: '+pc.current.missed.join(", "):' · all covered')):'';
+  const streak=pc.streaks.length?pc.streaks.slice(0,2).map(function(s){ return s.label+': missed the last '+s.misses+' week'+(s.misses===1?'':'s'); }).join(' · '):'Every priority muscle reached its minimum last week.';
+  return '<div class="pcov"><div class="pcov-n"><b style="color:'+col+'">'+pc.hit+'<i>/'+pc.weeks+'</i></b><span>complete weeks where every active priority muscle ('+pc.active+') reached its minimum · <b style="color:'+col+';font-size:13px">'+pc.pct+'%</b></span></div>'
+    +'<div class="pcov-grid">'
+    +'<div><b>'+pc.last4.hit+'/'+pc.last4.of+'</b><span>last 4 weeks</span></div>'
+    +(pc.last10.of>=10?'<div><b>'+pc.last10.hit+'/'+pc.last10.of+'</b><span>last 10 weeks</span></div>':'')
+    +'<div><b>'+pc.active+'</b><span>priority muscles scored</span></div></div>'
+    +'<div class="histline" style="margin-top:8px">'+streak+'</div>'
+    +(cur?'<div class="histline">'+cur+'</div>':'')
+    +'</div>'; }
+function covMatrixCard(){
+  const mx=coverageMatrix(); const pc=priorityCoverage(mx); const weeks=mx.weeks;
+  /* two columns: a fixed label rail on the left, the week cells in a horizontal scroller on the right.
+     Row heights are fixed on both sides so they stay aligned. */
+  let labels='<div class="cov-lrow cov-lhead"></div>';
+  let head='<tr class="cov-r cov-head"><th></th>'+weeks.map(function(w){ return '<th class="cov-wk'+(w.current?' cur':'')+'" title="Week of '+fmtDate(w.start)+'">'+fmtWeekLabel(w.start)+'</th>'; }).join("")+'<th class="cov-end">hit</th><th class="cov-end">10-wk</th></tr>';
+  let body='';
+  ["priority","secondary","maintenance"].forEach(function(g){ const meta=COV_GROUP_META[g]; const list=mx.groups[g]; const key="cov:"+g; const open=sectionOpenD(key,meta.def);
+    labels+='<div class="cov-lrow cov-lgrp" data-section="'+key+'" data-secdef="'+(meta.def?1:0)+'"><span class="cov-grp-t">'+(open?'−':'+')+' '+meta.label+' · '+list.length+'</span><span class="cov-grp-s">'+meta.sub+'</span></div>';
+    body+='<tr class="cov-r cov-grow" data-section="'+key+'" data-secdef="'+(meta.def?1:0)+'"><td colspan="'+(weeks.length+3)+'"></td></tr>';
+    if(!open||!list.length) return;
+    list.forEach(function(r){
+      labels+='<div class="cov-lrow"><span class="cov-m">'+r.label+'</span><small>'+(r.outOfScope?'min 0 · out of scope':'min '+r.min+' · cap '+r.cap)+'</small></div>';
+      body+='<tr class="cov-r"><td></td>'+r.cells.map(function(c){ const tip=r.label+' · week of '+fmtDate(c.week)+' · '+c.v+' effective sets ('+(r.outOfScope?'no minimum':'min '+r.min+', cap '+r.cap)+')';
+          return '<td class="cov-c '+(r.outOfScope&&c.status==='low'?'ok':c.status)+(c.current?' cur':'')+'" data-covcell="'+r.m+'|'+c.week+'" title="'+tip+'">'+fmtCov(c.v)+'</td>'; }).join("")
+        +'<td class="cov-end">'+(r.outOfScope?'—':r.hit+'/'+r.complete)+'</td><td class="cov-end">'+r.avg10+'</td></tr>'; }); });
+  return '<div class="card"><div class="tiny">Priority coverage</div>'+priorityCoverageBlock(pc)+'</div>'
+    +'<div class="card"><div class="tiny">Effective sets per muscle · week by week</div>'
+    +'<div class="histline" style="margin-top:2px">'+(weeks.length>COV_VIEW?'Latest weeks in view · swipe left for older · tap a cell for the exercises behind it':'Tap a cell for the exercises behind it')+'</div>'
+    +'<div class="cov-wrap"><div class="cov-labels">'+labels+'</div><div class="wscroll cov-scroll" data-wscroll><table class="cov">'+head+body+'</table></div></div>'
+    +'<div class="cov-legend"><span><i class="ok"></i>at or above minimum</span><span><i class="low"></i>below minimum</span><span><i class="over"></i>over cap</span><span><i class="zero"></i>not trained</span></div>'
+    +'<div class="histline" style="margin-top:8px">hit = complete weeks at or above minimum · 10-wk = average effective sets over the last 10 complete weeks · the in-progress week is outlined and not scored</div></div>'; }
+function covCellSheet(data){ const pr=data.split("|"); const m=pr[0], week=pr[1]; const cfg=S.muscles[m]||{label:m,min:0,cap:0}; const c=cellContributors(m,week);
+  const st=new Date(week); const en=new Date(st); en.setDate(en.getDate()+6);
+  const rows=c.rows.length?c.rows.map(function(r){ return '<div class="contrib"><div><b>'+r.name+'</b><div class="muted" style="font-size:12px;margin-top:2px">'+r.sets+' working set'+(r.sets===1?'':'s')+' × '+fmtCredit(r.credit)+' credit · '+[...new Set(r.dates.map(function(d){ return fmtDate(d); }))].join(", ")+'</div></div><span class="c-ef">'+(Math.round(r.effective*10)/10)+'</span></div>'; }).join(""):'<div class="empty">Nothing credited to '+cfg.label.toLowerCase()+' that week.</div>';
+  return '<div class="tiny">'+cfg.label+' · week of '+fmtDate(st)+' – '+fmtDate(en)+'</div>'
+    +'<div style="margin-top:8px;font-weight:700;font-size:16px">'+(Math.round(c.total*10)/10)+' effective sets <span class="muted" style="font-weight:500;font-size:13px">· '+(cfg.min>0?'min '+cfg.min+' · cap '+cfg.cap:'no minimum set')+' · '+c.sessions+' session'+(c.sessions===1?'':'s')+'</span></div>'
+    +'<div class="histline">'+(Math.round(c.direct*10)/10)+' direct (credit 1.0) · '+(Math.round(c.secondary*10)/10)+' secondary (0.5 / 0.25)</div>'
+    +'<div style="margin-top:8px">'+rows+'</div>'; }
+
+/* ---------------------------------------------------------------- STALL CARD */
+function stallRow(a,showNext){ const meta=STALL_META[a.state]||STALL_META.insufficient;
+  const evidence=a.state==="insufficient"?(a.n+' of '+STALL_MIN_N+' exposures'):(a.why&&a.why[0]||'');
+  return '<div class="stall" data-exhist="'+a.exId+'"><div class="stall-main"><div class="stall-nm">'+a.ex.name+' <span class="muted" style="font-weight:500;font-size:11px">· '+a.n+' exposures</span></div>'
+    +'<div class="stall-ev">'+evidence+'</div>'+(showNext&&a.next?'<div class="stall-next">→ '+a.next.text+'</div>':'')+'</div>'
+    +'<span class="statuspill" style="background:'+meta.c+'22;color:'+meta.c+';flex:none">'+meta.icon+' '+meta.label+'</span></div>'; }
+let stallShowAll=false;
+function stallCard(){ const all=stallBoard(); const by=function(st){ return all.filter(function(a){ return a.state===st; }); };
+  const plateau=by("plateau"), below=by("below"), belowCtx=by("below_context"), prog=by("progressing"), stable=by("stable"), thin=by("insufficient"), stale=by("stale");
+  const summary=[['plateau',plateau.length,'likely plateau'],['below',below.length,'below baseline'],['below_context',belowCtx.length,'below · context'],['progressing',prog.length,'progressing'],['stable',stable.length,'stable']]
+    .filter(function(x){ return x[1]>0; }).map(function(x){ const m=STALL_META[x[0]]; return '<span class="stall-sum" style="color:'+m.c+'"><b>'+x[1]+'</b> '+x[2]+'</span>'; }).join("");
+  const lead=plateau.concat(below,belowCtx); const rest=prog.concat(stable);
+  const body=(lead.length?lead.map(function(a){ return stallRow(a,a.state==="plateau"); }).join(""):'<div class="empty" style="padding:10px">No plateau or below-baseline pattern on any current exercise.</div>')
+    +(rest.length?'<div style="margin-top:8px"><button class="btn sm" data-stallall style="width:100%">'+(stallShowAll?'Hide':'Show')+' '+rest.length+' progressing / stable'+(thin.length?' · '+thin.length+' with too little data':'')+(stale.length?' · '+stale.length+' not recently trained':'')+'</button></div>':'')
+    +(stallShowAll?'<div style="margin-top:6px">'+rest.concat(thin,stale).map(function(a){ return stallRow(a,false); }).join("")+'</div>':'');
+  return '<div class="card"><div class="tiny">Progression &amp; stalls · top-set double progression</div>'
+    +'<div class="stall-sums">'+(summary||'<span class="muted">No exercise has 5 exposures yet.</span>')+'</div>'
+    +'<div class="histline" style="margin:4px 0 8px">A lift improves when its top set carries more load at comparable reps, or more reps at the same load. A plateau is '+STALL_SINCE+'+ sessions without an improvement and '+STALL_SAME+'+ in a row at the same top set. Tap a row for the full read and the suggested next step.</div>'
+    +body+'</div>'; }
+/* the block shown inside the exercise detail sheet — where a recommendation belongs */
+function stallDetailBlock(exId){ const a=stallAssess(exId); const meta=STALL_META[a.state]||STALL_META.insufficient;
+  const why=(a.why||[]).map(function(w){ return '<div class="histline" style="margin-top:3px">'+w+'</div>'; }).join("");
+  const facts=a.state==="insufficient"?'':('<div class="histline" style="margin-top:5px"><b>Best top set:</b> '+fmtTop(a.ex,a.best)+(a.best&&a.best.date?' ('+fmtDate(a.best.date)+')':'')+' · <b>last:</b> '+fmtTop(a.ex,a.last)
+      +(a.sinceE1!=null?' · <b>e1RM best:</b> '+Math.round(a.e1best)+' kg, '+a.sinceE1+' session'+(a.sinceE1===1?'':'s')+' ago':'')+'</div>');
+  return '<div class="card" style="margin:8px 0 0;padding:10px 12px;background:var(--panel2)"><div class="tiny" style="display:flex;justify-content:space-between;gap:8px;align-items:center"><span>Progression read</span><span class="statuspill" style="background:'+meta.c+'22;color:'+meta.c+'">'+meta.icon+' '+meta.label+'</span></div>'
+    +why+facts+(a.next?'<div class="histline" style="margin-top:6px;color:var(--accent)">→ '+a.next.text+'</div>':'')+'</div>'; }
+
+/* ---------------------------------------------------------------- DATA QUALITY CARD + REVIEW SHEET */
+const DQ_SEV={error:{c:"var(--red)",label:"Likely error"},warn:{c:"var(--amber)",label:"Check"},info:{c:"var(--muted)",label:"Note"}};
+let dqShowDismissed=false;
+function dqCard(){ const scan=dataQualityScan(); const n=scan.open.length;
+  const sums=[['error',scan.counts.error],['warn',scan.counts.warn],['info',scan.counts.info]].filter(function(x){ return x[1]>0; }).map(function(x){ return '<span class="stall-sum" style="color:'+DQ_SEV[x[0]].c+'"><b>'+x[1]+'</b> '+DQ_SEV[x[0]].label.toLowerCase()+(x[1]===1?'':'s')+'</span>'; }).join("");
+  const top=scan.open.slice(0,3).map(function(f){ return '<div class="dq-row" data-dq="'+f.id+'"><span class="dq-dot" style="background:'+DQ_SEV[f.sev].c+'"></span><div style="flex:1;min-width:0"><div class="dq-t">'+f.title+'</div><div class="dq-w">'+f.why+'</div></div></div>'; }).join("");
+  const repairs=(S.settings.dqRepairs||[]).length;
+  return '<div class="card"><div class="tiny">Data quality · whole history scanned</div>'
+    +'<div class="stall-sums">'+(n?sums:'<span class="muted">Nothing suspicious in '+completedSessions().length+' workouts.</span>')+'</div>'
+    +(n?'<div class="histline" style="margin:4px 0 8px">Nothing here is changed automatically. Review each flag: edit the workout, or dismiss it if it is right as logged.</div>'+top:'')
+    +(n?'<button class="btn sm full" data-dq="all" style="margin-top:8px">Review '+n+' flag'+(n===1?'':'s')+(scan.flags.length>n?' · '+(scan.flags.length-n)+' dismissed':'')+'</button>':(scan.flags.length?'<button class="btn sm ghost full" data-dq="all" style="margin-top:6px">'+scan.flags.length+' dismissed flag'+(scan.flags.length===1?'':'s')+'</button>':''))
+    +(repairs?'<div class="histline" style="margin-top:8px">'+repairs+' automatic repair'+(repairs===1?'':'s')+' of exact repeated set blocks on record (Settings → Data).</div>':'')
+    +'</div>'; }
+function dqSheet(){ const scan=dataQualityScan(); const list=dqShowDismissed?scan.flags:scan.open;
+  const rows=list.length?list.map(function(f){ const sv=DQ_SEV[f.sev];
+    return '<div class="dq-item'+(f.dismissed?' dismissed':'')+'"><div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start"><div style="flex:1;min-width:0"><div class="dq-t">'+f.title+'</div><div class="histline" style="margin-top:2px"><b style="color:'+sv.c+'">'+sv.label+'</b> · '+f.value+'</div></div></div>'
+      +'<div class="dq-w" style="margin-top:6px">'+f.why+'</div>'
+      +(f.context?'<div class="dq-ctx">'+escAttr(f.context)+'</div>':'')
+      +'<div class="row" style="margin-top:8px;gap:6px"><button class="btn sm" data-dqedit="'+f.sessionId+'" style="flex:1">Edit workout</button>'
+      +(f.dismissed?'<button class="btn sm ghost" data-dqrestore="'+escAttr(f.id)+'" style="flex:1">Restore</button>':'<button class="btn sm ghost" data-dqdismiss="'+escAttr(f.id)+'" style="flex:1">Dismiss · it’s right</button>')+'</div></div>'; }).join("")
+    :'<div class="empty">No open flags.</div>';
+  return '<div class="tiny">Data quality review · '+scan.open.length+' open'+(scan.flags.length-scan.open.length?' · '+(scan.flags.length-scan.open.length)+' dismissed':'')+'</div>'
+    +'<div class="histline" style="margin:6px 0 8px">Whole history, every render. ▶ marks the flagged session in the context lines; dismissed flags stay dismissed on every device.</div>'
+    +(scan.flags.length>scan.open.length?'<button class="btn sm ghost" data-dqtoggle style="margin-bottom:8px">'+(dqShowDismissed?'Hide':'Show')+' dismissed</button>':'')
+    +rows; }
+
+/* ---------------------------------------------------------------- PROTOTYPE 4 · REP-RANGE COMPLIANCE */
+function repRangeCard(){ const list=repRangeBoard(); if(!list.length) return '<div class="card"><div class="empty">Needs '+RR_MIN_EXPOSURES+'+ exposures of an exercise.</div></div>';
+  const rows=list.map(function(r){ const lean={load:["Load probably ahead of the range","var(--amber)"],range:["Range may not match how you train it","var(--gold)"],mixed:["Mixed — check the top sets","var(--muted)"],light:["Room to add load","var(--accent)"],ok:["In range","var(--green)"]}[r.lean];
+    const bar='<div class="rr-bar"><i class="b" style="width:'+r.pb+'%"></i><i class="w" style="width:'+r.pw+'%"></i><i class="a" style="width:'+r.pa+'%"></i></div>';
+    return '<div class="rr" data-exhist="'+r.ex.id+'"><div class="rr-hd"><div class="stall-nm">'+r.ex.name+'</div><div class="histline" style="margin:0">target '+r.rl+'–'+r.rh+' · last '+r.exposures+' exposures · '+r.n+' sets</div><span class="statuspill" style="background:'+lean[1]+'22;color:'+lean[1]+'">'+lean[0]+'</span></div>'
+      +bar+'<div class="rr-nums"><span style="color:var(--red)">'+r.pb+'% below</span><span style="color:var(--green)">'+r.pw+'% within</span><span style="color:var(--blue)">'+r.pa+'% above</span><span class="muted">median '+r.medReps+' reps</span></div>'
+      +'<div class="histline" style="margin-top:4px">'+r.reading+'</div></div>'; }).join("");
+  return '<div class="card"><div class="tiny">Rep-range compliance · last '+RR_WINDOW+' exposures per exercise</div>'
+    +'<div class="histline" style="margin:2px 0 8px">Share of working sets under, inside and over each exercise’s own configured range. The reading separates a load that has run ahead of the range from a range that no longer describes how you train the lift. Neither is changed automatically — edit the range in Settings → Exercise management if the range is the thing that is wrong.</div>'
+    +rows+'</div>'; }
+
+/* ---------------------------------------------------------------- PROTOTYPE 5 · BLOCK REPORT */
+function fmtRange(a,b){ const f=function(d){ return new Date(d).toLocaleDateString("en-AU",{day:"numeric",month:"short"}); }; return f(a)+' – '+f(b); }
+function deltaStr(r,p,unit,dec){ const d=Math.round((r-p)*(dec?10:1))/(dec?10:1); if(!d) return '<span class="muted">no change</span>'; return '<span style="color:'+(d>0?'var(--green)':'var(--red)')+'">'+(d>0?'+':'')+d+(unit||'')+'</span>'; }
+function blockReportCard(){ const b=blockReport(); if(!b) return '<div class="card"><div class="empty">Needs 8 complete weeks (4 + 4) to compare blocks.</div></div>';
+  const R=b.recent, P=b.prev;
+  const kpi=function(label,rv,pv,unit,dec){ return '<div class="blk-k"><span>'+label+'</span><b>'+rv+(unit||'')+'</b><small>vs '+pv+(unit||'')+' · '+deltaStr(rv,pv,unit,dec)+'</small></div>'; };
+  const groups=b.groups.slice(0,6).map(function(g){ return '<div class="contrib" style="padding:6px 0"><div><b>'+g.label+'</b><div class="muted" style="font-size:12px">'+g.r+' vs '+g.p+' effective sets / week</div></div><span class="c-ef">'+deltaStr(g.r,g.p,'',true)+'</span></div>'; }).join("");
+  const mover=function(m){ return '<div class="contrib" style="padding:6px 0"><div><b>'+m.ex.name+'</b><div class="muted" style="font-size:12px">best '+Math.round(m.recent)+' vs '+Math.round(m.prev)+' ('+m.nR+' / '+m.nP+' exposures)</div></div><span class="c-ef" style="color:'+(m.pct>0?'var(--green)':'var(--red)')+'">'+(m.pct>0?'+':'')+m.pct+'%</span></div>'; };
+  return '<div class="card"><div class="tiny">Block report · '+fmtRange(R.from,R.to)+' vs '+fmtRange(P.from,P.to)+'</div>'
+    +'<div class="histline" style="margin-top:2px">Last four complete weeks against the four before them. Only what changed a lot is worth reading.</div>'
+    +'<div class="blk-grid">'+kpi('Sessions / wk',R.perWeek,P.perWeek,'',true)+kpi('Working sets / wk',R.setsPerWeek,P.setsPerWeek,'',true)+'<div class="blk-k"><span>Priority coverage</span><b>'+R.coverage.hit+'/'+R.coverage.of+'</b><small>vs '+P.coverage.hit+'/'+P.coverage.of+' · '+deltaStr(R.coverage.hit,P.coverage.hit,' wk',false)+'</small></div>'
+    +(R.bodyweight!=null&&P.bodyweight!=null?kpi('Bodyweight (median)',R.bodyweight,P.bodyweight,' kg',true):'<div class="blk-k"><span>Bodyweight</span><b>—</b><small>log bodyweight in both blocks to compare</small></div>')+'</div>'
+    +'<div class="tiny" style="margin-top:12px">Effective sets by group · biggest moves</div><div style="margin-top:4px">'+(groups||'<div class="empty" style="padding:8px">—</div>')+'</div>'
+    +'<div class="tiny" style="margin-top:12px">Strength movers · best session score, 2+ exposures in each block</div><div style="margin-top:4px">'+(b.up.map(mover).join("")+b.down.map(mover).join("")||'<div class="empty" style="padding:8px">No exercise moved 3% or more.</div>')+'</div>'
+    +(b.stalled.length?'<div class="tiny" style="margin-top:12px">Stalled lifts</div><div class="histline" style="margin-top:4px">'+b.stalled.map(function(a){ return a.ex.name+' ('+a.sinceBest+' sessions since best)'; }).join(' · ')+'</div>':'')
+    +'</div>'; }
+
+/* ---------------------------------------------------------------- PROTOTYPE 6 · CALENDAR STRIP + TRAINING TIME */
+function calendarCard(){ const cal=calendarStrip(CAL_WEEKS); const names=["M","T","W","T","F","S","S"];
+  const grid='<div class="cal"><div class="cal-days">'+names.map(function(n){ return '<span>'+n+'</span>'; }).join("")+'</div>'
+    +cal.cols.map(function(c){ return '<div class="cal-col'+(c.current?' cur':'')+'" title="Week of '+fmtDate(c.start)+' · '+c.sessions+' session'+(c.sessions===1?'':'s')+'"><span class="cal-w">'+fmtWeekLabel(c.start)+'</span>'
+      +c.days.map(function(d){ const lvl=d.n?(d.sets>=18?3:d.sets>=12?2:1):0; return '<i class="cal-d l'+lvl+(d.future?' fut':'')+(d.today?' today':'')+'" title="'+fmtDate(d.date)+(d.n?' · '+d.sets+' sets':'')+'"></i>'; }).join("")+'</div>'; }).join("")+'</div>';
+  const tod=timeOfDayCounts6(); const max=Math.max.apply(null,[1].concat(tod.buckets.map(function(b){ return b.n; })));
+  const todRows=tod.buckets.map(function(b){ return '<div class="exline" style="padding:5px 0"><div style="flex:1"><div class="nm" style="font-size:13px">'+b.label+'</div><div class="bar" style="margin-top:4px"><i style="width:'+Math.round(b.n/max*100)+'%"></i></div></div><span class="mono" style="margin-left:10px">'+b.n+'</span></div>'; }).join("");
+  const placed=tod.total-tod.unknown; const top=tod.buckets.slice().sort(function(p,q){ return q.n-p.n; })[0];
+  return '<div class="card"><div class="tiny">Training calendar · last '+CAL_WEEKS+' weeks</div>'
+    +'<div class="histline" style="margin-top:2px">Rhythm and gaps at a glance. Darker = more working sets. '+(cal.longestGap>=3?'Longest gap: <b>'+cal.longestGap+' days</b> ending '+fmtDate(cal.longestGapEnd)+'.':'')+(cal.currentGap>=2?' Currently '+cal.currentGap+' days since the last session.':'')+'</div>'
+    +'<div class="wscroll" data-wscroll style="margin-top:10px">'+grid+'</div>'
+    +'<div class="tiny" style="margin-top:14px">Training time · '+placed+' of '+tod.total+' sessions placed</div>'
+    +'<div style="margin-top:4px">'+todRows+'</div>'
+    +'<div class="histline" style="margin-top:6px">'+(top&&top.n?'Most common: <b>'+top.label+'</b> · '+top.n+' of '+placed+'. ':'')+(tod.unknown?tod.unknown+' session'+(tod.unknown===1?'':'s')+' carry the noon placeholder time from a re-dated edit or an older build and are left out rather than guessed.':'')+'</div></div>'; }
+
+/* ---------------------------------------------------------------- PROTOTYPE 7 · STRENGTH INDEX */
+function strengthIndexCard(){ const groups=strengthIndex(); if(!groups.length) return '<div class="card"><div class="empty">No exercise has '+SI_MIN_EXPOSURES+' exposures yet.</div></div>';
+  const rows=groups.map(function(g){ const conf={ok:["",'var(--green)'],low:["low confidence",'var(--amber)'],none:["no scorable lift",'var(--muted)']}[g.conf];
+    const idx=g.index==null?'—':(g.conf==="low"?'~'+g.index:String(g.index));
+    const members=g.members.map(function(m){ return '<div class="contrib" style="padding:5px 0"><div><b>'+m.ex.name+'</b><div class="muted" style="font-size:12px">'+m.n+' exposure'+(m.n===1?'':'s')+(m.thin?' · below the '+SI_MIN_EXPOSURES+' needed':'')+(m.stale?' · not recently trained':'')+(m.peak&&!m.thin?' · peak '+m.peak:'')+'</div></div><span class="c-ef" style="color:'+(m.index==null?'var(--faint)':m.index>=103?'var(--green)':m.index<=97?'var(--red)':'var(--accent)')+'">'+(m.index==null?'—':m.index)+'</span></div>'; }).join("");
+    return '<div class="si"><div class="si-hd"><div><div class="stall-nm">'+g.label+'</div><div class="histline">'+g.live+' scorable lift'+(g.live===1?'':'s')+' · '+g.exposures+' supporting exposures'+(conf[0]?' · <b style="color:'+conf[1]+'">'+conf[0]+'</b>':'')+'</div></div><b class="si-n" style="color:'+(g.index==null?'var(--faint)':conf[1])+'">'+idx+'</b></div>'+members+'</div>'; }).join("");
+  return '<div class="card"><div class="tiny">Strength index by muscle group · first three exposures = 100</div>'
+    +'<div class="histline" style="margin:2px 0 8px">Each lift’s session strength (direction-aware e1RM, or top-set score for high-rep work) indexed to its own start; a group is the median of its lifts’ current index. A group on one lift or under '+SI_LOW_EXPOSURES+' exposures is marked low confidence and shown as ~, not as a number to plan around.</div>'
+    +rows+'</div>'; }
+
 /* ---------------------------------------------------------------- v11 INSIGHTS
    Cut back to insights that carry a number, a chart or a date. Removed outright: the 0-100
    momentum score and its ring, "Momentum: strong", "Best next move", and the all-time
@@ -3973,33 +4582,36 @@ function insightsBlock(){ const cards=[];
    "best week" milestone and the week streak. Each was interpretation or an all-time trophy
    rather than a number, a chart or a date. */
 function viewStats(){
+  try{ dqAutoRepair(); }catch(e){}                                   /* v16: integrity before analytics */
   const pBtns=[["week","Week"],["30","30d"],["90","90d"],["all","All"]].map(([v,l])=>'<button data-statsperiod="'+v+'" class="'+(statsPeriod===v?'on':'')+'">'+l+'</button>').join("");
   /* most-used now carries usage count, sparkline AND the change, per the same row grammar */
-  const mu=mostUsedExercises(6); const mumax=Math.max(1,...mu.map(x=>x.n));
-  const muRows=mu.length?mu.map(x=>'<div class="exline" data-exhist="'+x.ex.id+'" style="padding:7px 0;cursor:pointer">'
+  const muRows=function(){ const mu=mostUsedExercises(6); const mumax=Math.max(1,...mu.map(x=>x.n));
+    return mu.length?mu.map(x=>'<div class="exline" data-exhist="'+x.ex.id+'" style="padding:7px 0;cursor:pointer">'
     +'<div style="flex:1;min-width:0"><div class="nm" style="font-size:13px">'+(x.ex?x.ex.name:'?')+'</div>'
     +'<div class="bar" style="margin-top:5px"><i style="width:'+Math.round(x.n/mumax*100)+'%"></i></div></div>'
-    +miniSpark(x.ex.id)+'<span class="sets" style="margin-left:8px">'+x.n+'</span><span style="margin-left:6px">'+trendBadge(x.ex.id)+'</span></div>').join(""):'<div class="empty" style="padding:16px">Nothing logged.</div>';
-  const weekTop=statsPeriod==="week"?weekSummaryCard():"";
-  const hdr=function(t,c){ return '<div style="display:flex;align-items:center;gap:8px;margin:18px 2px 2px"><div class="tiny" style="font-size:13px;letter-spacing:.02em;text-transform:none;color:'+(c||"var(--text)")+';font-weight:700">'+t+'</div></div>'; };
-  return progressionBoardCard()
-    +recentAchievementsCard(6)
-    +insightsBlock()
-    +hdr("Training dashboard")
-    +dashboardCard()
-    +hdr("Volume & distribution")
-    +weekTop
-    +'<div class="card" style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px"><span class="tiny">Window</span><div class="seg" style="width:60%">'+pBtns+'</div></div>'
-    +muscleSplitCard()
-    +'<div class="card"><div class="tiny">Most-used exercises · tap for records and trend</div><div style="margin-top:6px">'+muRows+'</div></div>'
-    +exerciseTrendsCard()
-    +hdr("Training pattern")
-    +(function(){ const ser=weekSeriesAll();
+    +miniSpark(x.ex.id)+'<span class="sets" style="margin-left:8px">'+x.n+'</span><span style="margin-left:6px">'+trendBadge(x.ex.id)+'</span></div>').join(""):'<div class="empty" style="padding:16px">Nothing logged.</div>'; };
+  const dq=dataQualityScan();
+  /* v16 — every area is a section with a remembered open/closed state. The four questions open by
+     default; the four prototypes and the low-use areas closed. Nothing from v11–v14 is removed. */
+  return statsSection("stats:prog","Progression","board: name → last 2 → previous 6 → sparkline → % · achievements · insights",function(){ return progressionBoardCard()+recentAchievementsCard(6)+insightsBlock(); },true)
+    +statsSection("stats:cov","Consistency & coverage","priority coverage · effective sets per muscle, week by week",covMatrixCard,true)
+    +statsSection("stats:stall","Progression & stalls","double progression on the top set · plateau and below-baseline patterns",stallCard,true)
+    +statsSection("stats:dq","Data quality",(dq.open.length?dq.open.length+' open flag'+(dq.open.length===1?'':'s')+' · nothing is edited automatically':'whole history scanned · nothing open'),dqCard,dq.counts.error+dq.counts.warn>0)
+    +statsSection("stats:dash","Training dashboard","rolling window vs the one before",dashboardCard,true)
+    +statsSection("stats:vol","Volume & distribution","by individual muscle · most-used exercises · exercise charts",function(){
+        return (statsPeriod==="week"?weekSummaryCard():"")
+          +'<div class="card" style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px"><span class="tiny">Window</span><div class="seg" style="width:60%">'+pBtns+'</div></div>'
+          +muscleSplitCard()
+          +'<div class="card"><div class="tiny">Most-used exercises · tap for records and trend</div><div style="margin-top:6px">'+muRows()+'</div></div>'
+          +exerciseTrendsCard(); },true)
+    +statsSection("stats:pattern","Training pattern","working sets and workouts per week · consistency · training days · training time",function(){ const ser=weekSeriesAll();
         return weekScrollChartCard("Working sets per week",ser,"sets","sets")
-             + weekScrollChartCard("Workouts per week",ser,"sessions","workouts"); })()
-    +consistencyCard()
-    +weekdayCard()
-    +timeOfDayCard(); }
+             + weekScrollChartCard("Workouts per week",ser,"sessions","workouts")
+             + consistencyCard()+weekdayCard()+timeOfDayCard(); },true)
+    +statsSection("stats:p-rr","Rep-range compliance","% of sets under / inside / over each exercise’s range · last 8 exposures",repRangeCard,false,"prototype")
+    +statsSection("stats:p-block","Four-week block report","last 4 complete weeks vs the 4 before",blockReportCard,false,"prototype")
+    +statsSection("stats:p-cal","Training calendar & time of day","12-week strip · six time-of-day buckets",calendarCard,false,"prototype")
+    +statsSection("stats:p-si","Strength index by muscle group","each lift indexed to its first three exposures · confidence stated",strengthIndexCard,false,"prototype"); }
 
 /* ---------------- BODY (P6 two-layer + P7 grid + P5 attribution) ---------------- */
 const BODY_GROUPS=[["Chest & push",["upper_chest","chest","triceps","front_delts"]],["Back & pull",["back_lats","upper_back","biceps"]],["Delts",["side_delts","rear_delts"]],["Legs",["quads","hamstrings","glutes","calves"]],["Core & other",["abs","lower_back","forearms"]]];
@@ -4540,7 +5152,11 @@ function wireScreen(){
   document.querySelectorAll("[data-cxreview]").forEach(b=>b.onclick=()=>{ reconcileSearch=""; openSheet("reconcile",b.dataset.cxreview); });
   document.querySelectorAll("[data-addcustom]").forEach(b=>b.onclick=()=>{ customDraft={name:b.dataset.addcustom||"",group:"",load:"ext",id:null}; openSheet("custom"); });
   document.querySelectorAll("[data-closedetail]").forEach(b=>b.onclick=()=>{ bodyDetail=null; render(); });
-  document.querySelectorAll("[data-section]").forEach(b=>b.onclick=()=>{ toggleSection(b.dataset.section); render(); });
+  document.querySelectorAll("[data-section]").forEach(b=>b.onclick=()=>{ toggleSection(b.dataset.section, b.dataset.secdef==="1"); render(); });
+  /* v16 */
+  document.querySelectorAll("[data-covcell]").forEach(b=>b.onclick=(e)=>{ e.stopPropagation(); openSheet("covcell",b.dataset.covcell); });
+  document.querySelectorAll("[data-dq]").forEach(b=>b.onclick=()=>openSheet("dq",b.dataset.dq));
+  document.querySelectorAll("[data-stallall]").forEach(b=>b.onclick=()=>{ stallShowAll=!stallShowAll; render(); });
   document.querySelectorAll("[data-bodyview]").forEach(b=>b.onclick=()=>{ bodyView=b.dataset.bodyview;
     try{ localStorage.setItem("iron_arc_bodyview",bodyView); }catch(e){} render(); });
   document.querySelectorAll("[data-showall]").forEach(b=>b.onclick=()=>{ showAllMuscles=!showAllMuscles; render(); });
