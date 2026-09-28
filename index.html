@@ -364,6 +364,29 @@ table.cov .cov-end{color:var(--muted); font-weight:600; padding:0 0 0 6px; text-
 .cal-d{display:block; width:13px; height:13px; border-radius:3px; background:var(--panel2); box-shadow:inset 0 0 0 1px var(--line);}
 .cal-d.l1{background:rgba(59,130,246,.38); box-shadow:none;} .cal-d.l2{background:rgba(59,130,246,.65); box-shadow:none;} .cal-d.l3{background:var(--accent); box-shadow:none;}
 .cal-d.fut{background:transparent; box-shadow:inset 0 0 0 1px var(--line); opacity:.5;} .cal-d.today{box-shadow:inset 0 0 0 1.5px var(--accent);}
+
+/* ---- v20 Progress β ---- */
+[data-statsview]{margin:0 0 4px;} [data-statsview] button{padding:8px; font-size:13px;}
+.ps-big{font-family:var(--display),var(--ui),sans-serif; font-weight:800; font-size:44px; letter-spacing:-.03em; line-height:1.05;}
+.ps-wrap{margin:10px -4px 2px;} .ps{width:100%; height:auto; display:block; overflow:visible;}
+.ps-line{stroke:var(--accent); stroke-width:2;} .ps-line.cur{stroke:var(--faint); stroke-dasharray:3 4;}
+.ps-dot{fill:var(--accent);} .ps-dot.cur{fill:var(--panel); stroke:var(--faint); stroke-width:2; stroke-dasharray:2 2;} .ps-gap{fill:none; stroke:var(--faint); stroke-width:1.5;}
+.ps-val{font-family:'JetBrains Mono',monospace; font-size:11px; fill:var(--text);} .ps-val.cur{fill:var(--muted);}
+.ps-lab{font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.06em; fill:var(--muted); text-transform:uppercase;} .ps-lab.cur{fill:var(--faint);}
+.ps-row{display:grid; grid-template-columns:1fr auto; gap:2px 10px; align-items:baseline; padding:9px 0 0; margin-top:9px; border-top:1px dashed var(--line); font-size:13px;}
+.ps-row span{color:var(--muted);} .ps-row b{font-family:'JetBrains Mono',monospace; font-size:15px; font-weight:600;} .ps-row small{grid-column:1 / -1; font-size:11.5px; color:var(--faint); line-height:1.35;}
+.ps-row.cur b{color:var(--muted); font-size:13px;}
+.ps-grp{display:flex; align-items:center; gap:8px; margin-top:14px; padding-bottom:5px; border-bottom:1px solid var(--line);}
+.ps-grp .ps-gt{font-size:11px; letter-spacing:.08em; text-transform:uppercase; font-weight:700;} .ps-grp .ps-gn{font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--muted);}
+.ps-grp.up .ps-gt{color:var(--green);} .ps-grp.flat .ps-gt{color:var(--muted);} .ps-grp.down .ps-gt{color:var(--red);} .ps-grp.thin{cursor:pointer;} .ps-grp.thin .ps-gt{color:var(--faint);}
+.ps-lift{display:flex; align-items:center; gap:8px; padding:9px 0; border-top:1px dashed var(--line); cursor:pointer;} .ps-grp + .ps-lift{border-top:none;}
+.ps-lift .ps-nm{flex:1; min-width:0; font-weight:600; font-size:14px; line-height:1.3;} .ps-lift .ps-nm .tag{color:var(--amber); margin-left:6px; vertical-align:middle;}
+.ps-right{flex:none; text-align:right;} .ps-r2{display:flex; justify-content:flex-end; gap:7px; align-items:baseline; font-size:11.5px; color:var(--muted); line-height:1.45;}
+.ps-r2 b{font-family:'JetBrains Mono',monospace; font-size:13px; font-weight:600; min-width:44px; text-align:right;} .ps-r2.muted{font-size:11.5px; max-width:180px;}
+.ps-chev{color:var(--faint); flex:none; font-size:16px;} .ps-thinlist{margin-top:7px; line-height:1.5;}
+.ps-ins{border-color:rgba(59,130,246,.32); background:rgba(59,130,246,.06); padding:12px 14px;} .ps-insrow{display:flex; gap:8px; font-size:13px; line-height:1.45; color:var(--text);} .ps-insrow + .ps-insrow{margin-top:8px;}
+.ps-insi{color:var(--accent); flex:none;}
+.ps-foot{font-size:12px; color:var(--muted); text-align:center; padding:6px 14px 4px; line-height:1.5;} .ps-foot .protobadge{vertical-align:middle; margin-right:4px;} .ps-foot .linkbtn{display:inline; width:auto; padding:0; color:var(--accent); font-size:12px;}
 </style>
 </head>
 <body>
@@ -400,9 +423,9 @@ const APP_TAGLINE = "Training Command";
    recover.html on a v10 build is expected and correct.
    BUILD is shown in Settings and is what the deployed-version check compares against, so
    it must be bumped on every deploy. */
-const BUILD = "v19";
-const BUILD_DATE = "2026-09-14";
-const BUILD_NOTE = "Workout UX + Today simplification: Needs-work hero, rounded sets, weekday strip and daily quote removed, prominent rest timer, atomic muscle labels, collapsible setup, grouped Body summary";
+const BUILD = "v20";
+const BUILD_DATE = "2026-09-28";
+const BUILD_NOTE = "Stats → Progress β: chain-linked Strength Progress over four-week blocks (best set, median per lift, ≥2 exposures, ≥4 lifts, geometric mean), Progressing / Stable / Declining / Not enough data, rule-triggered coverage insight, How it works";
 
 /* Approved users (client-side UX gate; the real gate is Supabase signup settings — see DEPLOY).
    To add a person: add one line below with their real email (lowercase), display name and role.
@@ -3397,6 +3420,7 @@ function renderSheet(){ const m=document.getElementById("sheetmount"); if(!sheet
       +'<div class="tiny" style="margin-top:14px">What made this number</div><div style="margin-top:6px">'+(con.rows.length?con.rows.map(r=>'<div class="contrib"><div><b>'+r.name+'</b><div class="muted" style="font-size:11px">'+r.sets+' sets × '+fmtCredit(r.credit)+' credit · '+creditWord(r.credit)+' · last '+fmtAgo(r.dates.sort().slice(-1)[0])+'</div></div><span class="c-ef">'+r.effective.toFixed(1)+'</span></div>').join(""):'<div class="empty" style="padding:10px">No sets in this period.</div>')+'</div>'; }
   else if(sheet.type==="covcell"){ inner=covCellSheet(sheet.data); }
   else if(sheet.type==="achall"){ inner=achAllSheet(); }
+  else if(sheet.type==="proghow"){ inner=progHowSheet(); }              /* v20 */
   else if(sheet.type==="range"){ inner=rangeSheet(sheet.data); }
   else if(sheet.type==="dq"){ inner=dqSheet(sheet.data); }
   else if(sheet.type==="tips"){ const id=sheet.data; const ex=exById(id); const t=TIPS[id];
@@ -4315,11 +4339,274 @@ function exerciseProgressCard(){
 function exHeaderSub(){ resolveRepExId(); if(!repExId) return 'select an exercise · weight · reps · 5RM · 10RM · e1RM · volume · sets'; const ex=exById(repExId); const h=exerciseHistory(repExId); if(!ex||!h.length) return 'select an exercise';
   return ex.name+' · '+fmtTop(ex,topSetOf(ex,h[0].sets))+' · '+fmtDaysAgo(h[0].date); }
 
+/* ================================================================================================
+   v20 · PROGRESS β — chain-linked Strength Progress over fixed four-week blocks
+   ------------------------------------------------------------------------------------------------
+   One question: am I demonstrably stronger, by how much, and which lifts did it.
+
+   Recipe (PROG_RECIPE is the versioned methodology — bump PROG_RECIPE.version whenever a rule below
+   changes so persisted snapshots from an older recipe are never compared with the new one):
+     1. Working set = logged, non-warm-up, weight and reps present (workingSets()).
+     2. Per exercise-session: BEST SET only. score = effective load × (1 + min(reps, repCap) / 30),
+        effective load from setLoadScore() so assisted / bodyweight-loaded lifts use the same direction
+        rules as the rest of the app. An assisted lift with no bodyweight on record is not scoreable.
+        Set count and session volume never enter.
+     3. Blocks = fixed 28-day windows anchored on the local date of the first completed workout.
+        A block is COMPLETE once its 28th day has passed; the block containing today is CURRENT and
+        never touches the completed headline.
+     4. A lift is EVALUABLE in a block with ≥ 2 exposures (after the outlier guard). Its block value is
+        the median of its best-set scores in that block, so one unusually good or bad session cannot
+        dominate. Guard: with 2+ exposures, a best set more than 25% below the lift's block median is set
+        aside (counted, shown, never deleted) — the honest treatment of a different-facility session.
+     5. LINK(b) compares block b with the most recent earlier block that carries an index, using only
+        lifts evaluable in BOTH; link = geometric mean of the per-lift ratios; published only when ≥ 4
+        lifts qualify, otherwise the block is a gap and the chain continues from the last indexed block.
+     6. INDEX = cumulative product of links, first block with an evaluable lift = 1.00.
+        Headline = latest completed indexed block − 1, whole percent.
+     7. Lift classification on the latest completed link: Progressing ≥ +3%, Declining ≤ −3%, Stable in
+        between, Not enough data for lifts trained recently but not evaluable on both sides of the link.
+        Long view per lift = latest evaluable completed block ÷ its first evaluable completed block.
+   New lifts join the chain the first time they are evaluable in two linked blocks; a lift that stops
+   being trained simply drops out of later links (history preserved). Nothing is anchored to a fixed
+   list of exercises. Coverage insight: at most two rule-triggered lines (see progCoverageInsights()).
+   ================================================================================================ */
+const PROG_RECIPE={ version:1, blockDays:28, minExposures:2, minLifts:4, repCap:15, band:0.03, outlierBelow:0.25, agg:"median" };
+const PROG_TZ_DAY=86400000;
+function progDayStart(d){ const x=new Date(d); x.setHours(0,0,0,0); return x; }
+function progDaysBetween(a,b){ return Math.round((progDayStart(b)-progDayStart(a))/PROG_TZ_DAY); }
+function progAddDays(d,n){ const x=progDayStart(d); x.setDate(x.getDate()+n); return x; }
+function progMedian(a){ const s=a.slice().sort(function(x,y){ return x-y; }); const m=Math.floor(s.length/2); return s.length%2?s[m]:(s[m-1]+s[m])/2; }
+/* whole-percent rounding used everywhere a change is displayed or judged: half away from zero, tolerant of float noise */
+function progRoundPct(v){ const x=v*100; return x<0?-Math.round(-x+1e-9):Math.round(x+1e-9); }
+function progMean(a){ return a.length?a.reduce(function(x,y){ return x+y; },0)/a.length:0; }
+/* best-set score for one exercise-session; null when it cannot be scored honestly */
+function progBestSetScore(ex,sets,bw,recipe){ recipe=recipe||PROG_RECIPE; let best=null;
+  if(!ex) return null; if(isAssisted(ex)&&bw==null) return null;
+  (sets||[]).forEach(function(s){ const w=+s.weight||0, r=+s.reps||0; if(!(r>0)) return; const L=setLoadScore(ex,w,bw); if(!(L>0)) return;
+    const sc=L*(1+Math.min(r,recipe.repCap)/30); if(best==null||sc>best) best=sc; });
+  return best; }
+function progMonthLabel(d){ return new Date(d).toLocaleDateString("en-AU",{month:"short",year:"numeric"}); }
+function progShortMonth(d){ return new Date(d).toLocaleDateString("en-AU",{month:"short"}); }
+function progRangeLabel(start,end){ const a=new Date(start), b=new Date(end); const f=function(x,m){ return x.getDate()+(m?" "+progShortMonth(x):""); };
+  return f(a,a.getMonth()!==b.getMonth())+" – "+f(b,true); }
+/* The whole computation. Pure over completedSessions() + S.bodyweight (+ an optional recipe override
+   for tests and the validation harness). `now` can be injected so tests are calendar-stable. */
+function progressCompute(recipe,now){ recipe=Object.assign({},PROG_RECIPE,recipe||{}); now=now?new Date(now):new Date();
+  const sessions=completedSessions().slice().sort(function(a,b){ return new Date(a.completedAt)-new Date(b.completedAt); });
+  const out={recipe:recipe, anchor:null, blocks:[], completed:[], current:null, headline:null, lifts:[], insights:[], empty:sessions.length===0};
+  if(!sessions.length) return out;
+  const anchor=progDayStart(sessions[0].completedAt); out.anchor=anchor;
+  const todayIdx=Math.floor(progDaysBetween(anchor,now)/recipe.blockDays);
+  const nBlocks=Math.max(todayIdx+1,1);
+  /* ---- per block · per lift: scores of every exposure */
+  const blocks=[]; for(let i=0;i<nBlocks;i++){ const st=progAddDays(anchor,i*recipe.blockDays), en=progAddDays(anchor,(i+1)*recipe.blockDays);
+    blocks.push({i:i, start:st, end:progAddDays(en,-1), endExclusive:en, complete:progDaysBetween(en,now)>=0, sessions:0, raw:{}, lifts:{}, index:null, link:null, linkLifts:0, ref:null, gap:false, daysDone:Math.min(recipe.blockDays,Math.max(0,progDaysBetween(st,now)+1))}); }
+  sessions.forEach(function(s){ const bi=Math.floor(progDaysBetween(anchor,s.completedAt)/recipe.blockDays); const b=blocks[bi]; if(!b) return; b.sessions++;
+    const bw=bodyweightAt(s.completedAt); const seen={};
+    (s.entries||[]).forEach(function(en){ const ex=exById(en.exId); if(!ex) return; const ws=workingSets(en); if(!ws.length) return;
+      const sc=progBestSetScore(ex,ws,bw,recipe); if(sc==null) return;
+      /* two entries of one lift in one session (a swap back, a repeated block) count as one exposure — the better set */
+      if(seen[en.exId]!=null){ const r=b.raw[en.exId][seen[en.exId]]; if(sc>r.score) r.score=sc; return; }
+      (b.raw[en.exId]=b.raw[en.exId]||[]).push({date:s.completedAt, sessionId:s.id, score:sc}); seen[en.exId]=b.raw[en.exId].length-1; }); });
+  blocks.forEach(function(b){ Object.keys(b.raw).forEach(function(id){ const rows=b.raw[id]; const scores=rows.map(function(r){ return r.score; });
+    let kept=rows, aside=[];
+    if(rows.length>=2){ const med=progMedian(scores); aside=rows.filter(function(r){ return r.score<med*(1-recipe.outlierBelow); }); kept=rows.filter(function(r){ return r.score>=med*(1-recipe.outlierBelow); }); }
+    const ks=kept.map(function(r){ return r.score; });
+    b.lifts[id]={exId:id, n:rows.length, kept:kept.length, aside:aside.length, evaluable:kept.length>=recipe.minExposures,
+      value:kept.length?(recipe.agg==="mean"?progMean(ks):progMedian(ks)):null, scores:scores, asideDates:aside.map(function(r){ return r.date; })}; }); });
+  /* ---- chain: baseline = first block with an evaluable lift; each later block links to the last indexed block */
+  let refIdx=-1;
+  blocks.forEach(function(b){ const ev=Object.keys(b.lifts).filter(function(id){ return b.lifts[id].evaluable; });
+    if(refIdx<0){ if(ev.length){ b.index=1; b.baseline=true; refIdx=b.i; } return; }
+    const ref=blocks[refIdx]; const shared=ev.filter(function(id){ return ref.lifts[id]&&ref.lifts[id].evaluable; });
+    b.ref=refIdx; b.linkLifts=shared.length; b.ratios={}; shared.forEach(function(id){ b.ratios[id]=b.lifts[id].value/ref.lifts[id].value; });
+    if(shared.length>=recipe.minLifts){ b.link=Math.exp(progMean(shared.map(function(id){ return Math.log(b.ratios[id]); }))); b.index=ref.index*b.link; refIdx=b.i; }
+    else { b.gap=true; } });
+  out.blocks=blocks;
+  out.completed=blocks.filter(function(b){ return b.complete; });
+  out.current=blocks[blocks.length-1].complete?null:blocks[blocks.length-1];
+  const indexed=out.completed.filter(function(b){ return b.index!=null; });
+  const latest=indexed.length?indexed[indexed.length-1]:null;
+  const baseline=indexed.length?indexed[0]:null;
+  if(latest&&baseline&&latest!==baseline){ out.headline={pct:latest.index-1, index:latest.index, since:baseline.start, sinceLabel:progMonthLabel(baseline.start), blocks:indexed.length, lifts:latest.linkLifts, latest:latest, baseline:baseline, latestLink:latest.link!=null?latest.link-1:null}; }
+  else if(latest){ out.headline={pct:null, index:1, since:latest.start, sinceLabel:progMonthLabel(latest.start), blocks:1, lifts:Object.keys(latest.lifts).filter(function(id){ return latest.lifts[id].evaluable; }).length, latest:latest, baseline:latest, latestLink:null, firstBlock:true}; }
+  /* ---- lifts: classification on the latest completed link, long view over completed blocks */
+  /* lifts worth listing: anything trained in the latest completed block, plus lifts with two or more
+     sessions in the current block (a one-off at another gym is not a lift you are tracking) */
+  const recentIds={}; if(latest) Object.keys(latest.lifts).forEach(function(id){ recentIds[id]=1; });
+  if(out.current) Object.keys(out.current.lifts).forEach(function(id){ if(out.current.lifts[id].n>=recipe.minExposures) recentIds[id]=1; });
+  if(!latest) out.completed.forEach(function(b){ Object.keys(b.lifts).forEach(function(id){ recentIds[id]=1; }); });
+  const ref=latest&&latest.ref!=null?blocks[latest.ref]:null;
+  out.lifts=Object.keys(recentIds).map(function(id){ const ex=exById(id); if(!ex) return null;
+    const lb=latest?latest.lifts[id]:null, rb=ref?ref.lifts[id]:null;
+    let cat="thin", change=null;
+    if(latest&&latest.link!=null&&lb&&lb.evaluable&&rb&&rb.evaluable){ change=lb.value/rb.value-1; const p=progRoundPct(change), bp=Math.round(recipe.band*100); cat=p>=bp?"up":p<=-bp?"down":"flat"; }   /* judged on the whole percent that is displayed */
+    /* long view: first evaluable completed block → latest evaluable completed block */
+    const evB=out.completed.filter(function(b){ return b.lifts[id]&&b.lifts[id].evaluable; });
+    let longPct=null, longSince=null, longLabel=null, isNew=false;
+    if(evB.length>=2){ const f=evB[0], l=evB[evB.length-1]; longPct=l.lifts[id].value/f.lifts[id].value-1; longSince=f.start; longLabel=progShortMonth(f.start)+(f.start.getFullYear()!==l.start.getFullYear()?" "+f.start.getFullYear():""); }
+    else if(evB.length===1&&latest&&evB[0]===latest) isNew=true;
+    const curB=out.current?out.current.lifts[id]:null;
+    /* why it is thin — one honest reason for the list */
+    let why=null; if(cat==="thin"){
+      if(!latest) why="first block";
+      else if(lb&&lb.evaluable&&!(rb&&rb.evaluable)) why="new in this block";
+      else if(lb&&!lb.evaluable&&lb.n>0) why=lb.n+" exposure"+(lb.n===1?"":"s")+" in the latest block"+(lb.aside?" · "+lb.aside+" set aside":"");
+      else if(!lb&&curB) why="only in the current block";
+      else if(!lb&&rb) why="not trained in the latest block";
+      else why="not enough exposures"; }
+    return {exId:id, name:ex.name, cat:cat, change:change, latestN:lb?lb.n:0, latestAside:lb?lb.aside:0, longPct:longPct, longSince:longSince, longLabel:longLabel, isNew:isNew,
+      currentN:curB?curB.n:0, why:why, evBlocks:evB.length}; }).filter(Boolean)
+    .sort(function(a,b){ const o={up:0,flat:1,down:2,thin:3}; if(o[a.cat]!==o[b.cat]) return o[a.cat]-o[b.cat]; if(a.change!=null&&b.change!=null) return b.change-a.change; return a.name.localeCompare(b.name); });
+  /* a lift trained only once across the latest completed block, the block before it and the current
+     block — and never evaluable before — is a one-off, not a lift being tracked: counted, not listed */
+  const everEv={}; blocks.forEach(function(b){ Object.keys(b.lifts).forEach(function(id){ if(b.lifts[id].evaluable) everEv[id]=1; }); });
+  const windowN=function(id){ return [latest,ref,out.current].reduce(function(a,b){ return a+((b&&b.lifts[id])?b.lifts[id].n:0); },0); };
+  out.oneOff=0;
+  out.lifts=out.lifts.filter(function(l){ if(l.cat!=="thin"||everEv[l.exId]||windowN(l.exId)>=recipe.minExposures) return true; out.oneOff++; return false; });
+  /* lifts trained earlier but not in the last two blocks are simply not listed (retired from the chain, history intact) */
+  const everIds={}; blocks.forEach(function(b){ Object.keys(b.lifts).forEach(function(id){ everIds[id]=1; }); });
+  out.retired=Object.keys(everIds).filter(function(id){ return !recentIds[id]&&exById(id)&&blocks.some(function(b){ return b.lifts[id]&&b.lifts[id].evaluable; }); }).length;   /* only lifts that once qualified count as retired */
+  try{ out.insights=progCoverageInsights(out); }catch(e){ out.insights=[]; }
+  return out; }
+
+/* ---- coverage insight: fires only on a meaningful exception, never a volume dashboard.
+   Rule A · a muscle's lifts have been flat/declining for the last two links while direct work on that
+            muscle in the latest completed block averaged below its configured weekly minimum.
+   Rule B · a muscle is at or above its minimum on total effective sets in the latest completed block
+            while less than half of that is direct work.
+   At most two lines, largest shortfall first. */
+function progCoverageInsights(P){ const latest=P.headline&&P.headline.latest; if(!latest||latest.link==null||latest.ref==null) return [];
+  const blocks=P.blocks; const ref=blocks[latest.ref]; const prev=ref.ref!=null?blocks[ref.ref]:null; const weeks=PROG_RECIPE.blockDays/7;
+  const inBlock=function(b){ return completedSessions().filter(function(s){ const t=new Date(s.completedAt); return t>=b.start&&t<b.endExclusive; }); };
+  const sess=inBlock(latest); const tot=effectiveSetsByMuscleView(sess,"total"), dir=effectiveSetsByMuscleView(sess,"direct");
+  const out=[];
+  Object.keys(S.muscles).forEach(function(m){ const cfg=S.muscles[m]; if(!cfg||!(cfg.min>0)) return; const label=cfg.label;
+    const totW=(tot[m]||0)/weeks, dirW=(dir[m]||0)/weeks;
+    /* Rule A */
+    const ratioOf=function(b){ if(!b||b.link==null) return null; const ids=Object.keys(b.ratios||{}).filter(function(id){ const ex=exById(id); return ex&&primaryMuscle(ex)===m; }); if(!ids.length) return null; return Math.exp(progMean(ids.map(function(id){ return Math.log(b.ratios[id]); }))); };
+    const r1=ratioOf(latest), r2=ratioOf(ref);
+    if(r1!=null&&r2!=null&&r1<1+PROG_RECIPE.band&&r2<1+PROG_RECIPE.band&&dirW<cfg.min){
+      out.push({rule:"A", m:m, gap:cfg.min-dirW, text:label+" lifts have been "+(r1<=1-PROG_RECIPE.band||r2<=1-PROG_RECIPE.band?"flat or down":"flat")+" for two blocks while direct "+label.toLowerCase()+" work averaged "+(Math.round(dirW*10)/10)+" sets a week (minimum "+cfg.min+")."}); return; }
+    /* Rule B */
+    if(totW>=cfg.min&&dirW<cfg.min/2){ out.push({rule:"B", m:m, gap:cfg.min/2-dirW, text:label+" volume is on target ("+(Math.round(totW*10)/10)+" effective sets a week), but only "+(Math.round(dirW*10)/10)+" of that is direct work."}); } });
+  return out.sort(function(a,b){ return b.gap-a.gap; }).slice(0,2); }
+
+/* ---------------------------------------------------------------- 5 · PROGRESS β (v20) — the view */
+/* Read in about five seconds, top to bottom: the headline, the four-week trajectory, what is
+   progressing / stable / declining, and — only when a rule fires — one or two coverage lines.
+   Nothing here duplicates Overview: no consistency, calendar, volume, PRs or per-session charts.
+   A lift row hands off to the existing Exercise progress section rather than re-drawing it. */
+const PROG_LABELS={up:"Progressing", flat:"Stable", down:"Declining", thin:"Not enough data"};
+function progPct(v,opts){ opts=opts||{}; if(v==null) return "—"; const p=progRoundPct(v); if(p===0) return opts.zero||"0%"; return (p>0?"+":"−")+Math.abs(p)+"%"; }
+function progTone(v){ if(v==null) return "var(--muted)"; const p=progRoundPct(v), b=Math.round(PROG_RECIPE.band*100); return p>=b?"var(--green)":p<=-b?"var(--red)":"var(--text)"; }
+function progFmtDay(d){ const x=new Date(d); return x.getDate()+" "+progShortMonth(x); }
+/* one memoised computation per render — the page reads it in three places */
+let _progCache=null;
+function progressData(){ if(!_progCache) _progCache=progressCompute(); return _progCache; }
+function progressInvalidate(){ _progCache=null; }
+/* ---- the strip: completed indexed blocks as dots on a line, the current block hollow, gaps hollow-dashed */
+function progStripSVG(P){ const all=P.blocks; if(!all.length) return "";
+  const MAXB=13; const shown=all.length>MAXB?all.slice(-MAXB):all; const hidden=all.length-shown.length;
+  const W=340, H=92, padL=22, padR=22, top=30, base=64; const n=shown.length; const step=n>1?(W-padL-padR)/(n-1):0;
+  const vals=shown.filter(function(b){ return b.index!=null&&b.complete; }).map(function(b){ return b.index; });
+  const cur=P.current&&P.current.index!=null?[P.current.index]:[];
+  const lo=Math.min.apply(null,vals.concat(cur,[1])), hi=Math.max.apply(null,vals.concat(cur,[1]));
+  const span=Math.max(0.06,hi-lo); const y=function(v){ return base-((v-lo)/span)*(base-top); };
+  let path="", dots="", labels="", prevPt=null;
+  shown.forEach(function(b,i){ const x=Math.round(padL+i*step);
+    const mon=progShortMonth(b.start); const prevMon=i>0?progShortMonth(shown[i-1].start):null;
+    const lab=!b.complete?"now":(n>8?mon.slice(0,1):(mon===prevMon?b.start.getDate()+" "+mon.slice(0,3):mon));
+    labels+='<text x="'+x+'" y="'+(H-6)+'" text-anchor="middle" class="ps-lab'+(b.complete?"":" cur")+'">'+lab+'</text>';
+    if(b.index==null){ if(!b.complete&&prevPt){ dots+='<line x1="'+prevPt.x+'" y1="'+prevPt.y+'" x2="'+x+'" y2="'+prevPt.y+'" class="ps-line cur"/><circle cx="'+x+'" cy="'+prevPt.y+'" r="4" class="ps-dot cur"/>'; }   /* in progress, nothing to compare yet */
+      else dots+='<circle cx="'+x+'" cy="'+(base+6)+'" r="3" class="ps-gap"/>'; return; }
+    const yy=y(b.index); const isCur=!b.complete;
+    if(prevPt){ path+='<line x1="'+prevPt.x+'" y1="'+prevPt.y+'" x2="'+x+'" y2="'+yy.toFixed(1)+'" class="ps-line'+(isCur?" cur":"")+'"/>'; }
+    dots+='<circle cx="'+x+'" cy="'+yy.toFixed(1)+'" r="'+(isCur?4:4.5)+'" class="ps-dot'+(isCur?" cur":"")+'"/>';
+    if(n<=8||i===0||i===n-1||isCur) dots+='<text x="'+x+'" y="'+(yy-10).toFixed(1)+'" text-anchor="middle" class="ps-val'+(isCur?" cur":"")+'">'+b.index.toFixed(2)+'</text>';
+    prevPt={x:x,y:yy.toFixed(1)}; });
+  return '<div class="ps-wrap"><svg viewBox="0 0 '+W+' '+H+'" class="ps" role="img" aria-label="Strength progress by four-week block">'+path+dots+labels+'</svg>'
+    +(hidden?'<div class="histline" style="text-align:center;margin-top:-2px">'+hidden+' earlier block'+(hidden===1?'':'s')+' not shown</div>':'')+'</div>'; }
+/* ---- hero card */
+function progHeroCard(P){ const h=P.headline; const cur=P.current;
+  const head='<div class="tiny" style="display:flex;align-items:center;gap:8px">Strength progress<span class="protobadge">Beta</span></div>';
+  if(P.empty) return '<div class="card">'+head+'<div class="empty" style="padding:18px 6px 8px">Log a few workouts and your first four-week block starts here.</div></div>';
+  if(!h){ /* no completed block yet */
+    const b=P.blocks[0]; return '<div class="card">'+head
+      +'<div class="ps-big muted" style="font-size:26px;margin-top:8px">Building your baseline</div>'
+      +'<div class="histline">Your first four-week block runs '+progRangeLabel(b.start,b.end)+' · '+b.sessions+' session'+(b.sessions===1?'':'s')+' so far · the first comparison arrives when the block after it completes.</div></div>'; }
+  let big, sub;
+  if(h.firstBlock){ big='<div class="ps-big muted" style="font-size:26px">Baseline set</div>';
+    sub='First block complete ('+progRangeLabel(h.latest.start,h.latest.end)+') · '+h.lifts+' lift'+(h.lifts===1?'':'s')+' with two or more sessions · your first change arrives when the next block completes.'; }
+  else { big='<div class="ps-big" style="color:'+progTone(h.pct)+'">'+progPct(h.pct,{zero:"0%"})+'</div>';
+    sub='Since '+h.sinceLabel+' · '+h.blocks+' blocks · '+h.lifts+' lifts tracked'; }
+  const latestLine=(!h.firstBlock&&h.latestLink!=null)?'<div class="ps-row"><span>Latest completed block</span><b style="color:'+progTone(h.latestLink)+'">'+progPct(h.latestLink)+'</b><small>vs previous block · '+progRangeLabel(h.latest.start,h.latest.end)+'</small></div>':'';
+  let curLine='';
+  if(cur){ const left=PROG_RECIPE.blockDays-cur.daysDone; const ev=Object.keys(cur.lifts).filter(function(id){ return cur.lifts[id].evaluable; }).length;
+    const sofar=cur.link!=null?'so far '+progPct(cur.link-1)+' on '+cur.linkLifts+' lifts':(cur.sessions?ev+' lift'+(ev===1?'':'s')+' with two or more sessions · too early to compare':'no sessions yet');
+    curLine='<div class="ps-row cur"><span>Current block</span><b>'+cur.sessions+' session'+(cur.sessions===1?'':'s')+'</b><small>'+progRangeLabel(cur.start,cur.end)+' · '+(left===0?'completes tonight':left+' day'+(left===1?'':'s')+' left')+' · '+sofar+' · not counted until complete</small></div>'; }
+  const revised=(P.revised&&P.revised.length)?'<div class="histline" style="margin-top:6px;color:var(--amber)">Block values revised since your last visit — a workout was edited or added late.</div>':'';
+  return '<div class="card">'+head+'<div style="margin-top:6px">'+big+'</div><div class="histline">'+sub+'</div>'+progStripSVG(P)+latestLine+curLine+revised+'</div>'; }
+/* ---- what is driving it */
+function progLiftRow(l){ const right=l.cat==="thin"
+    ?'<div class="ps-r2 muted">'+(l.why||"")+'</div>'
+    :'<div class="ps-r2"><span>Latest block</span><b style="color:'+progTone(l.change)+'">'+progPct(l.change)+'</b></div>'
+      +(l.longPct!=null?'<div class="ps-r2"><span>Since '+l.longLabel+'</span><b style="color:'+progTone(l.longPct)+'">'+progPct(l.longPct)+'</b></div>':(l.isNew?'<div class="ps-r2 muted">new this block</div>':''));
+  return '<div class="ps-lift" data-progex="'+l.exId+'"><div class="ps-nm">'+l.name+(l.latestAside?'<span class="tag" title="one session set aside as far below your usual load for this block">'+l.latestAside+' set aside</span>':'')+'</div><div class="ps-right">'+right+'</div><span class="ps-chev">›</span></div>'; }
+function progDriversCard(P){ if(P.empty||!P.headline||P.headline.firstBlock) return '';
+  const groups=["up","flat","down","thin"].map(function(k){ return {k:k, rows:P.lifts.filter(function(l){ return l.cat===k; })}; });
+  const scored=groups.slice(0,3).reduce(function(a,g){ return a+g.rows.length; },0);
+  let h='<div class="card"><div class="tiny">What is driving it</div><div class="histline">'+P.headline.latest.linkLifts+' lifts compared · latest completed block vs the one before · tap a lift for its full history</div>';
+  if(!scored) h+='<div class="empty" style="padding:14px 6px 6px">No lift had two or more sessions in both of the last two completed blocks.</div>';
+  groups.forEach(function(g){ if(!g.rows.length) return;
+    if(g.k==="thin"){ const open=sectionOpenD("stats:progthin",false);
+      h+='<div class="ps-grp thin" data-section="stats:progthin" data-secdef="0"><span class="ps-gt">'+PROG_LABELS.thin+'</span><span class="ps-gn">'+g.rows.length+'</span><span class="muted" style="margin-left:auto">'+(open?'−':'+')+'</span></div>';
+      if(open) h+=g.rows.map(progLiftRow).join(""); else h+='<div class="histline ps-thinlist">'+g.rows.map(function(l){ return l.name; }).join(" · ")+'</div>';
+      if(P.oneOff) h+='<div class="histline" style="margin-top:6px">+ '+P.oneOff+' lift'+(P.oneOff===1?'':'s')+' trained once in this period.</div>';
+      return; }
+    h+='<div class="ps-grp '+g.k+'"><span class="ps-gt">'+PROG_LABELS[g.k]+'</span><span class="ps-gn">'+g.rows.length+'</span></div>'+g.rows.map(progLiftRow).join(""); });
+  if(P.retired) h+='<div class="histline" style="margin-top:8px">'+P.retired+' other lift'+(P.retired===1?'':'s')+' tracked earlier '+(P.retired===1?'is':'are')+' not in the comparison right now · history kept.</div>';
+  return h+'</div>'; }
+function progInsightCard(P){ if(!P.insights||!P.insights.length) return '';
+  return '<div class="card ps-ins">'+P.insights.map(function(i){ return '<div class="ps-insrow"><span class="ps-insi">ⓘ</span><span>'+i.text+'</span></div>'; }).join("")+'</div>'; }
+function progFooter(){ return '<div class="ps-foot"><span class="protobadge">Beta</span> Demonstrated strength across the lifts you train regularly, compared over four-week blocks. Not a measured 1RM or a physiological claim. <button class="linkbtn" data-proghow>How it works ›</button></div>'; }
+function viewProgress(){ progressInvalidate(); const P=progressData(); try{ progSnapshotSync(P); }catch(e){}
+  return progHeroCard(P)+progDriversCard(P)+progInsightCard(P)+progFooter(); }
+/* ---- How it works (sheet) — plain words, no formula */
+function progHowSheet(){ const P=progressData();
+  return '<div class="tiny" style="display:flex;align-items:center;gap:8px">How Strength progress works<span class="protobadge">Beta</span></div>'
+    +'<div class="histline" style="margin:8px 0 0;font-size:13px;color:var(--text);line-height:1.5">'
+    +'<p>It answers one question: over four-week blocks, are the lifts you keep coming back to being performed better than before?</p>'
+    +'<p><b>Best set, not volume.</b> Each time you train a lift, only your best set counts — the load and the reps of that set together, with reps credited up to 15. Set count and total volume never enter, so a longer session is not "stronger".</p>'
+    +'<p><b>Four-week blocks.</b> Your history is cut into fixed 28-day blocks from your first workout. A lift counts in a block only when you trained it at least twice, and one block is compared with the one before it only on lifts trained in both. The block\'s figure for a lift is the middle of its sessions, so one unusually good or bad day cannot move it.</p>'
+    +'<p><b>Chained.</b> Each block\'s change is linked to the last, starting at 1.00. At least four lifts must qualify for a block to count; otherwise it is left as a gap and the chain continues from the last counted block. New lifts join as soon as they qualify in two linked blocks and retired lifts simply drop out — the set of lifts is never fixed.</p>'
+    +'<p><b>Incomplete blocks do not count.</b> The current block is shown for context and joins the headline only when its 28 days are up.</p>'
+    +'<p><b>Odd sessions.</b> A best set more than a quarter below your usual for that block (a different machine or gym, say) is set aside for that block and marked on the lift — never deleted or edited.</p>'
+    +'<p><b>What it is not.</b> "+10%" means your demonstrated best-set performance across those lifts is about a tenth higher than in the first block. It is not a measured 1RM and not a claim about muscle or physiology.</p>'
+    +'<p class="muted">Method version '+PROG_RECIPE.version+(P.anchor?' · blocks anchored to '+fmtDate(P.anchor):'')+'</p></div>'
+; }
+/* ---- persistence: per-block values snapshotted when a block completes, versioned by recipe ----
+   Stored in S.settings.progress (rides the ordinary settings push). Used only to notice a revision
+   — a late edit or a late-added workout changing a block that was already complete. */
+function progSnapshotSync(P){ const cur=(S.settings&&S.settings.progress)||null; const rows=P.completed.filter(function(b){ return b.index!=null; }).map(function(b){ return {start:dayKey(b.start), index:Math.round(b.index*1000)/1000, link:b.link==null?null:Math.round(b.link*1000)/1000, lifts:b.linkLifts}; });
+  P.revised=[];
+  if(cur&&cur.recipe===PROG_RECIPE.version&&Array.isArray(cur.blocks)){ cur.blocks.forEach(function(o){ const n=rows.find(function(r){ return r.start===o.start; }); if(n&&Math.abs(n.index-o.index)>=0.005) P.revised.push(o.start); }); }
+  const next={recipe:PROG_RECIPE.version, blocks:rows, at:iso(new Date())};
+  const same=cur&&cur.recipe===next.recipe&&JSON.stringify(cur.blocks)===JSON.stringify(rows);
+  if(!same&&S.settings){ S.settings.progress=next; try{ save(); }catch(e){} } }
+/* ---- hand-off to Exercise progress (Overview → Exercise progress section, that lift selected) */
+function progOpenExercise(id){ repExId=id; repSearch=""; statsPref.view="overview"; saveStatsPref(); setOpen["stats:ex"]=true; try{ localStorage.setItem("iron_arc_setopen",JSON.stringify(setOpen)); }catch(e){} render();
+  try{ const el=document.querySelector('[data-section="stats:ex"]'); if(el) el.scrollIntoView({behavior:"smooth",block:"start"}); }catch(e){} }
+
 /* ---------------------------------------------------------------- the page */
 function viewStats(){
   try{ dqAutoRepair(); }catch(e){}                                   /* v16: integrity before analytics */
   const dq=dataQualityScan(); const groups=groupAchievements(achievementTimeline(0));
-  const head='<div class="stats-hd"><span class="tiny">Stats</span>'+(dq.open.length?'<button class="dqbadge" data-dq="all">Data quality · '+dq.open.length+' to review</button>':'')+'</div>';
+  /* v20 — two views: Overview (the four v18 parents, untouched) and Progress β */
+  const view=statsPref.view==="progress"?"progress":"overview";
+  const seg='<div class="seg mini" data-statsview><button data-statsview-btn="overview" class="'+(view==="overview"?'on':'')+'">Overview</button><button data-statsview-btn="progress" class="'+(view==="progress"?'on':'')+'">Progress <span style="font-weight:800">β</span></button></div>';
+  const head='<div class="stats-hd"><span class="tiny">Stats</span>'+(dq.open.length?'<button class="dqbadge" data-dq="all">Data quality · '+dq.open.length+' to review</button>':'')+'</div>'+seg;
+  if(view==="progress") return head+viewProgress();
   return head
     +statsSection("stats:ach","Recent achievements",achHeaderSub(groups),achievementsCard,true)
     +statsSection("stats:pattern","Training pattern & consistency",patternHeaderSub(),patternBody,true)
@@ -4855,6 +5142,10 @@ function wireScreen(){
   document.querySelectorAll("[data-statsperiod]").forEach(b=>b.onclick=(e)=>{ e.stopPropagation(); statsPeriod=b.dataset.statsperiod; statsPref.period=statsPeriod; saveStatsPref(); render(); });
   /* v18 — Stats V2 */
   document.querySelectorAll("[data-loadtab]").forEach(b=>b.onclick=(e)=>{ e.stopPropagation(); statsPref.tab=b.dataset.loadtab; saveStatsPref(); render(); });
+  /* v20 — Progress β */
+  document.querySelectorAll("[data-statsview-btn]").forEach(b=>b.onclick=()=>{ statsPref.view=b.dataset.statsviewBtn; saveStatsPref(); render(); });
+  document.querySelectorAll("[data-progex]").forEach(b=>b.onclick=()=>progOpenExercise(b.dataset.progex));
+  document.querySelectorAll("[data-proghow]").forEach(b=>b.onclick=()=>openSheet("proghow"));
   document.querySelectorAll("[data-achall]").forEach(b=>b.onclick=()=>openSheet("achall"));
   document.querySelectorAll("[data-muscle-group]").forEach(b=>b.onclick=()=>{ const g=MUSCLE_GROUPS.find(x=>x.key===b.dataset.muscleGroup); go("body");
     if(g&&g.muscles.length){ bodyDetail=g.muscles[0]; render(); setTimeout(()=>{ const el2=document.getElementById("bodydetail"); if(el2) el2.scrollIntoView({behavior:"smooth",block:"center"}); },60); } });
