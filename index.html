@@ -386,6 +386,7 @@ table.cov .cov-end{color:var(--muted); font-weight:600; padding:0 0 0 6px; text-
 .ps-chev{color:var(--faint); flex:none; font-size:16px;} .ps-thinlist{margin-top:7px; line-height:1.5;}
 .ps-ins{border-color:rgba(59,130,246,.32); background:rgba(59,130,246,.06); padding:12px 14px;} .ps-insrow{display:flex; gap:8px; font-size:13px; line-height:1.45; color:var(--text);} .ps-insrow + .ps-insrow{margin-top:8px;}
 .ps-insi{color:var(--accent); flex:none;}
+.ps-epoch{stroke:var(--gold);stroke-width:1;stroke-dasharray:3 3;opacity:.8}.ps-eplab{font-size:9px;fill:var(--gold)}.ps-row.ep span{color:var(--gold)}
 .ps-foot{font-size:12px; color:var(--muted); text-align:center; padding:6px 14px 4px; line-height:1.5;} .ps-foot .protobadge{vertical-align:middle; margin-right:4px;} .ps-foot .linkbtn{display:inline; width:auto; padding:0; color:var(--accent); font-size:12px;}
 </style>
 </head>
@@ -423,16 +424,28 @@ const APP_TAGLINE = "Training Command";
    recover.html on a v10 build is expected and correct.
    BUILD is shown in Settings and is what the deployed-version check compares against, so
    it must be bumped on every deploy. */
-const BUILD = "v20";
-const BUILD_DATE = "2026-09-28";
-const BUILD_NOTE = "Stats → Progress β: chain-linked Strength Progress over four-week blocks (best set, median per lift, ≥2 exposures, ≥4 lifts, geometric mean), Progressing / Stable / Declining / Not enough data, rule-triggered coverage insight, How it works";
+const BUILD = "v21";
+const BUILD_DATE = "2026-10-16";
+const BUILD_NOTE = "Plus Fitness equipment migration (12 Oct 2026): 24 machine exercises retired with history kept, 20 replacement exercises with fresh baselines, hard retire gate in the recommender, familiarisation progression from session 1, Progress β equipment epoch + re-baseline, setup grip/load fields, past-date logging for backfill";
 
 /* Approved users (client-side UX gate; the real gate is Supabase signup settings — see DEPLOY).
    To add a person: add one line below with their real email (lowercase), display name and role.
    role "admin" = full access, "user" = standard. Each user's data is private (per-user RLS). */
 const ADMIN_EMAIL = "adam.nbsearch@gmail.com";
 /* availability confirmed from the gym tour — these override any stale saved/cloud value on load */
-const FORCE_AVAIL = ["assisted_dip","machine_lat_raise","machine_tricep_ext","bitri_machine_curl","bitri_machine_ext","back_extension"];
+/* v21: emptied — every former member is retired (Plus Fitness re-fit) or deliberately off. Kept as a hook. */
+const FORCE_AVAIL = [];
+/* v21 — EQUIPMENT EPOCHS. A date on which the gym's strength machines changed. Exercises carry
+   since:"<date>" (new equipment) or retired:"<date>" (removed). Progress β treats exposures on a
+   since-lift inside the block that contains the epoch as familiarisation (counted, never compared),
+   and re-baselines the chain when a block after the epoch cannot be linked to pre-epoch blocks. */
+const EQUIP_EPOCHS = [ { from:"2026-10-12", label:"Plus Fitness re-fit" } ];
+function exRetired(e){ return !!(e&&e.retired); }
+function exNewEquip(e){ return !!(e&&e.since); }
+function replacesList(e){ if(!e||!e.replaces) return []; return Array.isArray(e.replaces)?e.replaces:[e.replaces]; }
+function replacedBy(id){ return (S&&S.exercises||[]).find(function(x){ return replacesList(x).indexOf(id)>=0; })||null; }
+function plainExName(e){ return String((e&&e.name)||e||"").replace(/ \(retired Oct 2026\)$/,""); }
+function fmtEpochDate(d){ return new Date(d+"T12:00:00").toLocaleDateString("en-AU",{day:"numeric",month:"short",year:"numeric"}); }
 const ALLOWED_USERS = {
   "adam.nbsearch@gmail.com": { name:"Adam", role:"admin" },
   "timothywilson0911@gmail.com": { name:"Tim", role:"user" },
@@ -496,43 +509,43 @@ function equipLabel(eq){ const p=EQUIP_FILTERS.find(x=>x[0]===eq); return p?p[1]
 /* pattern drives swap suggestions. credit: 1.0 direct, .5 indirect, .25 minor indirect. */
 const EXERCISES = [
  /* ---- LEGS ---- */
- {id:"leg_press", name:"Leg Press", type:"compound", equip:"machine", pattern:"leg_press", pref:"like", avail:"always", rec:true, src:"confirmed", rest:150, rl:8, rh:12, sl:2, sh:3, fatigue:2.5, m:{quads:1, glutes:.5}, aliases:"df-101 sportsart squat quads"},
- {id:"plate_leg_press", name:"Plate-Loaded Leg Press", type:"compound", equip:"machine", pattern:"plate_leg_press", pref:"like", avail:"always", rec:true, src:"confirmed", rest:150, rl:8, rh:12, sl:2, sh:3, fatigue:2.7, m:{quads:1, glutes:.5}, aliases:"plate loaded squat press quads legs"},
- {id:"leg_ext", name:"Leg Extension", type:"isolation", equip:"machine", pattern:"leg_ext", pref:"neutral", avail:"always", rec:true, src:"confirmed", rest:75, rl:10, rh:15, sl:2, sh:3, fatigue:1.5, m:{quads:1}, aliases:"df-100-a sportsart quads extension"},
- {id:"leg_curl", name:"Seated Leg Curl", type:"isolation", equip:"machine", pattern:"leg_curl", pref:"like", avail:"always", rec:true, src:"confirmed", rest:90, rl:8, rh:15, sl:2, sh:3, fatigue:1.5, m:{hamstrings:1, calves:.25}, aliases:"df-100-b sportsart hamstring leg curl"},
- {id:"lying_leg_curl", name:"Lying Leg Curl", type:"isolation", equip:"machine", pattern:"leg_curl", pref:"like", avail:"always", rec:true, src:"confirmed", rest:90, rl:8, rh:15, sl:2, sh:3, fatigue:1.5, m:{hamstrings:1, calves:.25}, aliases:"lying flat prone leg curl hamstring machine"},   /* v7: confirmed at the gym */
- {id:"calf_raise", name:"Calf Extension", type:"isolation", equip:"machine", pattern:"calf", pref:"like", avail:"always", rec:true, src:"confirmed", rest:75, rl:8, rh:15, sl:2, sh:3, fatigue:1, m:{calves:1}, aliases:"df-101-b leg press calf raise calves"},
- {id:"legpress_calf", name:"Leg-Press Calf Raise", type:"isolation", equip:"machine", pattern:"calf", pref:"like", avail:"always", rec:true, src:"confirmed", rest:75, rl:8, rh:15, sl:2, sh:3, fatigue:1, m:{calves:1}, aliases:"calf raise calves leg press"},
- {id:"seated_calf_raise", name:"Seated Calf Raise", type:"isolation", equip:"machine", pattern:"seated_calf", pref:"like", avail:"always", rec:true, src:"confirmed", rest:75, rl:10, rh:18, sl:2, sh:3, fatigue:1, m:{calves:1}, aliases:"plate loaded seated calf raise calves soleus"},
- {id:"hack_squat", name:"Hack Squat", type:"compound", equip:"machine", pattern:"squat", pref:"avoid", avail:"usually", rec:false, src:"manual", rest:150, rl:6, rh:10, sl:2, sh:3, fatigue:3, m:{quads:1, glutes:.5}, aliases:"v-squat squat press quads manual"},
+ {id:"leg_press", name:"Leg Press (retired Oct 2026)", type:"compound", equip:"machine", pattern:"leg_press", pref:"like", avail:"no", rec:false, retired:"2026-10-12", replacedBy:"seated_leg_press", src:"confirmed", rest:150, rl:8, rh:12, sl:2, sh:3, fatigue:2.5, m:{quads:1, glutes:.5}, aliases:"df-101 sportsart squat quads"},
+ {id:"plate_leg_press", name:"Plate-Loaded Leg Press (retired Oct 2026)", type:"compound", equip:"machine", pattern:"plate_leg_press", pref:"like", avail:"no", rec:false, retired:"2026-10-12", replacedBy:"angled_leg_press", src:"confirmed", rest:150, rl:8, rh:12, sl:2, sh:3, fatigue:2.7, m:{quads:1, glutes:.5}, aliases:"plate loaded squat press quads legs"},
+ {id:"leg_ext", name:"Leg Extension (retired Oct 2026)", type:"isolation", equip:"machine", pattern:"leg_ext", pref:"neutral", avail:"no", rec:false, retired:"2026-10-12", replacedBy:"leg_ext_2026", src:"confirmed", rest:75, rl:10, rh:15, sl:2, sh:3, fatigue:1.5, m:{quads:1}, aliases:"df-100-a sportsart quads extension"},
+ {id:"leg_curl", name:"Seated Leg Curl (retired Oct 2026)", type:"isolation", equip:"machine", pattern:"leg_curl", pref:"like", avail:"no", rec:false, retired:"2026-10-12", replacedBy:"seated_leg_curl_2026", src:"confirmed", rest:90, rl:8, rh:15, sl:2, sh:3, fatigue:1.5, m:{hamstrings:1, calves:.25}, aliases:"df-100-b sportsart hamstring leg curl"},
+ {id:"lying_leg_curl", name:"Lying Leg Curl (retired Oct 2026)", type:"isolation", equip:"machine", pattern:"leg_curl", pref:"like", avail:"no", rec:false, retired:"2026-10-12", replacedBy:"lying_leg_curl_2026", src:"confirmed", rest:90, rl:8, rh:15, sl:2, sh:3, fatigue:1.5, m:{hamstrings:1, calves:.25}, aliases:"lying flat prone leg curl hamstring machine"},   /* v7: confirmed at the gym */
+ {id:"calf_raise", name:"Calf Extension (retired Oct 2026)", type:"isolation", equip:"machine", pattern:"calf", pref:"like", avail:"no", rec:false, retired:"2026-10-12", src:"confirmed", rest:75, rl:8, rh:15, sl:2, sh:3, fatigue:1, m:{calves:1}, aliases:"df-101-b leg press calf raise calves"},
+ {id:"legpress_calf", name:"Leg-Press Calf Raise (retired Oct 2026)", type:"isolation", equip:"machine", pattern:"calf", pref:"like", avail:"no", rec:false, retired:"2026-10-12", src:"confirmed", rest:75, rl:8, rh:15, sl:2, sh:3, fatigue:1, m:{calves:1}, aliases:"calf raise calves leg press"},
+ {id:"seated_calf_raise", name:"Seated Calf Raise (retired Oct 2026)", type:"isolation", equip:"machine", pattern:"seated_calf", pref:"like", avail:"no", rec:false, retired:"2026-10-12", replacedBy:"seated_calf_raise_2026", src:"confirmed", rest:75, rl:10, rh:18, sl:2, sh:3, fatigue:1, m:{calves:1}, aliases:"plate loaded seated calf raise calves soleus"},
+ {id:"hack_squat", name:"Hack Squat", type:"compound", equip:"machine", pattern:"squat", pref:"avoid", avail:"always", rec:false, src:"confirmed", since:"2026-10-12", unit:"hack", rest:150, rl:6, rh:10, sl:2, sh:3, fatigue:3, m:{quads:1, glutes:.5}, aliases:"v-squat squat press quads manual"},
  {id:"rdl", name:"Romanian Deadlift", type:"compound", equip:"barbell", pattern:"hinge", pref:"neutral", avail:"usually", rec:false, src:"manual", rest:150, rl:5, rh:8, sl:2, sh:3, fatigue:3.5, m:{hamstrings:1, glutes:.5, lower_back:.5}, aliases:"rdl barbell hinge hamstrings manual"},
  {id:"hip_thrust", name:"Barbell Hip Thrust", type:"compound", equip:"barbell", pattern:"hip_thrust", pref:"like", avail:"always", rec:true, src:"confirmed", rest:150, rl:6, rh:12, sl:2, sh:3, fatigue:2.5, m:{glutes:1, hamstrings:.5}, aliases:"glutes barbell bench thrust"},
  {id:"cable_kickback", name:"Cable Glute Kickback", type:"isolation", equip:"cable", pattern:"kickback", pref:"neutral", avail:"always", rec:true, src:"cable", rest:60, rl:10, rh:15, sl:2, sh:3, fatigue:1.1, m:{glutes:1, hamstrings:.25}, aliases:"glutes cable crossover kickback"},
  /* ---- BACK / LATS ---- */
- {id:"lat_pulldown", name:"Lat Pulldown", type:"compound", equip:"machine", pattern:"vertical_pull", pref:"like", avail:"always", rec:true, src:"confirmed", rest:120, rl:8, rh:12, sl:2, sh:3, fatigue:2, m:{back_lats:1, biceps:.5, upper_back:.5, rear_delts:.25}, aliases:"sportsart df-103 wide grip pulldown lats vertical pull"},
- {id:"neutral_pulldown", name:"Neutral-Grip Pulldown", type:"compound", equip:"machine", pattern:"vertical_pull", pref:"like", avail:"always", rec:true, src:"confirmed", rest:120, rl:8, rh:12, sl:2, sh:3, fatigue:2, m:{back_lats:1, biceps:.5, upper_back:.5}, aliases:"close neutral grip pulldown lats vertical pull"},
- {id:"assisted_chin", name:"Assisted Chin-Up", type:"compound", equip:"machine", pattern:"vertical_pull", load:"assist", pref:"love", avail:"always", rec:true, src:"confirmed", rest:120, rl:6, rh:12, sl:2, sh:3, fatigue:2.5, m:{back_lats:1, biceps:.5, upper_back:.5, rear_delts:.25}, aliases:"df-107-a assisted chin up pull up lats"},
- {id:"machine_row", name:"Mid Row Machine", type:"compound", equip:"machine", pattern:"mid_row", pref:"like", avail:"always", rec:true, src:"confirmed", rest:120, rl:8, rh:12, sl:2, sh:3, fatigue:2, m:{upper_back:1, back_lats:.5, rear_delts:.5, biceps:.25}, aliases:"df-103 sportsart mid row seated row upper back"},
- {id:"cs_row", name:"Chest-Supported Row", type:"compound", equip:"machine", pattern:"horizontal_pull", pref:"like", avail:"always", rec:false, src:"manual", rest:120, rl:8, rh:12, sl:2, sh:3, fatigue:2, m:{upper_back:1, back_lats:.5, rear_delts:.5, biceps:.25}, aliases:"chest supported row plate row upper back manual"},
+ {id:"lat_pulldown", name:"Lat Pulldown (retired Oct 2026)", type:"compound", equip:"machine", pattern:"vertical_pull", pref:"like", avail:"no", rec:false, retired:"2026-10-12", replacedBy:"shua_lat_pulldown", src:"confirmed", rest:120, rl:8, rh:12, sl:2, sh:3, fatigue:2, m:{back_lats:1, biceps:.5, upper_back:.5, rear_delts:.25}, aliases:"sportsart df-103 wide grip pulldown lats vertical pull"},
+ {id:"neutral_pulldown", name:"Neutral-Grip Pulldown (retired Oct 2026)", type:"compound", equip:"machine", pattern:"vertical_pull", pref:"like", avail:"no", rec:false, retired:"2026-10-12", replacedBy:"shua_lat_pulldown", src:"confirmed", rest:120, rl:8, rh:12, sl:2, sh:3, fatigue:2, m:{back_lats:1, biceps:.5, upper_back:.5}, aliases:"close neutral grip pulldown lats vertical pull"},
+ {id:"assisted_chin", name:"Assisted Chin-Up (retired Oct 2026)", type:"compound", equip:"machine", pattern:"vertical_pull", load:"assist", pref:"love", avail:"no", rec:false, retired:"2026-10-12", replacedBy:"assisted_chin_2026", src:"confirmed", rest:120, rl:6, rh:12, sl:2, sh:3, fatigue:2.5, m:{back_lats:1, biceps:.5, upper_back:.5, rear_delts:.25}, aliases:"df-107-a assisted chin up pull up lats"},
+ {id:"machine_row", name:"Mid Row Machine (retired Oct 2026)", type:"compound", equip:"machine", pattern:"mid_row", pref:"like", avail:"no", rec:false, retired:"2026-10-12", replacedBy:"shua_low_row", src:"confirmed", rest:120, rl:8, rh:12, sl:2, sh:3, fatigue:2, m:{upper_back:1, back_lats:.5, rear_delts:.5, biceps:.25}, aliases:"df-103 sportsart mid row seated row upper back"},
+ {id:"cs_row", name:"Chest-Supported Row", type:"compound", equip:"machine", pattern:"horizontal_pull", pref:"like", avail:"no", rec:false, src:"manual", rest:120, rl:8, rh:12, sl:2, sh:3, fatigue:2, m:{upper_back:1, back_lats:.5, rear_delts:.5, biceps:.25}, aliases:"chest supported row plate row upper back manual"},
  {id:"seated_cable_row", name:"Seated Cable Row", type:"compound", equip:"cable", pattern:"cable_row", pref:"like", avail:"always", rec:false, src:"manual", rest:120, rl:8, rh:12, sl:2, sh:3, fatigue:2, m:{upper_back:1, back_lats:.5, rear_delts:.5, biceps:.25}, aliases:"cable row seated row upper back manual"},
- {id:"plate_row", name:"Plate-Loaded Row", type:"compound", equip:"machine", pattern:"plate_row", pref:"neutral", avail:"always", rec:false, src:"manual", rest:120, rl:8, rh:12, sl:2, sh:3, fatigue:2, m:{upper_back:1, back_lats:.5, rear_delts:.5, biceps:.25}, aliases:"plate loaded row t-bar chest supported upper back manual"},
+ {id:"plate_row", name:"Plate-Loaded Row (retired Oct 2026)", type:"compound", equip:"machine", pattern:"plate_row", pref:"neutral", avail:"no", rec:false, retired:"2026-10-12", replacedBy:"t_bar_row", src:"manual", rest:120, rl:8, rh:12, sl:2, sh:3, fatigue:2, m:{upper_back:1, back_lats:.5, rear_delts:.5, biceps:.25}, aliases:"plate loaded row t-bar chest supported upper back manual"},
  {id:"single_db_row", name:"Single-Arm DB Row", type:"compound", equip:"dumbbell", pattern:"horizontal_pull", pref:"neutral", avail:"usually", rec:false, src:"manual", rest:90, rl:8, rh:12, sl:2, sh:3, fatigue:2, m:{back_lats:1, upper_back:.5, biceps:.25}, aliases:"one arm dumbbell row lats manual"},
  {id:"straight_arm_pulldown", name:"Straight-Arm Pulldown", type:"isolation", equip:"cable", pattern:"straight_arm", pref:"like", avail:"always", rec:false, src:"manual", rest:75, rl:10, rh:15, sl:2, sh:3, fatigue:1.3, m:{back_lats:1, triceps:.25}, aliases:"straight arm cable pulldown lats manual"},
  /* ---- CHEST / UPPER CHEST ---- */
- {id:"incline_press", name:"Machine Incline Chest Press", type:"compound", equip:"machine", pattern:"incline_press", pref:"like", avail:"always", rec:true, src:"confirmed", rest:120, rl:6, rh:12, sl:2, sh:3, fatigue:2.5, m:{upper_chest:1, front_delts:.5, triceps:.5}, aliases:"df-108-b sportsart incline press upper chest"},
- {id:"machine_chest_press", name:"Machine Chest Press", type:"compound", equip:"machine", pattern:"chest_press", pref:"like", avail:"always", rec:true, src:"confirmed", rest:120, rl:6, rh:12, sl:2, sh:3, fatigue:2.5, m:{chest:1, upper_chest:.5, front_delts:.5, triceps:.5}, aliases:"df-103 sportsart chest press flat press"},
- {id:"seated_chest_press", name:"Seated Chest Press", type:"compound", equip:"machine", pattern:"seated_chest_press", pref:"like", avail:"always", rec:true, src:"confirmed", rest:120, rl:6, rh:12, sl:2, sh:3, fatigue:2.5, m:{chest:1, front_delts:.5, triceps:.5}, aliases:"df-108 sportsart seated chest press multi press"},
- {id:"pec_deck", name:"Pec Deck", type:"isolation", equip:"machine", pattern:"chest_fly", pref:"like", avail:"always", rec:true, src:"confirmed", rest:75, rl:10, rh:15, sl:2, sh:3, fatigue:1.3, m:{chest:1, upper_chest:.5, front_delts:.25}, aliases:"df-104-b pec fly pec deck chest"},
+ {id:"incline_press", name:"Machine Incline Chest Press (retired Oct 2026)", type:"compound", equip:"machine", pattern:"incline_press", pref:"like", avail:"no", rec:false, retired:"2026-10-12", replacedBy:"smith_incline_press", src:"confirmed", rest:120, rl:6, rh:12, sl:2, sh:3, fatigue:2.5, m:{upper_chest:1, front_delts:.5, triceps:.5}, aliases:"df-108-b sportsart incline press upper chest"},
+ {id:"machine_chest_press", name:"Machine Chest Press (retired Oct 2026)", type:"compound", equip:"machine", pattern:"chest_press", pref:"like", avail:"no", rec:false, retired:"2026-10-12", replacedBy:"iso_decline_press", src:"confirmed", rest:120, rl:6, rh:12, sl:2, sh:3, fatigue:2.5, m:{chest:1, upper_chest:.5, front_delts:.5, triceps:.5}, aliases:"df-103 sportsart chest press flat press"},
+ {id:"seated_chest_press", name:"Seated Chest Press", type:"compound", equip:"machine", pattern:"seated_chest_press", pref:"like", avail:"no", rec:false, src:"confirmed", rest:120, rl:6, rh:12, sl:2, sh:3, fatigue:2.5, m:{chest:1, front_delts:.5, triceps:.5}, aliases:"df-108 sportsart seated chest press multi press"},
+ {id:"pec_deck", name:"Pec Deck (retired Oct 2026)", type:"isolation", equip:"machine", pattern:"chest_fly", pref:"like", avail:"no", rec:false, retired:"2026-10-12", replacedBy:"combo_pec_fly", src:"confirmed", rest:75, rl:10, rh:15, sl:2, sh:3, fatigue:1.3, m:{chest:1, upper_chest:.5, front_delts:.25}, aliases:"df-104-b pec fly pec deck chest"},
  {id:"chest_fly", name:"Cable Chest Fly", type:"isolation", equip:"cable", pattern:"chest_fly", pref:"love", avail:"always", rec:true, src:"cable", rest:75, rl:10, rh:15, sl:2, sh:3, fatigue:1.5, m:{upper_chest:.5, chest:1, front_delts:.25}, aliases:"cable crossover fly chest pec"},
  {id:"incline_cable_fly", name:"Incline Cable Fly", type:"isolation", equip:"cable", pattern:"incline_fly", pref:"like", avail:"always", rec:true, src:"cable", rest:75, rl:10, rh:15, sl:2, sh:3, fatigue:1.5, m:{upper_chest:1, chest:.5, front_delts:.25}, aliases:"incline cable fly upper chest pec low to high"},
  {id:"db_fly", name:"Dumbbell Fly", type:"isolation", equip:"dumbbell", pattern:"chest_fly", pref:"neutral", avail:"usually", rec:true, src:"confirmed", rest:75, rl:10, rh:15, sl:2, sh:3, fatigue:1.4, m:{chest:1, upper_chest:.5, front_delts:.25}, aliases:"dumbbell fly chest pec"},
  /* ---- SHOULDERS / DELTS ---- */
- {id:"machine_ohp", name:"Machine Shoulder Press", type:"compound", equip:"machine", pattern:"overhead_press", pref:"neutral", avail:"always", rec:true, src:"confirmed", rest:120, rl:8, rh:12, sl:2, sh:3, fatigue:2.5, m:{front_delts:1, side_delts:.5, triceps:.5}, aliases:"df-108-a sportsart seated shoulder press overhead delts"},
- {id:"plated_ohp", name:"Plated Shoulder Press", type:"compound", equip:"machine", pattern:"overhead_press", pref:"neutral", avail:"always", rec:false, src:"manual", rest:120, rl:8, rh:12, sl:2, sh:3, fatigue:2.5, m:{front_delts:1, side_delts:.5, triceps:.5}, aliases:"plate loaded shoulder press overhead delts manual"},
+ {id:"machine_ohp", name:"Machine Shoulder Press (retired Oct 2026)", type:"compound", equip:"machine", pattern:"overhead_press", pref:"neutral", avail:"no", rec:false, retired:"2026-10-12", replacedBy:"iso_shoulder_press", src:"confirmed", rest:120, rl:8, rh:12, sl:2, sh:3, fatigue:2.5, m:{front_delts:1, side_delts:.5, triceps:.5}, aliases:"df-108-a sportsart seated shoulder press overhead delts"},
+ {id:"plated_ohp", name:"Plated Shoulder Press (retired Oct 2026)", type:"compound", equip:"machine", pattern:"overhead_press", pref:"neutral", avail:"no", rec:false, retired:"2026-10-12", replacedBy:"iso_shoulder_press", src:"manual", rest:120, rl:8, rh:12, sl:2, sh:3, fatigue:2.5, m:{front_delts:1, side_delts:.5, triceps:.5}, aliases:"plate loaded shoulder press overhead delts manual"},
  {id:"cable_lat_raise", name:"Cable Lateral Raise", type:"isolation", equip:"cable", pattern:"lateral_raise", pref:"love", avail:"always", rec:true, src:"cable", rest:60, rl:12, rh:20, sl:2, sh:3, fatigue:1, m:{side_delts:1, upper_back:.25}, aliases:"cable side lateral raise side delts"},
  {id:"db_lat_raise", name:"DB Lateral Raise", type:"isolation", equip:"dumbbell", pattern:"lateral_raise", pref:"like", avail:"always", rec:true, src:"confirmed", rest:60, rl:12, rh:20, sl:2, sh:3, fatigue:1, m:{side_delts:1, upper_back:.25}, aliases:"dumbbell side lateral raise side delts"},
  {id:"machine_lat_raise", name:"Machine Lateral Raise", type:"isolation", equip:"machine", pattern:"lateral_raise", pref:"like", avail:"no", rec:false, src:"unavailable", rest:60, rl:12, rh:20, sl:2, sh:3, fatigue:1, m:{side_delts:1}, aliases:"machine lateral raise side delts not available"},
- {id:"reverse_pec_deck", name:"Rear Delt Fly Machine", type:"isolation", equip:"machine", pattern:"rear_delt", pref:"like", avail:"always", rec:true, src:"confirmed", rest:60, rl:12, rh:18, sl:2, sh:3, fatigue:1, m:{rear_delts:1, upper_back:.5}, aliases:"df-104-a sportsart rear deltoid reverse pec deck rear delts"},
+ {id:"reverse_pec_deck", name:"Rear Delt Fly Machine (retired Oct 2026)", type:"isolation", equip:"machine", pattern:"rear_delt", pref:"like", avail:"no", rec:false, retired:"2026-10-12", replacedBy:"combo_rear_delt_fly", src:"confirmed", rest:60, rl:12, rh:18, sl:2, sh:3, fatigue:1, m:{rear_delts:1, upper_back:.5}, aliases:"df-104-a sportsart rear deltoid reverse pec deck rear delts"},
  {id:"rear_delt_fly", name:"Cable Rear Delt Fly", type:"isolation", equip:"cable", pattern:"rear_delt", pref:"love", avail:"always", rec:true, src:"cable", rest:60, rl:12, rh:18, sl:2, sh:3, fatigue:1, m:{rear_delts:1, upper_back:.5}, aliases:"cable rear delt fly reverse fly rear delts"},
  {id:"face_pull", name:"Cable Face Pull", type:"isolation", equip:"cable", pattern:"face_pull", pref:"like", avail:"always", rec:true, src:"cable", rest:60, rl:12, rh:18, sl:2, sh:3, fatigue:1, m:{rear_delts:1, upper_back:.5}, aliases:"cable face pull rope rear delts upper back"},
  /* ---- TRICEPS ---- */
@@ -541,15 +554,15 @@ const EXERCISES = [
  {id:"straightbar_pushdown", name:"Straight-Bar Tricep Pushdown", type:"isolation", equip:"cable", pattern:"pushdown", pref:"like", avail:"always", rec:true, src:"cable", rest:75, rl:8, rh:15, sl:2, sh:3, fatigue:1.2, m:{triceps:1}, aliases:"straight bar tricep pushdown pressdown triceps"},
  {id:"overhead_rope_ext", name:"Overhead Cable Tricep Extension", type:"isolation", equip:"cable", pattern:"overhead_ext", pref:"like", avail:"always", rec:true, src:"cable", rest:75, rl:10, rh:15, sl:2, sh:3, fatigue:1.3, m:{triceps:1}, aliases:"overhead cable rope tricep extension triceps long head"},
  {id:"single_overhead_ext", name:"Single-Arm Cable Tricep Extension", type:"isolation", equip:"cable", pattern:"single_arm_ext", pref:"neutral", avail:"always", rec:true, src:"cable", rest:60, rl:10, rh:15, sl:2, sh:3, fatigue:1.2, m:{triceps:1}, aliases:"single arm overhead cable tricep extension triceps"},
- {id:"machine_tricep_ext", name:"Machine Tricep Extension", type:"isolation", equip:"machine", pattern:"machine_ext", pref:"like", avail:"always", rec:true, src:"confirmed", rest:75, rl:8, rh:15, sl:2, sh:3, fatigue:1.3, m:{triceps:1}, aliases:"df-105-b sportsart machine tricep extension dip triceps"},
- {id:"assisted_dip", name:"Assisted Dip", type:"compound", equip:"machine", pattern:"dip", load:"assist", pref:"like", avail:"always", rec:true, src:"confirmed", rest:120, rl:6, rh:12, sl:2, sh:3, fatigue:2, m:{triceps:1, chest:.5, front_delts:.25}, aliases:"df-107-b assisted dip shoulder dip triceps"},
+ {id:"machine_tricep_ext", name:"Machine Tricep Extension (retired Oct 2026)", type:"isolation", equip:"machine", pattern:"machine_ext", pref:"like", avail:"no", rec:false, retired:"2026-10-12", replacedBy:"bitri_machine_ext", src:"confirmed", rest:75, rl:8, rh:15, sl:2, sh:3, fatigue:1.3, m:{triceps:1}, aliases:"df-105-b sportsart machine tricep extension dip triceps"},
+ {id:"assisted_dip", name:"Assisted Dip (retired Oct 2026)", type:"compound", equip:"machine", pattern:"dip", load:"assist", pref:"like", avail:"no", rec:false, retired:"2026-10-12", replacedBy:"assisted_dip_2026", src:"confirmed", rest:120, rl:6, rh:12, sl:2, sh:3, fatigue:2, m:{triceps:1, chest:.5, front_delts:.25}, aliases:"df-107-b assisted dip shoulder dip triceps"},
  {id:"db_overhead_ext", name:"DB Overhead Tricep Ext.", type:"isolation", equip:"dumbbell", pattern:"overhead_ext", pref:"like", avail:"always", rec:false, src:"manual", rest:75, rl:8, rh:15, sl:2, sh:3, fatigue:1.4, m:{triceps:1}, aliases:"dumbbell overhead tricep extension triceps manual"},
  {id:"bench_dip", name:"Bench Dip", type:"compound", equip:"bodyweight", pattern:"dip", pref:"neutral", avail:"always", rec:false, src:"manual", rest:90, rl:8, rh:15, sl:2, sh:3, fatigue:1.5, m:{triceps:1, chest:.5, front_delts:.25}, aliases:"bench dip bodyweight triceps manual"},
  {id:"crossbody_ext", name:"Cross-Body Cable Tricep Ext.", type:"isolation", equip:"cable", pattern:"crossbody_ext", pref:"neutral", avail:"no", rec:false, src:"unavailable", rest:60, rl:10, rh:15, sl:2, sh:3, fatigue:1.1, m:{triceps:1}, aliases:"cross body cable tricep extension not used"},
- {id:"bitri_machine_ext", name:"Bi/Tri Machine (Ext) — unconfirmed", type:"isolation", equip:"machine", pattern:"machine_ext", pref:"neutral", avail:"no", rec:false, src:"unavailable", rest:75, rl:8, rh:14, sl:2, sh:3, fatigue:1.2, m:{triceps:1}, aliases:"unconfirmed duplicate machine tricep extension"},
+ {id:"bitri_machine_ext", name:"Seated Triceps Press (Bi/Tri combo)", type:"isolation", equip:"machine", pattern:"machine_ext", pref:"like", avail:"always", rec:true, src:"confirmed", since:"2026-10-12", unit:"bitri_combo", replaces:"machine_tricep_ext", rest:75, rl:8, rh:15, sl:2, sh:3, fatigue:1.3, m:{triceps:1}, aliases:"seated triceps press extension dip machine bi tri combo biceps triceps 2026 new machine"},
  /* ---- BICEPS ---- */
  {id:"cable_curl", name:"Cable Bicep Curl", type:"isolation", equip:"cable", pattern:"curl", pref:"love", avail:"always", rec:true, src:"cable", rest:75, rl:8, rh:12, sl:2, sh:3, fatigue:1.2, m:{biceps:1, forearms:.5}, aliases:"cable bicep curl biceps"},
- {id:"machine_curl", name:"Machine Bicep Curl", type:"isolation", equip:"machine", pattern:"machine_curl", pref:"like", avail:"always", rec:true, src:"confirmed", rest:75, rl:8, rh:12, sl:2, sh:3, fatigue:1.2, m:{biceps:1, forearms:.25}, aliases:"df-105-a sportsart machine bicep curl biceps"},
+ {id:"machine_curl", name:"Machine Bicep Curl (retired Oct 2026)", type:"isolation", equip:"machine", pattern:"machine_curl", pref:"like", avail:"no", rec:false, retired:"2026-10-12", replacedBy:"bitri_machine_curl", src:"confirmed", rest:75, rl:8, rh:12, sl:2, sh:3, fatigue:1.2, m:{biceps:1, forearms:.25}, aliases:"df-105-a sportsart machine bicep curl biceps"},
  {id:"rope_hammer_curl", name:"Rope Hammer Curl", type:"isolation", equip:"cable", pattern:"hammer_curl", pref:"like", avail:"always", rec:true, src:"cable", rest:75, rl:8, rh:12, sl:2, sh:3, fatigue:1.3, m:{biceps:1, forearms:.5}, aliases:"rope hammer curl cable biceps brachialis forearms"},
  {id:"single_arm_cable_curl", name:"Single-Arm Cable Curl", type:"isolation", equip:"cable", pattern:"single_arm_curl", pref:"like", avail:"always", rec:true, src:"cable", rest:60, rl:8, rh:12, sl:2, sh:3, fatigue:1.2, m:{biceps:1, forearms:.25}, aliases:"single arm cable curl biceps"},
  {id:"db_curl", name:"Dumbbell Curl", type:"isolation", equip:"dumbbell", pattern:"curl", pref:"like", avail:"usually", rec:true, src:"confirmed", rest:75, rl:8, rh:12, sl:2, sh:3, fatigue:1.3, m:{biceps:1, forearms:.25}, aliases:"dumbbell bicep curl biceps"},
@@ -557,11 +570,11 @@ const EXERCISES = [
  {id:"bayesian_curl", name:"Cable Bayesian Curl", type:"isolation", equip:"cable", pattern:"bayesian_curl", pref:"neutral", avail:"always", rec:false, src:"manual", rest:75, rl:8, rh:14, sl:2, sh:3, fatigue:1.2, m:{biceps:1, forearms:.25}, aliases:"bayesian cable curl behind body biceps manual"},
  {id:"incline_db_curl", name:"DB Incline Curl", type:"isolation", equip:"dumbbell", pattern:"curl", pref:"like", avail:"usually", rec:false, src:"manual", rest:75, rl:8, rh:12, sl:2, sh:3, fatigue:1.3, m:{biceps:1, forearms:.25}, aliases:"incline dumbbell curl biceps manual"},
  {id:"ezbar_curl", name:"EZ-Bar Curl", type:"isolation", equip:"barbell", pattern:"curl", pref:"neutral", avail:"usually", rec:false, src:"manual", rest:90, rl:6, rh:12, sl:2, sh:3, fatigue:1.5, m:{biceps:1, forearms:.5}, aliases:"ez bar barbell curl biceps manual"},
- {id:"preacher_curl", name:"Preacher Curl", type:"isolation", equip:"machine", pattern:"curl", pref:"neutral", avail:"sometimes", rec:false, src:"manual", rest:90, rl:6, rh:12, sl:2, sh:3, fatigue:1.5, m:{biceps:1, forearms:.25}, aliases:"preacher curl machine biceps manual"},
- {id:"bitri_machine_curl", name:"Bi/Tri Machine (Curl) — unconfirmed", type:"isolation", equip:"machine", pattern:"machine_curl2", pref:"neutral", avail:"no", rec:false, src:"unavailable", rest:75, rl:8, rh:14, sl:2, sh:3, fatigue:1.2, m:{biceps:1}, aliases:"unconfirmed duplicate machine bicep curl"},
+ {id:"preacher_curl", name:"Preacher Curl", type:"isolation", equip:"machine", pattern:"curl", pref:"neutral", avail:"no", rec:false, src:"manual", rest:90, rl:6, rh:12, sl:2, sh:3, fatigue:1.5, m:{biceps:1, forearms:.25}, aliases:"preacher curl machine biceps manual"},
+ {id:"bitri_machine_curl", name:"Seated Biceps Curl (Bi/Tri combo)", type:"isolation", equip:"machine", pattern:"machine_curl", pref:"like", avail:"always", rec:true, src:"confirmed", since:"2026-10-12", unit:"bitri_combo", replaces:"machine_curl", rest:75, rl:8, rh:12, sl:2, sh:3, fatigue:1.2, m:{biceps:1, forearms:.25}, aliases:"seated biceps curl machine bi tri combo preacher style 2026 new machine"},
  /* ---- CORE / LOWER BACK ---- */
- {id:"ab_movement", name:"Machine Ab Crunch", type:"isolation", equip:"machine", pattern:"ab_crunch", pref:"neutral", avail:"always", rec:true, src:"confirmed", rest:60, rl:10, rh:20, sl:2, sh:3, fatigue:1, m:{abs:1}, aliases:"df-106-b sportsart abdominal crunch machine abs core"},
- {id:"back_extension", name:"Back Extension", type:"isolation", equip:"machine", pattern:"back_extension", pref:"neutral", avail:"always", rec:true, src:"confirmed", rest:90, rl:10, rh:15, sl:2, sh:3, fatigue:1.4, m:{lower_back:1, glutes:.5, hamstrings:.5}, aliases:"df-106-a hyperextension 45 degree lower back core"},
+ {id:"ab_movement", name:"Machine Ab Crunch (retired Oct 2026)", type:"isolation", equip:"machine", pattern:"ab_crunch", pref:"neutral", avail:"no", rec:false, retired:"2026-10-12", replacedBy:"ab_crunch_2026", src:"confirmed", rest:60, rl:10, rh:20, sl:2, sh:3, fatigue:1, m:{abs:1}, aliases:"df-106-b sportsart abdominal crunch machine abs core"},
+ {id:"back_extension", name:"Back Extension", type:"isolation", equip:"machine", pattern:"back_extension", pref:"neutral", avail:"no", rec:false, src:"confirmed", rest:90, rl:10, rh:15, sl:2, sh:3, fatigue:1.4, m:{lower_back:1, glutes:.5, hamstrings:.5}, aliases:"df-106-a hyperextension 45 degree lower back core"},
  {id:"cable_crunch", name:"Cable Crunch", type:"isolation", equip:"cable", pattern:"cable_crunch", pref:"like", avail:"always", rec:false, src:"manual", rest:60, rl:10, rh:20, sl:2, sh:3, fatigue:1, m:{abs:1}, aliases:"cable crunch kneeling abs core manual"},
  {id:"hanging_leg_raise", name:"Hanging Leg Raise", type:"isolation", equip:"bodyweight", pattern:"ab_raise", pref:"neutral", avail:"usually", rec:false, src:"manual", rest:75, rl:8, rh:15, sl:2, sh:3, fatigue:1.2, m:{abs:1, lower_back:.25}, aliases:"hanging leg knee raise abs core manual"},
 
@@ -578,7 +591,7 @@ const EXERCISES = [
  /* ---- BACK (item 3 + expansion) ---- */
  {id:"smith_bent_row", name:"Smith Machine Bent-Over Row", type:"compound", equip:"smith", pattern:"bent_row", pref:"neutral", avail:"always", rec:false, src:"manual", rest:120, rl:6, rh:12, sl:3, sh:4, fatigue:2.8, m:{back_lats:1, upper_back:1, rear_delts:.5, biceps:.5, lower_back:.5, abs:.25}, aliases:"smith machine bent over row bent-over row bentover row smith row back row lats rhomboids middle traps hinge row barbell fixed bar row"},
  {id:"bb_bent_row", name:"Barbell Bent-Over Row", type:"compound", equip:"barbell", pattern:"bent_row", pref:"neutral", avail:"usually", rec:false, src:"manual", rest:120, rl:6, rh:12, sl:3, sh:4, fatigue:3, m:{back_lats:1, upper_back:1, rear_delts:.5, biceps:.5, lower_back:.5, abs:.25}, aliases:"barbell bent over row bent-over row bentover row pendlay row back row lats rhomboids traps"},
- {id:"t_bar_row", name:"T-Bar Row (Machine)", type:"compound", equip:"machine", pattern:"tbar_row", pref:"neutral", avail:"usually", rec:false, src:"manual", rest:120, rl:8, rh:12, sl:2, sh:3, fatigue:2.4, m:{upper_back:1, back_lats:.5, rear_delts:.5, biceps:.25}, aliases:"t-bar tbar t bar row landmine row upper back thickness"},
+ {id:"t_bar_row", name:"T-Bar Row", type:"compound", equip:"machine", pattern:"tbar_row", pref:"like", avail:"always", rec:true, src:"confirmed", since:"2026-10-12", unit:"tbar", replaces:"plate_row", rest:120, rl:8, rh:12, sl:2, sh:3, fatigue:2.4, m:{upper_back:1, back_lats:.5, rear_delts:.5, biceps:.25}, aliases:"t-bar tbar t bar row landmine row upper back thickness"},
  {id:"chin_up", name:"Chin-Up (Bodyweight / Weighted)", type:"compound", equip:"bodyweight", pattern:"vertical_pull", load:"bw", pref:"neutral", avail:"always", rec:false, src:"manual", rest:150, rl:4, rh:12, sl:2, sh:4, fatigue:2.8, m:{back_lats:1, biceps:.75, upper_back:.5, rear_delts:.25, abs:.25}, aliases:"chin up chinup supinated underhand grip chin bodyweight weighted belt lats biceps vertical pull graduation"},
  {id:"bw_dip", name:"Dip (Bodyweight / Weighted)", type:"compound", equip:"bodyweight", pattern:"dip", load:"bw", pref:"neutral", avail:"always", rec:false, src:"manual", rest:150, rl:5, rh:12, sl:2, sh:4, fatigue:2.4, m:{triceps:1, chest:.75, front_delts:.5}, aliases:"dip dips parallel bar bodyweight weighted belt triceps chest graduation"},
  {id:"pull_up", name:"Pull-Up (Bodyweight)", type:"compound", equip:"bodyweight", pattern:"vertical_pull", load:"bw", pref:"neutral", avail:"always", rec:false, src:"manual", rest:150, rl:4, rh:12, sl:2, sh:4, fatigue:2.8, m:{back_lats:1, biceps:.5, upper_back:.5, rear_delts:.25, abs:.25}, aliases:"pull up pullup chin up wide grip bodyweight lats vertical pull"},
@@ -625,21 +638,56 @@ const EXERCISES = [
  {id:"good_morning", name:"Barbell Good Morning", type:"compound", equip:"barbell", pattern:"good_morning", pref:"neutral", avail:"usually", rec:false, src:"manual", rest:120, rl:8, rh:12, sl:2, sh:3, fatigue:2.6, m:{hamstrings:1, glutes:.5, lower_back:1}, aliases:"good morning barbell hinge hamstrings lower back"},
 
  /* ---- GLUTES ---- */
- {id:"hip_abduction", name:"Machine Hip Abduction", type:"isolation", equip:"machine", pattern:"abduction", pref:"neutral", avail:"always", rec:false, src:"manual", rest:60, rl:12, rh:20, sl:2, sh:3, fatigue:1, m:{glutes:1}, aliases:"machine hip abduction abductor glute med outer thigh seated abduction"},
+ {id:"hip_abduction", name:"Machine Hip Abduction", type:"isolation", equip:"machine", pattern:"abduction", pref:"neutral", avail:"no", rec:false, src:"manual", rest:60, rl:12, rh:20, sl:2, sh:3, fatigue:1, m:{glutes:1}, aliases:"machine hip abduction abductor glute med outer thigh seated abduction"},
  {id:"smith_hip_thrust", name:"Smith Machine Hip Thrust", type:"compound", equip:"smith", pattern:"hip_thrust", pref:"neutral", avail:"always", rec:false, src:"manual", rest:120, rl:8, rh:15, sl:2, sh:3, fatigue:2.3, m:{glutes:1, hamstrings:.5}, aliases:"smith machine hip thrust glute bridge glutes"},
  {id:"cable_pull_through", name:"Cable Pull-Through", type:"compound", equip:"cable", pattern:"pull_through", pref:"neutral", avail:"always", rec:false, src:"manual", rest:75, rl:10, rh:15, sl:2, sh:3, fatigue:1.6, m:{glutes:1, hamstrings:.5, lower_back:.25}, aliases:"cable pull through rope hinge glutes hamstrings"},
  {id:"step_up", name:"Dumbbell Step-Up", type:"compound", equip:"dumbbell", pattern:"step_up", pref:"neutral", avail:"usually", rec:false, src:"manual", rest:90, rl:8, rh:15, sl:2, sh:3, fatigue:2.2, m:{glutes:1, quads:1, hamstrings:.25}, aliases:"step up dumbbell box step ups glutes quads single leg"},
 
  /* ---- CALVES ---- */
- {id:"standing_calf_machine", name:"Standing Calf Raise Machine", type:"isolation", equip:"machine", pattern:"standing_calf", pref:"neutral", avail:"usually", rec:false, src:"manual", rest:60, rl:8, rh:15, sl:2, sh:4, fatigue:1, m:{calves:1}, aliases:"standing calf raise machine shoulder pad calves gastrocnemius"},
+ {id:"standing_calf_machine", name:"Standing Calf Raise Machine (retired Oct 2026)", type:"isolation", equip:"machine", pattern:"standing_calf", pref:"neutral", avail:"no", rec:false, retired:"2026-10-12", src:"manual", rest:60, rl:8, rh:15, sl:2, sh:4, fatigue:1, m:{calves:1}, aliases:"standing calf raise machine shoulder pad calves gastrocnemius"},
  {id:"smith_calf_raise", name:"Smith Machine Calf Raise", type:"isolation", equip:"smith", pattern:"standing_calf", pref:"neutral", avail:"always", rec:false, src:"manual", rest:60, rl:10, rh:18, sl:2, sh:4, fatigue:1, m:{calves:1}, aliases:"smith machine calf raise standing calves gastrocnemius"},
  {id:"db_single_calf_raise", name:"Single-Leg Dumbbell Calf Raise", type:"isolation", equip:"dumbbell", pattern:"single_calf", pref:"neutral", avail:"always", rec:false, src:"manual", rest:60, rl:10, rh:20, sl:2, sh:3, fatigue:1, m:{calves:1}, aliases:"single leg dumbbell calf raise one legged calves step"},
 
  /* ---- CORE ---- */
- {id:"captains_chair", name:"Captain's Chair Leg Raise", type:"isolation", equip:"machine", pattern:"ab_raise", pref:"neutral", avail:"usually", rec:false, src:"manual", rest:60, rl:8, rh:20, sl:2, sh:3, fatigue:1.1, m:{abs:1}, aliases:"captains chair leg raise knee raise vertical bench abs core"},
+ {id:"captains_chair", name:"Captain's Chair Leg Raise", type:"isolation", equip:"machine", pattern:"ab_raise", pref:"neutral", avail:"no", rec:false, src:"manual", rest:60, rl:8, rh:20, sl:2, sh:3, fatigue:1.1, m:{abs:1}, aliases:"captains chair leg raise knee raise vertical bench abs core"},
  {id:"decline_situp", name:"Decline Sit-Up", type:"isolation", equip:"bodyweight", pattern:"situp", pref:"neutral", avail:"usually", rec:false, src:"manual", rest:60, rl:10, rh:20, sl:2, sh:3, fatigue:1.1, m:{abs:1}, aliases:"decline sit up situp crunch bench abs core"},
  {id:"ab_wheel", name:"Ab Wheel Rollout", type:"isolation", equip:"bodyweight", pattern:"rollout", pref:"neutral", avail:"usually", rec:false, src:"manual", rest:60, rl:8, rh:15, sl:2, sh:3, fatigue:1.4, m:{abs:1, lower_back:.25}, aliases:"ab wheel rollout roller abs core anti extension"},
  {id:"cable_woodchop", name:"Cable Woodchopper", type:"isolation", equip:"cable", pattern:"rotation", pref:"neutral", avail:"always", rec:false, src:"manual", rest:60, rl:10, rh:15, sl:2, sh:3, fatigue:1.1, m:{abs:1, lower_back:.25}, aliases:"cable woodchop woodchopper rotation oblique twist abs core"},
+ /* ============================================================================================
+    v21 — PLUS FITNESS RE-FIT (w/c 12 Oct 2026). Every strength machine was replaced. Replaced
+    machines above carry retired:"2026-10-12" (history, PBs and charts intact; never recommended).
+    The entries below are the replacements: NEW slugs, so no load, PB, trend or Progress β value
+    can leak from the old machine. `replaces` feeds familiarity ranking and the "replaces …" line
+    only. `unit` groups movements that live on one physical machine. Credits copy the predecessor
+    unless noted. rec:true = may be auto-programmed from day one (Adam, 16 Oct 2026).
+    ============================================================================================ */
+ /* ---- chest ---- */
+ {id:"smith_incline_press", name:"Smith Machine Incline Press", type:"compound", equip:"smith", pattern:"incline_press", pref:"like", avail:"always", rec:true, src:"confirmed", since:"2026-10-12", unit:"smith", replaces:"incline_press", rest:120, rl:6, rh:12, sl:2, sh:3, fatigue:2.5, m:{upper_chest:1, front_delts:.5, triceps:.5}, aliases:"smith machine incline bench press upper chest new 2026 replacement incline press"},
+ {id:"iso_decline_press", name:"Iso-Leverage Decline Chest Press", type:"compound", equip:"machine", pattern:"decline_press", pref:"neutral", avail:"always", rec:false, src:"confirmed", since:"2026-10-12", unit:"iso_decline", replaces:"machine_chest_press", rest:120, rl:6, rh:12, sl:2, sh:3, fatigue:2.5, m:{chest:1, triceps:.5, front_delts:.25}, aliases:"iso lateral leverage decline chest press plate loaded hammer strength new 2026"},
+ {id:"combo_pec_fly", name:"Pec Fly (combo machine)", type:"isolation", equip:"machine", pattern:"chest_fly", pref:"like", avail:"always", rec:true, src:"confirmed", since:"2026-10-12", unit:"pec_combo", replaces:"pec_deck", setupCare:"shoulder", rest:75, rl:10, rh:15, sl:2, sh:3, fatigue:1.3, m:{chest:1, upper_chest:.5, front_delts:.25}, aliases:"pec fly pec deck chest fly combo rear delt machine new 2026 replacement"},
+ {id:"combo_rear_delt_fly", name:"Rear Delt Fly (combo machine)", type:"isolation", equip:"machine", pattern:"rear_delt", pref:"like", avail:"always", rec:true, src:"confirmed", since:"2026-10-12", unit:"pec_combo", replaces:"reverse_pec_deck", rest:60, rl:12, rh:18, sl:2, sh:3, fatigue:1, m:{rear_delts:1, upper_back:.5}, aliases:"rear delt fly reverse pec deck combo machine rear delts new 2026 replacement"},
+ /* ---- shoulders ---- */
+ {id:"iso_shoulder_press", name:"Iso-Lateral Shoulder Press", type:"compound", equip:"machine", pattern:"overhead_press", pref:"neutral", avail:"always", rec:true, src:"confirmed", since:"2026-10-12", unit:"iso_shoulder", replaces:["plated_ohp","machine_ohp"], rest:120, rl:8, rh:12, sl:2, sh:3, fatigue:2.5, m:{front_delts:1, side_delts:.5, triceps:.5}, aliases:"iso lateral shoulder press plate loaded seated shoulder press overhead delts new 2026 replacement"},
+ /* ---- back ---- */
+ {id:"shua_lat_pulldown", name:"SHUA Lat Pulldown", type:"compound", equip:"machine", pattern:"vertical_pull", pref:"like", avail:"always", rec:true, src:"confirmed", since:"2026-10-12", unit:"shua_pulldown", replaces:["lat_pulldown","neutral_pulldown"], rest:120, rl:8, rh:12, sl:2, sh:3, fatigue:2, m:{back_lats:1, biceps:.5, upper_back:.5, rear_delts:.25}, aliases:"shua lat pulldown wide grip pulldown lats vertical pull new 2026 replacement"},
+ {id:"iso_lat_pulldown", name:"Iso-Lateral Lat Pulldown", type:"compound", equip:"machine", pattern:"vertical_pull", pref:"neutral", avail:"always", rec:false, src:"confirmed", since:"2026-10-12", unit:"iso_pulldown", rest:120, rl:8, rh:12, sl:2, sh:3, fatigue:2, m:{back_lats:1, biceps:.5, upper_back:.5, rear_delts:.25}, aliases:"iso lateral lat pulldown plate loaded unilateral lats new 2026"},
+ {id:"combo_lat_pulldown", name:"Combo Lat Pulldown", type:"compound", equip:"machine", pattern:"vertical_pull", pref:"neutral", avail:"always", rec:false, src:"confirmed", since:"2026-10-12", unit:"pull_row_combo", rest:120, rl:8, rh:12, sl:2, sh:3, fatigue:2, m:{back_lats:1, biceps:.5, upper_back:.5, rear_delts:.25}, aliases:"combo lat pulldown seated row dual station pulldown lats new 2026"},
+ {id:"shua_low_row", name:"SHUA Low Row", type:"compound", equip:"machine", pattern:"low_row", pref:"like", avail:"always", rec:true, src:"confirmed", since:"2026-10-12", unit:"shua_lowrow", replaces:"machine_row", rest:120, rl:8, rh:12, sl:2, sh:3, fatigue:2, m:{upper_back:1, back_lats:.5, rear_delts:.5, biceps:.25}, aliases:"shua low row seated row mid row machine upper back new 2026 replacement"},
+ {id:"combo_seated_row", name:"Combo Seated Row", type:"compound", equip:"machine", pattern:"seated_row", pref:"neutral", avail:"always", rec:false, src:"confirmed", since:"2026-10-12", unit:"pull_row_combo", rest:120, rl:8, rh:12, sl:2, sh:3, fatigue:2, m:{upper_back:1, back_lats:.5, rear_delts:.5, biceps:.25}, aliases:"combo seated row pulldown row dual station upper back new 2026"},
+ {id:"assisted_chin_2026", name:"Assisted Chin-Up", type:"compound", equip:"machine", pattern:"vertical_pull", load:"assist", pref:"love", avail:"always", rec:true, src:"confirmed", since:"2026-10-12", unit:"assist_station", replaces:"assisted_chin", rest:120, rl:6, rh:12, sl:2, sh:3, fatigue:2.5, m:{back_lats:1, biceps:.5, upper_back:.5, rear_delts:.25}, aliases:"assisted chin up pull up machine lats new 2026 replacement"},
+ /* ---- arms ---- */
+ {id:"assisted_dip_2026", name:"Assisted Dip", type:"compound", equip:"machine", pattern:"dip", load:"assist", pref:"like", avail:"always", rec:false, src:"confirmed", since:"2026-10-12", unit:"assist_station", replaces:"assisted_dip", rest:120, rl:6, rh:12, sl:2, sh:3, fatigue:2, m:{triceps:1, chest:.5, front_delts:.25}, aliases:"assisted dip machine triceps chest new 2026 replacement"},
+ {id:"shua_tricep_pushdown", name:"SHUA Triceps Pushdown (machine)", type:"isolation", equip:"machine", pattern:"pushdown", pref:"neutral", avail:"always", rec:false, src:"confirmed", since:"2026-10-12", unit:"shua_pushdown", rest:75, rl:8, rh:15, sl:2, sh:3, fatigue:1.2, m:{triceps:1}, aliases:"shua triceps pushdown machine seated dip press triceps new 2026"},
+ /* ---- legs ---- */
+ {id:"angled_leg_press", name:"Angled Leg Press", type:"compound", equip:"machine", pattern:"leg_press", pref:"like", avail:"always", rec:true, src:"confirmed", since:"2026-10-12", unit:"angled_press", replaces:"plate_leg_press", rest:150, rl:8, rh:12, sl:2, sh:3, fatigue:2.7, m:{quads:1, glutes:.5}, aliases:"angled leg press 45 degree sled plate loaded quads legs new 2026 replacement"},
+ {id:"seated_leg_press", name:"Seated Leg Press", type:"compound", equip:"machine", pattern:"seated_leg_press", pref:"neutral", avail:"always", rec:false, src:"confirmed", since:"2026-10-12", unit:"seated_press", replaces:"leg_press", rest:150, rl:8, rh:12, sl:2, sh:3, fatigue:2.5, m:{quads:1, glutes:.5}, aliases:"seated leg press horizontal selectorised quads legs new 2026 replacement"},
+ {id:"leg_ext_2026", name:"Leg Extension", type:"isolation", equip:"machine", pattern:"leg_ext", pref:"neutral", avail:"always", rec:true, src:"confirmed", since:"2026-10-12", unit:"leg_ext", replaces:"leg_ext", rest:75, rl:10, rh:15, sl:2, sh:3, fatigue:1.5, m:{quads:1}, aliases:"leg extension quads machine new 2026 replacement"},
+ {id:"lying_leg_curl_2026", name:"Lying Leg Curl", type:"isolation", equip:"machine", pattern:"leg_curl", pref:"like", avail:"always", rec:true, src:"confirmed", since:"2026-10-12", unit:"lying_curl", replaces:"lying_leg_curl", rest:90, rl:8, rh:15, sl:2, sh:3, fatigue:1.5, m:{hamstrings:1, calves:.25}, aliases:"lying prone leg curl hamstrings machine new 2026 replacement"},
+ {id:"seated_leg_curl_2026", name:"Seated Leg Curl", type:"isolation", equip:"machine", pattern:"leg_curl", pref:"like", avail:"always", rec:true, src:"confirmed", since:"2026-10-12", unit:"seated_curl", replaces:"leg_curl", rest:90, rl:8, rh:15, sl:2, sh:3, fatigue:1.5, m:{hamstrings:1, calves:.25}, aliases:"seated leg curl hamstrings machine new 2026 replacement"},
+ {id:"angled_legpress_calf", name:"Angled Leg Press Calf Raise", type:"isolation", equip:"machine", pattern:"calf", pref:"neutral", avail:"always", rec:false, src:"confirmed", since:"2026-10-12", unit:"angled_press", replaces:"legpress_calf", rest:75, rl:8, rh:15, sl:2, sh:3, fatigue:1, m:{calves:1}, aliases:"angled leg press calf raise sled calves gastrocnemius new 2026"},
+ {id:"seated_calf_raise_2026", name:"Seated Calf Raise", type:"isolation", equip:"machine", pattern:"seated_calf", pref:"like", avail:"always", rec:true, src:"confirmed", since:"2026-10-12", unit:"seated_calf", replaces:"seated_calf_raise", rest:75, rl:10, rh:18, sl:2, sh:3, fatigue:1, m:{calves:1}, aliases:"seated calf raise calves soleus machine new 2026 replacement"},
+ /* ---- core ---- */
+ {id:"ab_crunch_2026", name:"Machine Ab Crunch", type:"isolation", equip:"machine", pattern:"ab_crunch", pref:"neutral", avail:"always", rec:true, src:"confirmed", since:"2026-10-12", unit:"ab_crunch", replaces:"ab_movement", rest:60, rl:10, rh:20, sl:2, sh:3, fatigue:1, m:{abs:1}, aliases:"abdominal crunch machine abs core new 2026 replacement"},
 ];
 /* ===== Exercise metadata for temporary limitations (toe/foot, legs, standing) =====
    foot_pressure: 0 none · 1 light · 2 heavy (drives through forefoot/toe).
@@ -649,7 +697,9 @@ const FOOT_PRESSURE={ hack_squat:2, leg_press:2, plate_leg_press:2, rdl:2, calf_
   bb_squat:2, smith_squat:2, bulgarian_split_squat:2, walking_lunge:2, step_up:2, goblet_squat:2,
   standing_calf_machine:2, smith_calf_raise:2, db_single_calf_raise:2,
   db_rdl:2, smith_rdl:2, good_morning:2, smith_hip_thrust:1, hip_thrust:1, cable_pull_through:1,
-  smith_bent_row:1, bb_bent_row:1, bb_ohp:1, push_up:1, hip_abduction:0, captains_chair:0 };
+  smith_bent_row:1, bb_bent_row:1, bb_ohp:1, push_up:1, hip_abduction:0, captains_chair:0,
+  /* v21 — Plus Fitness replacements */
+  angled_leg_press:2, seated_leg_press:2, angled_legpress_calf:2, seated_calf_raise_2026:2, leg_ext_2026:0, lying_leg_curl_2026:0, seated_leg_curl_2026:0 };
 const STANDING_LOADED={ hack_squat:true, rdl:true, calf_raise:true,
   /* v8 additions — axially or unilaterally loaded while standing */
   bb_squat:true, smith_squat:true, bulgarian_split_squat:true, walking_lunge:true, step_up:true, goblet_squat:true,
@@ -698,8 +748,11 @@ const SETUP_FIELDS = {
   pulley: { label:"Pulley height",       hint:"cable origin height",            ph:"e.g. shoulder height" },
   bench:  { label:"Bench / incline",     hint:"bench angle or position",        ph:"e.g. 30° incline" },
   foot:   { label:"Foot / platform",     hint:"foot plate or stance",           ph:"e.g. feet high, shoulder width" },
+  /* v21 — new machines: grip and a machine-specific working-load note (free text, never a target) */
+  grip:   { label:"Grip",                hint:"width / orientation",            ph:"e.g. neutral, shoulder width" },
+  load:   { label:"Working-load note",   hint:"what felt right on THIS machine", ph:"e.g. 35 kg comfortable, pin 7" },
 };
-const SETUP_FIELD_ORDER = ["seat","back","arm","pad","rom","safety","handle","pulley","bench","foot"];
+const SETUP_FIELD_ORDER = ["seat","back","arm","pad","rom","safety","handle","grip","pulley","bench","foot","load"];
 /* Per-exercise field sets. Only list what actually matters on that machine — irrelevant fields are
    never rendered. Anything not listed here falls back to equipFallbackSetup() below. */
 const SETUP_SPEC = {
@@ -712,7 +765,7 @@ const SETUP_SPEC = {
   lat_pulldown:["seat","pad","handle"], neutral_pulldown:["seat","pad","handle"], single_arm_pulldown:["seat","pad","handle"],
   assisted_chin:["seat","handle"], machine_row:["seat","back","pad","handle"], cs_row:["seat","back","pad"],
   seated_cable_row:["seat","handle","foot"], plate_row:["seat","back","handle"],
-  straight_arm_pulldown:["pulley","handle"], t_bar_row:["handle","foot"], smith_bent_row:["safety","handle","foot"],
+  straight_arm_pulldown:["pulley","handle"], t_bar_row:["handle","grip","pad","foot","load"], smith_bent_row:["safety","handle","foot"],
   bb_bent_row:["handle","foot"], single_db_row:["bench"], db_pullover:["bench"], pull_up:["handle"], inverted_row:["handle","rom"],
   /* --- shoulders --- */
   machine_ohp:["seat","back","arm","handle"], plated_ohp:["seat","back","handle"], machine_lat_raise:["seat","arm","rom"],
@@ -729,7 +782,17 @@ const SETUP_SPEC = {
   skull_crusher:["bench","handle"], close_grip_bench:["safety","bench","handle"], db_kickback:["bench"],
   concentration_curl:["bench"], bb_curl:["handle"], ezbar_curl:["handle"], reverse_curl:["handle"],
   db_curl:[], hammer_curl:[], db_overhead_ext:[], bench_dip:["bench"],
-  bitri_machine_ext:["seat","arm"], bitri_machine_curl:["seat","arm"],
+  bitri_machine_ext:["seat","arm","pad","rom","load"], bitri_machine_curl:["seat","arm","pad","rom","load"],
+  /* --- v21 Plus Fitness replacements (setup lives on the NEW slug; retired slugs keep theirs) --- */
+  smith_incline_press:["safety","bench","grip","foot","load"], iso_decline_press:["seat","back","handle","grip","rom","load"],
+  combo_pec_fly:["seat","arm","grip","rom","load"], combo_rear_delt_fly:["seat","arm","grip","rom","load"],
+  iso_shoulder_press:["seat","back","handle","grip","rom","load"],
+  shua_lat_pulldown:["seat","pad","handle","grip","load"], iso_lat_pulldown:["seat","pad","handle","grip","load"], combo_lat_pulldown:["seat","pad","handle","grip","load"],
+  shua_low_row:["seat","pad","handle","grip","rom","load"], combo_seated_row:["seat","pad","handle","grip","load"],
+  assisted_chin_2026:["seat","handle","grip","load"], assisted_dip_2026:["seat","handle","grip","load"], shua_tricep_pushdown:["seat","pad","handle","grip","rom","load"],
+  angled_leg_press:["back","foot","rom","safety","load"], seated_leg_press:["seat","back","foot","rom","load"],
+  leg_ext_2026:["seat","back","pad","rom","load"], lying_leg_curl_2026:["pad","rom","load"], seated_leg_curl_2026:["seat","back","pad","rom","load"],
+  seated_calf_raise_2026:["seat","pad","foot","load"], angled_legpress_calf:["back","foot","rom","load"], ab_crunch_2026:["seat","pad","rom","load"],
   /* --- legs --- */
   leg_press:["seat","back","foot","rom","safety"], plate_leg_press:["back","foot","rom","safety"],
   leg_ext:["seat","back","pad","rom"], leg_curl:["seat","back","pad","rom"], lying_leg_curl:["pad","rom"],
@@ -836,7 +899,13 @@ function load(){
       /* v6: gym inventory (avail + rec) is authoritative from seed; only user love/like preference is carried over */
       fresh.exercises.forEach(e=>{ if(pref[e.id]&&pref[e.id].pref) e.pref=pref[e.id].pref; });
       fresh.sessions=normaliseSessions(fresh.sessions,"load-migrate"); return fresh; }
-    d.measurements=d.measurements||[]; d.photos=d.photos||[]; d.bodyweight=d.bodyweight||[]; d.sessions=normaliseSessions(d.sessions||[],"load"); return d;
+    d.measurements=d.measurements||[]; d.photos=d.photos||[]; d.bodyweight=d.bodyweight||[]; d.sessions=normaliseSessions(d.sessions||[],"load");
+    /* v21 — the exercise LIBRARY (names, availability, retired / since flags, rec) is authoritative from
+       code on every start, not only after a cloud hydrate; only your preference and any edited muscle
+       credits are kept from the stored copy. Before this, an offline start could resurrect a retired
+       machine from the cached library until the next hydrate. */
+    try{ d.exercises=mergeLibraryFromSeed(d.exercises||[]); }catch(e){}
+    return d;
   }catch(e){ return seed(); }
 }
 /* v10 — persistLocal now REPORTS failure instead of swallowing it. A silent
@@ -853,6 +922,10 @@ function persistLocal(){
   }
 }
 function save(){ S.updatedAt=iso(new Date()); persistLocal(); scheduleCloudPush(); }
+/* v21 — seed library + the user's pref / edited credits from an older stored copy (custom cx- entries are
+   rebuilt separately by rebuildCustomExercises()). avail / rec / retired / since come from code. */
+function mergeLibraryFromSeed(oldList){ const by={}; (oldList||[]).forEach(function(e){ if(e&&e.id) by[e.id]=e; });
+  return EXERCISES.map(function(e){ const n={...e, m:{...e.m}}; const o=by[e.id]; if(o){ if(o.pref&&PREF_SCORE[o.pref]!=null) n.pref=o.pref; if(o.m&&Object.keys(o.m).length) n.m={...o.m}; } return n; }); }
 
 /* ---------------------------------------------------------------- WORKOUT JOURNAL (v10)
    An append-only, write-ahead record of every completed workout, kept in its own
@@ -1369,6 +1442,14 @@ async function pushAllMeasurements(){ if(!cloudReady()) return;
 /* ============================================================================ DATE HELPERS ============================================================================ */
 function startOfWeek(d=new Date()){ const x=new Date(d); x.setHours(0,0,0,0); const day=(x.getDay()+6)%7; x.setDate(x.getDate()-day); return x; }
 function iso(d){ return new Date(d).toISOString(); }
+/* v21 — LOCAL calendar date as YYYY-MM-DD. The draft date used to be taken from toISOString(), i.e. the
+   UTC date, which in Sydney is the previous day before 11:00 — so editing a morning workout without
+   touching the date re-stamped it a day early. */
+function localDateISO(d){ const x=new Date(d||Date.now()); const p=function(n){ return (n<10?"0":"")+n; }; return x.getFullYear()+"-"+p(x.getMonth()+1)+"-"+p(x.getDate()); }
+/* a chosen draft date that is before today (local) — null when the draft is for today or unset */
+/* a chosen draft date that is before today (local) — null when the draft is for today, unset, or was never
+   touched by the user (dateSet): a draft carried over from an older build keeps live-session behaviour */
+function backdateFor(sess){ if(!sess||!sess.dateSet) return null; const d=sess.dateISO; if(!d||!/^\d{4}-\d{2}-\d{2}$/.test(d)) return null; return d<localDateISO()?d:null; }
 function dayKey(d){ const x=new Date(d); return x.getFullYear()+"-"+(x.getMonth()+1)+"-"+x.getDate(); }
 function fmtDate(d){ return new Date(d).toLocaleDateString("en-AU",{weekday:"short",day:"numeric",month:"short"}); }
 function hoursBetween(a,b){ return (new Date(b)-new Date(a))/36e5; }
@@ -1486,6 +1567,17 @@ function topSetLoad(sets){ return Math.max(0,...sets.map(s=>+s.weight||0)); }
 function bestSetVol(sets){ return Math.max(0,...sets.map(s=>(+s.weight||0)*(+s.reps||0))); }
 /* ===== PT-style form tips (item 3). Keyed by exercise id. Kept short + practical. ===== */
 const TIPS={
+ /* v21 — Plus Fitness replacements: predecessor cues, plus the pec fly shoulder note */
+ combo_pec_fly:{feel:"Chest, even contraction through a pain-free range.",avoid:"Shoulder-joint pain (not training discomfort — stop and shorten the range), shoulders rolling forward, jerking.",cues:["Start light: find the seat height and arm start position where the stretch is felt in the chest, not the front of the shoulder.","Bring the arms together, squeeze 1s.","Open slowly only to a comfortable stretch — set the ROM limiter if the machine has one."]},
+ smith_incline_press:{feel:"Upper chest, some front delt and triceps.",avoid:"Shoulder pain, flaring elbows, bouncing the bar.",cues:["Bench 30–45°, shoulder blades back and down.","Bar to upper chest, elbows ~45°.","Set the safeties just below chest height."]},
+ combo_rear_delt_fly:{feel:"Rear delts.",avoid:"Mid-back/traps dominating, jerking.",cues:["Chest on the pad, soft elbows.","Drive arms back and slightly out.","Pause at the back, slow return."]},
+ shua_low_row:{feel:"Mid-back / lats.",avoid:"Heaving with the torso, shrugging.",cues:["Chest supported, brace.","Drive elbows back and down, squeeze the back.","Slow return to a full stretch each rep."]},
+ shua_lat_pulldown:{feel:"Lats (outer back).",avoid:"Leaning way back, arms-only pulling.",cues:["Thigh pad snug, slight lean back, chest up.","Pull elbows down and slightly back.","Bar to upper chest, control the return."]},
+ assisted_chin_2026:{feel:"Lats and biceps pulling you up.",avoid:"Yanking with arms only, neck craning.",cues:["Full hang, shoulders engaged.","Drive elbows down to your ribs.","Less assistance = progress."]},
+ bitri_machine_curl:{feel:"Biceps, evenly through the range.",avoid:"Heaving the weight, lifting off the seat.",cues:["Chest against the pad, upper arms on the support.","Drive the contraction, pause briefly at the top.","Slow lower, no bounce at the bottom."]},
+ bitri_machine_ext:{feel:"Triceps.",avoid:"Shoulders rolling forward, elbows flaring.",cues:["Back against the pad, elbows stacked under the shoulders.","Press to lockout, pause.","Control the return."]},
+ iso_shoulder_press:{feel:"Front and side delts.",avoid:"Arching the lower back, flaring elbows wide.",cues:["Seat so the handles start at ear height.","Press up and slightly in.","Lower under control to ear height."]},
+ t_bar_row:{feel:"Mid-back thickness, lats.",avoid:"Rounding the lower back, jerking.",cues:["Chest on the pad if supported, neutral spine.","Row to the lower ribs, elbows ~45°.","Squeeze, then a slow full stretch."]},
  cable_curl:{feel:"Biceps (the contraction at the top).",avoid:"Swinging, shoulders rolling forward, forearms/elbows taking over.",cues:["Elbows pinned to your sides, don’t let them drift.","Curl with the biceps, not momentum.","Squeeze hard at the top, control the lowering.","Full stretch at the bottom each rep."]},
  machine_curl:{feel:"Biceps, evenly through the range.",avoid:"Heaving the weight, lifting off the seat.",cues:["Chest against the pad, elbows on the support.","Drive the contraction, pause briefly at the top.","Slow 2–3s lowering, full stretch at the bottom."]},
  preacher_curl:{feel:"Biceps, especially the lower stretch.",avoid:"Bouncing out of the bottom, elbow pain.",cues:["Back of arms flat on the pad.","Don’t fully lock/jerk at the bottom — stay controlled.","Full but smooth stretch, hard squeeze up top."]},
@@ -1569,7 +1661,8 @@ const TIPS={
    to ranking on negated assistance (still the right direction) and the UI shows the assistance
    trend instead of an effective-load number.
    ============================================================================================ */
-const PROG_CHAINS={ assisted_chin:{next:"chin_up", label:"bodyweight chin-up"}, assisted_dip:{next:"bw_dip", label:"bodyweight dip"} };
+const PROG_CHAINS={ assisted_chin:{next:"chin_up", label:"bodyweight chin-up"}, assisted_dip:{next:"bw_dip", label:"bodyweight dip"},
+  assisted_chin_2026:{next:"chin_up", label:"bodyweight chin-up"}, assisted_dip_2026:{next:"bw_dip", label:"bodyweight dip"} };
 function loadKind(ex){ var k=ex&&ex.load; return (k==="assist"||k==="bw")?k:"ext"; }
 function isAssisted(ex){ return loadKind(ex)==="assist"; }
 function isBodyweightLoaded(ex){ return loadKind(ex)==="bw"; }
@@ -1781,9 +1874,47 @@ const TREND_META={
   above:{label:"Above baseline", c:"var(--green)", icon:"\u25b2", note:"Recent exposures are averaging above the block before them."},
   steady:{label:"In line", c:"var(--accent)", icon:"\u25ac", note:"Recent exposures are in line with the block before them."},
   below:{label:"Below baseline", c:"var(--red)", icon:"\u25bc", note:"Recent exposures are averaging below the block before them. Performance moves with order, fatigue, sleep and recovery \u2014 this is the number, not a diagnosis."},
-  stale:{label:"Not recently trained", c:"var(--muted)", icon:"\u25cb", note:"No exposure inside the last "+TREND_STALE_DAYS+" days, so this is history rather than current training."}
+  stale:{label:"Not recently trained", c:"var(--muted)", icon:"\u25cb", note:"No exposure inside the last "+TREND_STALE_DAYS+" days, so this is history rather than current training."},
+  retired:{label:"Retired · history kept", c:"var(--muted)", icon:"\u25cb", note:"This machine left the gym in the Plus Fitness re-fit. Every set, record and chart is kept; nothing here is compared with its replacement."}
 };
+/* ---------------------------------------------------------------- v21 FAMILIARISATION READ
+   A lift on NEW equipment (ex.since) has no history to compare with, and the ordinary trend needs five
+   exposures. Rather than show "Not enough data" for a month, the first sessions get an explicitly
+   provisional read, built from the Progress β best-set primitive (direction-aware effective load × (1 +
+   min(reps, 15) / 30) — set count and volume never enter):
+     session 1  → "Baseline set"            (nothing compared)
+     session 2  → "Early read"  ▲ ▬ ▼       (latest vs the first)
+     session 3+ → "Provisional" ▲ ▬ ▼ · n   (latest vs the mean of the earlier comparable sessions)
+   A comparison is only made between MATCHED efforts: both sessions must have a scoreable top set
+   and their effective loads must sit within FAM_LOAD_MATCH of each other — more reps at a much lighter
+   weight is not a strength read. Otherwise: "Not yet comparable".
+   From five exposures the ordinary methodology takes over unchanged. */
+const FAM_LOAD_MATCH=0.25;
+function famRead(exId){ const ex=exById(exId); if(!ex||!exNewEquip(ex)) return null;
+  const h=exerciseHistory(exId); const n=h.length; if(!n||n>=TREND_MIN_N) return null;
+  /* the scoring set = the session's best set under the Progress β primitive (effective load × (1 + min(reps, repCap) / 30));
+     its effective load is what the matched-load guard compares, so a feeler set at a much lighter weight never reads as a gain */
+  const rows=h.map(function(x){ let best=null; (x.sets||[]).forEach(function(st){ const w=+st.weight||0, r=+st.reps||0; if(!(r>0)) return; const L=setLoadScore(ex,w,x.bw); if(!(L>0)) return; const sc=L*(1+Math.min(r,PROG_RECIPE.repCap)/30); if(!best||sc>best.s) best={s:sc, L:L}; });
+    return {date:x.date, top:topSetOf(ex,x.sets), s:best?best.s:0, L:best?best.L:0}; });
+  const latest=rows[0];
+  if(n===1) return {state:"fam_base", dir:null, pct:0, n:n, baseN:0, top:latest.top, label:"Baseline set", icon:"\u25d4", c:"var(--gold)",
+    note:"First session on this machine \u2014 this top set is the baseline. Nothing from the old machine is compared or carried over."};
+  const matched=rows.slice(1).filter(function(p){ if(!(p.s>0&&latest.s>0)) return false; const a=Math.abs(p.L), b=Math.abs(latest.L); const hi=Math.max(a,b); return hi>0&&Math.abs(a-b)/hi<=FAM_LOAD_MATCH; });
+  if(!matched.length) return {state:"fam_nc", dir:null, pct:0, n:n, baseN:0, top:latest.top, label:"Familiarisation \u00b7 not yet comparable", icon:"\u25d4", c:"var(--muted)",
+    note:"Session "+n+" on this machine. The efforts so far are at different loads or rep counts, so no direction is read yet \u2014 a comparison needs a best set at a similar load (within "+Math.round(FAM_LOAD_MATCH*100)+"%)."};
+  const base=matched.reduce(function(a,p){ return a+p.s; },0)/matched.length;
+  const pct=base!==0?((latest.s-base)/Math.abs(base))*100:0;
+  const dir=pct>=TREND_BAND?"up":pct<=-TREND_BAND?"down":"flat";
+  const early=n===2; const arrow=dir==="up"?"\u25b2":dir==="down"?"\u25bc":"\u25ac";
+  const word=dir==="up"?"up":dir==="down"?"down":"level";
+  return {state:early?"fam_early":"fam_prov", dir:dir, pct:pct, n:n, baseN:matched.length, top:latest.top,
+    label:(early?"Early read ":"Provisional ")+arrow+(early?"":" \u00b7 "+n+" sessions"), icon:arrow,
+    c:dir==="up"?"var(--green)":dir==="down"?"var(--amber)":"var(--accent)",
+    note:(early?"Second session on this machine: ":"Session "+n+" on this machine: ")+"top-set strength is "+word+(dir==="flat"?"":" "+Math.round(Math.abs(pct))+"%")+" against "+(matched.length===1?"the first session":"the mean of "+matched.length+" comparable sessions")+" at a matched load. Provisional while you settle the setup \u2014 the full trend starts at "+TREND_MIN_N+" sessions."}; }
 function exerciseTrend(exId){ const d=exerciseTrendData(exId);
+  /* v21 — retired equipment is history, not a stale lift; new equipment gets the familiarisation read */
+  if(d.ex&&exRetired(d.ex)&&d.state!=="insufficient"){ const m=TREND_META.retired; return {label:m.label, c:m.c, icon:m.icon, note:m.note, state:"retired", raw:d.state, pct:d.pct, n:d.n, days:d.days, stale:d.stale}; }
+  if(d.state==="insufficient"&&d.ex&&exNewEquip(d.ex)){ const fr=famRead(exId); if(fr) return {label:fr.label, c:fr.c, icon:fr.icon, note:fr.note, state:fr.state, raw:"insufficient", pct:fr.pct, n:d.n, days:d.days, stale:d.stale, fam:fr}; }
   const key=(d.stale&&d.state!=="insufficient")?"stale":d.state;
   const m=TREND_META[key]||TREND_META.insufficient;
   let note=m.note;
@@ -1868,8 +1999,9 @@ function groupAchievements(events){ const by={}; const order=[];
   const rank=function(t){ return Object.prototype.hasOwnProperty.call(ACH_RANK,t)?ACH_RANK[t]:9; };
   return order.map(function(k){ const g=by[k]; g.records.sort(function(x,y){ return rank(x.type)-rank(y.type); });
     g.primary=g.records[0]; g.also=g.records.slice(1).map(achAlsoText); return g; }); }
-function achPrimaryText(g){ const a=g.primary; return (a.first?"First ":"New ")+achLabel(a)+" · "+achLoadStr(a)+" × "+a.reps; }
-function achText(a){ return (a.first?"First ":"New ")+achLabel(a)+" \u2014 "+a.name+": "+achLoadStr(a)+" \u00d7 "+a.reps; }
+function achNewEquip(a){ const ex=a&&exById(a.exId); return !!(a&&a.first&&ex&&exNewEquip(ex)); }
+function achPrimaryText(g){ const a=g.primary; return (a.first?"First ":"New ")+achLabel(a)+" · "+achLoadStr(a)+" × "+a.reps+(achNewEquip(a)?" · new equipment":""); }
+function achText(a){ return (a.first?"First ":"New ")+achLabel(a)+" \u2014 "+a.name+": "+achLoadStr(a)+" \u00d7 "+a.reps+(achNewEquip(a)?" (new equipment)":""); }
 /* per-session metric series (oldest->newest) for charts.
    "eff" charts effective load (bodyweight - assistance, or bodyweight + added) which always rises
    as you get stronger; "top" charts the raw number you actually dial into the machine. A series we
@@ -2164,9 +2296,11 @@ function escAttr(s){ return String(s==null?"":s).replace(/&/g,"&amp;").replace(/
      2. Never show a delta without saying what it is a delta AGAINST.
      3. "Not enough data" is a first-class, visible state, not a silent omission.
    ============================================================================================ */
-const TB_CLASS={above:"up", below:"dn", steady:"st", insufficient:"na", stale:"na"};
+const TB_CLASS={above:"up", below:"dn", steady:"st", insufficient:"na", stale:"na", retired:"na", fam_base:"na", fam_nc:"na", fam_early:"na", fam_prov:"na"};
 function pctStr(p){ const v=Math.round(Math.abs(p)); return (p>0?"+":p<0?"−":"")+v+"%"; }
 function trendBadge(exId){ const t=exerciseTrend(exId); const cls=TB_CLASS[t.state]||"na";
+  if(t.fam&&t.fam.dir) return '<span class="tb '+(t.fam.dir==="up"?"up":t.fam.dir==="down"?"dn":"st")+'" title="provisional \u00b7 new machine \u00b7 '+(t.n||0)+'/'+TREND_MIN_N+'">'+t.icon+' '+pctStr(t.pct)+'<small>?</small></span>';
+  if(t.state==="retired") return '<span class="tb na" title="retired \u00b7 history kept">○ retired</span>';
   if(t.raw==="insufficient") return '<span class="tb na" title="needs '+TREND_MIN_N+' exposures">○ '+(t.n||0)+'/'+TREND_MIN_N+'</span>';
   if(t.state==="stale") return '<span class="tb na" title="not trained recently">○ '+Math.round((t.days||0)/7)+'w</span>';
   const showPct=(t.state==="above"||t.state==="below");
@@ -2419,7 +2553,8 @@ function incrementFor(e){ return (e.m.quads||e.m.hamstrings||e.m.glutes||e.m.bac
    movement is NEVER told to add assistance - progress there means taking assistance away, and at
    zero assistance it graduates to the bodyweight version of the movement. */
 function progressionFor(exId){ const e=exById(exId); const last=exerciseHistory(exId)[0];
-  if(!last||!last.sets.length) return {weight:"",reps:"",note:"Find a working "+loadNoun(e)+" in "+e.rl+"-"+e.rh+" reps.",add:false,dir:0};
+  if(!last||!last.sets.length){ const rep=exNewEquip(e)?replacesList(e).map(exById).filter(Boolean):[];
+    return {weight:"",reps:"",note:(exNewEquip(e)?"New machine \u2014 start light and find a working "+loadNoun(e)+" in "+e.rl+"-"+e.rh+" reps."+(rep.length?" Nothing is carried over from "+shortExName(plainExName(rep[0]))+".":""):"Find a working "+loadNoun(e)+" in "+e.rl+"-"+e.rh+" reps."),add:false,dir:0,fresh:true}; }
   const ws=last.sets; const tr=Math.max(...ws.map(s=>+s.reps||0));
   const cur=bestRawLoad(e,ws);                       /* heaviest weight, or LOWEST assistance */
   const allTop=ws.length>=2&&ws.every(s=>(+s.reps||0)>=e.rh);
@@ -2483,8 +2618,12 @@ function familiarityIndex(){
 /* 0 = never used, 1 = your most-used exercise. Equipment familiarity is a softer, separate term. */
 function familiarityScore(ex){
   const f=familiarityIndex();
-  if(!f.sessions||!f.maxEx) return {ex:0, equip:0, uses:0};
-  const uses=f.byEx[ex.id]||0;
+  if(!f.sessions||!f.maxEx) return {ex:0, equip:0, uses:0, own:0, inherited:0, conf:0};
+  const own=f.byEx[ex.id]||0;
+  /* v21 — a replacement machine inherits its predecessor's FREQUENCY so the recommender does not treat
+     the new pec fly as a novelty for eight sessions. Loads, PBs and trends are never inherited. */
+  let inherited=0; replacesList(ex).forEach(function(r){ inherited+=(f.byEx[r]||0); });
+  const uses=Math.max(own,inherited);
   const eq=(ex.equip||"other");
   const eqUses=f.byEquip[eq]||0;
   /* Confidence: with two sessions of history "most used" is noise, so the whole familiarity
@@ -2492,7 +2631,7 @@ function familiarityScore(ex){
      full; below that it fades out and recovery/volume logic keeps its original authority. */
   const conf=Math.min(1, f.sessions/FAM_CONFIDENCE_SESSIONS);
   return { ex:Math.min(1,uses/f.maxEx)*conf, equip:Math.min(1,eqUses/Math.max(1,f.sessions))*conf,
-           uses:uses, conf:conf }; }
+           uses:uses, own:own, inherited:inherited>own?inherited:0, conf:conf }; }
 function isFamiliar(ex){ return familiarityScore(ex).uses>=2; }
 /* v12 — USAGE PROVES AVAILABILITY. Two separate faults were excluding exercises the athlete
    actually trains from ever being recommended:
@@ -2506,6 +2645,7 @@ function isFamiliar(ex){ return familiarityScore(ex).uses>=2; }
 const REGULAR_USE_MIN=3;   /* logged this often in the window = part of your actual routine */
 function usableInPool(e){
   if(!e) return false;
+  if(e.retired) return false;                     /* v21: removed from the gym — final, ahead of the usage override below */
   if(e.pref==="avoid") return false;              /* an explicit dislike is always final */
   const uses=familiarityIndex().byEx[e.id]||0;
   const availOk = AVAIL_OK[e.avail] || FORCE_AVAIL.indexOf(e.id)>=0 || uses>0;
@@ -2567,7 +2707,7 @@ function builderExValue(e,byM,lastExMap,now){
   if(lx){ const h=hoursBetween(lx.date,now); if(h<24) val-=140; else if(h<48) val-=70; else if(h<72) val-=25; }
   return {ex:e, exId:e.id, muscle:pm, label:(S.muscles[pm]||{}).label||pm,
     val:val, gap:Math.max(0,lead.cfg.min-lead.v), v:lead.v, min:lead.cfg.min,
-    status:lead.status, uses:fam.uses}; }
+    status:lead.status, uses:fam.uses, own:fam.own}; }
 
 /* Every exercise that is legal to offer right now, best first. excludeIds is a plain object of
    exercise ids already in the draft, so "Added" rows drop out of the shortlist. */
@@ -2639,7 +2779,7 @@ function inDraft(exId){ return !!draftExIds()[exId]; }
 function ensureDraft(){
   if(activeSession) return activeSession;
   loggerOpen={}; rerollCounts={};
-  activeSession={ id:uid(), startedAt:iso(new Date()), dateISO:new Date().toISOString().slice(0,10),
+  activeSession={ id:uid(), startedAt:iso(new Date()), dateISO:localDateISO(),
     title:BUILD_TITLE, mode:"manual", entries:[] };
   saveActive();
   return activeSession; }
@@ -3090,8 +3230,13 @@ function ghostFor(en,si){ const e=exById(en.exId);
   return {w:w===""?"":String(w), r:r===""?"":String(r)}; }
 function viewLogger(){ const isEdit=activeSession.mode==="edit"; const c=loggerCounts();
   const entries=activeSession.entries.map((en,i)=>loggerEx(en,i)).join("");
-  const dateBlock=isEdit?('<div class="card"><div class="tiny">Workout date</div><input class="inp" type="date" value="'+(activeSession.dateISO||new Date().toISOString().slice(0,10))+'" data-wdate style="text-align:left;margin-top:6px;padding:9px"></div>'):"";
-  const head='<div class="lhead"><div style="flex:1"><div class="ttl">'+(isEdit?"Editing · ":"")+(activeSession.title||"Workout")+'</div><div class="meta">'+(isEdit?fmtDate(activeSession.dateISO||new Date()):'<span id="elapsed">0:00</span> elapsed')+'</div></div><div><div class="clk" id="setprog">'+c.done+'/'+c.total+'</div><div class="prog">sets</div></div></div>';
+  const bd=!isEdit&&backdateFor(activeSession);
+  /* v21 — the date field is on a NEW draft too, so a past workout (missed log, other device) is
+     entered once against its real date instead of Finish → History → Edit → re-date. Leaving it on
+     today keeps the live-session behaviour exactly as before. */
+  const dateBlock=isEdit?('<div class="card"><div class="tiny">Workout date</div><input class="inp" type="date" value="'+(activeSession.dateISO||localDateISO())+'" data-wdate style="text-align:left;margin-top:6px;padding:9px"></div>')
+    :('<div class="card" style="padding:10px 16px"><div class="row" style="align-items:center;gap:10px"><div style="flex:1"><div class="tiny">Workout date</div><div class="histline">'+(bd?'<span style="color:var(--amber)">Logging a past workout \u00b7 saved at midday, no time of day</span>':'Today \u00b7 change it to log a past workout')+'</div></div><input class="inp" type="date" value="'+(activeSession.dateISO||localDateISO())+'" max="'+localDateISO()+'" data-wdate style="width:150px;text-align:left;padding:8px"></div></div>');
+  const head='<div class="lhead"><div style="flex:1"><div class="ttl">'+(isEdit?"Editing · ":"")+(activeSession.title||"Workout")+'</div><div class="meta">'+(isEdit?fmtDate(activeSession.dateISO||new Date()):(bd?fmtDate(bd+"T12:00:00")+' \u00b7 past workout':'<span id="elapsed">0:00</span> elapsed'))+'</div></div><div><div class="clk" id="setprog">'+c.done+'/'+c.total+'</div><div class="prog">sets</div></div></div>';
   return head+dateBlock+builderPanel()+entries
     +'<button class="btn ghost full" data-act="add-ex" style="margin:4px 0 12px;color:var(--accent)">+ Add exercise</button>'
     +'<button class="btn ghost full danger" data-act="'+(isEdit?'deleteedit':'discard')+'" style="margin:4px 0 100px">'+(isEdit?"Delete this workout":"Discard workout")+'</button>'; }
@@ -3108,7 +3253,7 @@ function viewLogger(){ const isEdit=activeSession.mode==="edit"; const c=loggerC
    Hidden while EDITING a past workout: retro-fitting today's volume gaps onto a session from
    three weeks ago would be nonsense. */
 function builderPanel(){
-  if(!activeSession||activeSession.mode==="edit") return "";
+  if(!activeSession||activeSession.mode==="edit"||backdateFor(activeSession)) return "";   /* v21: a past-dated draft is a reconstruction — today's gaps do not apply (+ Add exercise still works) */
   const excl=draftExIds();
   const q=(bldSearch||"").trim();
   const narrowed=!!(q||bldGroup||bldEquip);
@@ -3126,7 +3271,7 @@ function builderPanel(){
     const ranked=builderRanked({});
     const rank={}; ranked.forEach(function(c,i){ rank[c.exId]=i; });
     const byId={}; ranked.forEach(function(c){ byId[c.exId]=c; });
-    const hits=S.exercises.filter(function(e){ return exPassesFilters(e,bldGroup,bldEquip)&&exMatches(e,q); })
+    const hits=S.exercises.filter(function(e){ return (!e.retired||excl[e.id])&&exPassesFilters(e,bldGroup,bldEquip)&&exMatches(e,q); })
       .sort(function(a,b){
         const ra=(rank[a.id]==null?9e9:rank[a.id]), rb=(rank[b.id]==null?9e9:rank[b.id]);
         return ra-rb||a.name.localeCompare(b.name); }).slice(0,30);
@@ -3167,7 +3312,8 @@ function builderRow(c,added){
   const rm=READY_META[c.status]||READY_META.ready;
   const g=Math.round(c.gap*10)/10;
   const need=g>0.01?(roundSets(g)+' to go'):'at minimum';   /* v19: short, same wording as Body */
-  const famTag=c.uses>=REGULAR_USE_MIN?' <span class="tag" style="color:var(--green)">regular</span>'
+  const famTag=(c.ex&&exNewEquip(c.ex)&&!(c.own>0))?' <span class="tag" style="color:var(--gold)">new machine</span>'
+             :c.uses>=REGULAR_USE_MIN?' <span class="tag" style="color:var(--green)">regular</span>'
              :(c.uses===0?' <span class="tag" style="color:var(--faint)">new to you</span>':'');
   const prefTag=c.ex.pref==="love"?' <span class="tag love">★</span>':'';
   /* v19 — the muscle line sits under the row at full width so the atomic units pack two or three
@@ -3205,12 +3351,24 @@ function loggerEx(en,i){ const e=exById(en.exId)||{id:en.exId,name:en.asName||"U
      and the muscle line were squeezed into ~55% of the card and wrapped onto three to five lines. The trend explanation
      sentence (tr.note) is dropped from the card — the chip carries the verdict, the exercise
      sheet still has the sentence. */
+  const famStrip=newEquipStrip(e);
   return '<div class="card logex" data-ex="'+i+'"><div class="hd"><div class="nm" data-expand="'+i+'" style="flex:1;min-width:0">'+entryName(en)+cxTag+'</div><div class="exmenu"><button class="swap" data-tips="'+en.exId+'" style="color:var(--gold)">Form</button><button class="swap" data-swap="'+i+'">⇄ Swap</button><button class="more" data-more="'+i+'">⋯</button></div></div>'
     +'<div class="exmeta" data-expand="'+i+'"><div class="histline"><span class="mcu">Last: <b>'+lastStr+'</b></span> '+trendChip+'</div><div class="histline target">'+arrow+'Next: '+prog.note+'</div>'+assistNote+'<div class="mcredline" data-tips="'+en.exId+'" style="cursor:pointer">'+musLabels(e)+'</div></div>'
     +recwarn
+    +famStrip
     +setupStrip(en.exId)
     +'<div class="setgrid"><div class="sethead"><span>#</span><span>prev</span>'+(inputOrder()==="rw"?'<span>reps</span><span>'+loadColLabel(e)+'</span>':'<span>'+loadColLabel(e)+'</span><span>reps</span>')+'<span>log</span></div>'+rows+'</div>'
     +'<button class="btn ghost sm" data-addset="'+i+'" style="margin-top:4px">+ set</button>'+flaghtml+winhtml+'</div>'; }
+/* v21 — one amber line while a NEW machine is in its familiarisation window (fewer than TREND_MIN_N
+   logged sessions): which session this is, that nothing is carried over, and — for the pec fly —
+   the shoulder note Adam asked for. Disappears on its own once the ordinary trend takes over. */
+function newEquipStrip(e){ if(!e||!exNewEquip(e)) return "";
+  const n=exerciseHistory(e.id).filter(function(h){ return !activeSession||h.sessionId!==activeSession.editingId; }).length;
+  if(n>=TREND_MIN_N) return "";
+  const reps=replacesList(e).map(exById).filter(Boolean);
+  const line1='<b>New machine \u00b7 session '+(n+1)+' of '+TREND_MIN_N+' familiarisation</b> \u00b7 fresh baseline'+(reps.length?' \u00b7 nothing carried over from '+shortExName(plainExName(reps[0])):'');
+  const care=e.setupCare==="shoulder"?'<div style="margin-top:3px">Start light and establish a pain-free range of motion first \u2014 shoulder-joint pain is not training discomfort to push through. Record the seat, arm start and grip below once they feel right.</div>':'';
+  return '<div class="histline" style="color:var(--gold);margin:4px 0 6px;line-height:1.35">'+line1+care+'</div>'; }
 /* v19 — SETUP as a compact collapsible block on the open logger card.
    Collapsed (default):  ⚙ Setup ▸  Seat: 5 notches · Arms: position 4      (one line, ellipsised)
    Expanded:             the structured fields in full, a free-text note ONLY when it says
@@ -3218,7 +3376,7 @@ function loggerEx(en,i){ const e=exById(en.exId)||{id:en.exId,name:en.asName||"U
    Open/closed is remembered per exercise (localStorage iron_arc_setupopen). Empty setups keep the
    dashed one-line "add" prompt. Storage is never touched by the display rule — a note that only
    repeats the structured fields is hidden, not deleted (see setupNoteRedundant). */
-const SETUP_SHORT={seat:"Seat", back:"Back", arm:"Arms", pad:"Pad", rom:"ROM", safety:"Safeties", handle:"Handle", pulley:"Pulley", bench:"Bench", foot:"Feet"};
+const SETUP_SHORT={seat:"Seat", back:"Back", arm:"Arms", pad:"Pad", rom:"ROM", safety:"Safeties", handle:"Handle", grip:"Grip", pulley:"Pulley", bench:"Bench", foot:"Feet", load:"Load"};
 let setupOpen=(function(){ try{ return JSON.parse(localStorage.getItem("iron_arc_setupopen")||'{}')||{}; }catch(e){ return {}; } })();
 function toggleSetupOpen(exId){ setupOpen[exId]=!setupOpen[exId]; try{ localStorage.setItem("iron_arc_setupopen",JSON.stringify(setupOpen)); }catch(e){} }
 function setupNums(str){ return (String(str||"").match(/\d+(?:\.\d+)?/g)||[]); }
@@ -3273,6 +3431,11 @@ function evalWins(en,bests){ const ex=exById(en.exId); const ws=workingSets(en);
   if(!out.length&&mScore!=null&&bests.bestScore!=null&&mScore>=bests.bestScore) out.push({t:"Beat last time",c:"beat"});
   return out; }
 
+/* v21 — where a lift sits relative to the equipment change, for the exercise sheet and Settings */
+function equipProvenanceLine(ex){ if(!ex) return "";
+  if(exRetired(ex)){ const rb=ex.replacedBy?exById(ex.replacedBy):null; return '<div class="histline" style="margin-top:6px;color:var(--muted)">Retired '+fmtEpochDate(ex.retired)+' \u00b7 history kept'+(rb?' \u00b7 replaced by <b>'+rb.name+'</b> (separate baseline)':'')+'</div>'; }
+  if(exNewEquip(ex)){ const reps=replacesList(ex).map(exById).filter(Boolean); return '<div class="histline" style="margin-top:6px;color:var(--gold)">New since '+fmtEpochDate(ex.since)+(reps.length?' \u00b7 replaces '+reps.map(function(r){ return shortExName(plainExName(r)); }).join(" / ")+' \u2014 loads, records and trends are not carried over':' \u00b7 fresh baseline')+'</div>'; }
+  return ""; }
 /* ---------------- HISTORY (P2) ---------------- */
 function viewHistory(){ const list=completedSessions().sort((a,b)=>new Date(b.completedAt)-new Date(a.completedAt));
   if(!list.length) return '<div class="card"><div class="empty">No saved workouts yet.</div></div>';
@@ -3303,7 +3466,7 @@ function renderSheet(){ const m=document.getElementById("sheetmount"); if(!sheet
       +'<div style="margin-top:10px">'+(subs.length?subs.map(function(e){ return '<button class="opt" data-pick="'+e.id+'" style="width:100%;text-align:left"><div><div class="nm">'+e.name+(e.pref==="love"?' <span class="tag love">\u2605</span>':'')+(e.rec?'':' <span class="tag">manual</span>')+(hasSetup(e.id)?' <span class="tag" style="color:var(--gold)">\u2699</span>':'')+'</div><div class="meta">'+equipLabel(e.equip)+' \u00b7 '+groupLabel(exGroup(e))+' \u00b7 '+(e.pattern||"").replace(/_/g," ")+'</div><div class="mcredline">'+musLabels(e)+'</div></div><span class="sets">pick</span></button>'; }).join(""):'<div class="empty">No matches in the library.</div>')+'</div>'; }
   else if(sheet.type==="add"){ const q=addSearch||""; const inWk=new Set((activeSession?activeSession.entries:[]).map(function(en){return en.exId;}));
     var rank=function(e){ return !AVAIL_OK[e.avail]?2:(e.rec?0:1); };
-    var tg=function(e){ return !AVAIL_OK[e.avail]?' <span class="tag" style="color:var(--faint)">off</span>':(e.rec?'':' <span class="tag">manual</span>'); };
+    var tg=function(e){ return e.retired?' <span class="tag" style="color:var(--faint)">retired</span>':!AVAIL_OK[e.avail]?' <span class="tag" style="color:var(--faint)">off</span>':(e.rec?'':' <span class="tag">manual</span>'); };
     var row=function(e){ return '<button class="opt" data-add="'+e.id+'" style="width:100%;text-align:left"><div><div class="nm">'+e.name+tg(e)+(hasSetup(e.id)?' <span class="tag" style="color:var(--gold)">\u2699</span>':'')+(inWk.has(e.id)?' <span class="tag" style="color:var(--amber)">in workout</span>':'')+'</div><div class="meta">'+equipLabel(e.equip)+' \u00b7 '+groupLabel(exGroup(e))+' \u00b7 '+(e.pattern||"").replace(/_/g," ")+' \u00b7 '+e.rl+'-'+e.rh+' reps</div><div class="mcredline">'+musLabels(e)+'</div></div><span class="sets">+ add</span></button>'; };
     var listHtml;
     if(q){ var res=S.exercises.filter(function(e){ return exPassesFilters(e,addGroup,addEquip)&&exMatches(e,q); }).sort(function(a,b){ return rank(a)-rank(b)||(PREF_SCORE[b.pref]-PREF_SCORE[a.pref])||a.name.localeCompare(b.name); });
@@ -3344,7 +3507,8 @@ function renderSheet(){ const m=document.getElementById("sheetmount"); if(!sheet
     var seg='<div class="seg mini" style="margin-top:10px">'+metrics.map(function(mn){ return '<button data-exmetric="'+mn[0]+'" class="'+(exChartMetric===mn[0]?"on":"")+'">'+mn[1]+'</button>'; }).join("")+'</div>';
     var chart=lineChartSVG(exerciseSeries(id,exChartMetric),{unit:metricUnit(exChartMetric),dirNote:dirNoteFor(ex,exChartMetric)});
     var _bwNote=(loadKind(ex)!=="ext"&&!hasBodyweight())?'<div class="ibody" style="margin-top:6px;color:var(--amber)">Log your bodyweight in Settings and this becomes an effective-load chart (bodyweight '+(_asst?"− assistance":"+ added")+'). Until then it shows '+(_asst?"assistance used":"added load")+' only — no figure is invented.</div>':'';
-    inner='<div class="tiny">'+ex.name+'</div><div class="row" style="gap:6px;margin-top:8px;align-items:center"><span class="statuspill" style="background:'+_tr.c+'22;color:'+_tr.c+'">'+_tr.label+'</span>'+(TIPS[id]?'<button class="btn sm" data-tips="'+id+'" style="color:var(--gold)">Form tips</button>':'')+'<button class="btn sm" data-setup="'+id+'" style="color:var(--gold)">⚙ Setup</button></div><div class="ibody" style="margin-top:6px">'+_tr.note+'</div>'
+    var _prov=equipProvenanceLine(ex);
+    inner='<div class="tiny">'+ex.name+'</div><div class="row" style="gap:6px;margin-top:8px;align-items:center"><span class="statuspill" style="background:'+_tr.c+'22;color:'+_tr.c+'">'+_tr.label+'</span>'+(TIPS[id]?'<button class="btn sm" data-tips="'+id+'" style="color:var(--gold)">Form tips</button>':'')+'<button class="btn sm" data-setup="'+id+'" style="color:var(--gold)">⚙ Setup</button></div><div class="ibody" style="margin-top:6px">'+_tr.note+'</div>'+_prov
       /* v11 — the verdict shows its evidence and its next action right where it is asserted */
       +'<div class="card" style="margin:8px 0 0;padding:10px 12px;background:var(--panel2)"><div class="tiny">Why this verdict</div>'
       +'<div class="histline" style="margin-top:3px">'+((trendEvidence(id)||{}).text||'Not enough history yet.')+'</div>'
@@ -3800,7 +3964,8 @@ function stallAssess(exId){
   const med=prevScores.length?median(prevScores):0; const lastScore=last.e1>0?last.e1:setLoadScore(ex,last.w,last.bw);
   const lastDrop=(med>0&&lastScore>0)?(lastScore-med)/med:0;
   let state="stable"; const why=[];
-  if(tr.stale){ state="stale"; why.push("No exposure in the last "+TREND_STALE_DAYS+" days."); }
+  if(exRetired(ex)){ state="retired"; const rb=ex.replacedBy?exById(ex.replacedBy):null; why.push("Machine retired "+fmtEpochDate(ex.retired)+" \u2014 history kept"+(rb?", replaced by "+rb.name:"")+"."); }
+  else if(tr.stale){ state="stale"; why.push("No exposure in the last "+TREND_STALE_DAYS+" days."); }
   else if(sinceBest<=2||tr.state==="above"){ state="progressing";
     if(sinceBest<=2) why.push("Top set improved "+(sinceBest===0?"last session":sinceBest+" session"+(sinceBest===1?"":"s")+" ago")+".");
     if(tr.state==="above") why.push("Last "+tr.recentN+" exposures average above the previous "+tr.baseN+"."); }
@@ -3826,7 +3991,7 @@ function stallNextStep(ex,state,tops,best,same,sinceBest){
   const dir=progDir(ex); const asst=isAssisted(ex); const step=asst?-inc:inc;
   const nextLoad=Math.max(0,Math.round((last.w+step)*10)/10);
   const loadStr=function(w){ return asst?(w+" kg assist"):(isBodyweightLoaded(ex)?(w>0?"+"+w+" kg":"bodyweight"):w+" kg"); };
-  if(state==="insufficient"||state==="stale") return null;
+  if(state==="insufficient"||state==="stale"||state==="retired") return null;
   if(state==="progressing"){ const p=progressionFor(ex.id); return {kind:"keep", text:(p&&p.note)?p.note:"Keep the progression going — match the load, beat the reps."}; }
   if(state==="below_context") return {kind:"repeat", text:"Repeat "+fmtTop(ex,tops[tops.length-2]||last)+" next time before reading anything into one session."};
   if(state==="below") return {kind:"hold", text:"Hold "+loadStr(last.w)+" and rebuild the reps toward "+rh+" before adding load."};
@@ -3845,7 +4010,8 @@ const STALL_META={
   below_context:{label:"Below baseline · context", c:"var(--gold)", icon:"▼"},
   below:{label:"Below baseline", c:"var(--red)", icon:"▼"},
   insufficient:{label:"Not enough data", c:"var(--muted)", icon:"○"},
-  stale:{label:"Not recently trained", c:"var(--muted)", icon:"○"} };
+  stale:{label:"Not recently trained", c:"var(--muted)", icon:"○"},
+  retired:{label:"Retired · history kept", c:"var(--muted)", icon:"○"} };
 
 /* ---------------------------------------------------------------- 5 · DATA-QUALITY SCAN
    Runs over the WHOLE history every time Stats renders (cheap: a few hundred sets). Every flag says
@@ -4309,7 +4475,7 @@ function stallLine(exId){ const a=stallAssess(exId); const exp=function(n){ retu
   if(a.state==="below") return "Top set has sat below your recent baseline for "+exp(TREND_RECENT_N)+" ("+Math.round(Math.abs(a.trendPct||0))+"% under).";
   return ""; }
 function exHistList(){ return S.exercises.map(function(e){ return {e:e,n:exerciseHistory(e.id).length}; }).filter(function(x){ return x.n>=1; }).sort(function(a,b){ return b.n-a.n; }); }
-function resolveRepExId(histList){ histList=histList||exHistList(); if(!repExId||!histList.find(function(x){ return x.e.id===repExId; })) repExId=histList.length?histList[0].e.id:null; return repExId; }
+function resolveRepExId(histList){ histList=histList||exHistList(); if(!repExId||!histList.find(function(x){ return x.e.id===repExId; })){ const live=histList.find(function(x){ return !exRetired(x.e); }); repExId=live?live.e.id:(histList.length?histList[0].e.id:null); } return repExId; }
 function exerciseProgressCard(){
   var histList=exHistList(); resolveRepExId(histList);
   if(!repExId) return '<div class="card"><div class="empty" style="padding:18px">Log a few sessions to chart your progress.</div></div>';
@@ -4370,7 +4536,12 @@ function exHeaderSub(){ resolveRepExId(); if(!repExId) return 'select an exercis
    being trained simply drops out of later links (history preserved). Nothing is anchored to a fixed
    list of exercises. Coverage insight: at most two rule-triggered lines (see progCoverageInsights()).
    ================================================================================================ */
-const PROG_RECIPE={ version:1, blockDays:28, minExposures:2, minLifts:4, repCap:15, band:0.03, outlierBelow:0.25, agg:"median" };
+/* v21 → version 2: equipment epochs. Values for blocks that contain no new-equipment lift are byte-identical
+   to version 1 (tests pin the 10 Jun – 29 Sep 2026 chain at 1.000 / 1.034 / 1.060 / 1.100). */
+const PROG_RECIPE={ version:2, blockDays:28, minExposures:2, minLifts:4, repCap:15, band:0.03, outlierBelow:0.25, agg:"median", epochs:true };
+function progEpochs(){ return (EQUIP_EPOCHS||[]).map(function(e){ return {from:progDayStart(e.from+"T12:00:00"), label:e.label||"Equipment change"}; }).sort(function(a,b){ return a.from-b.from; }); }
+/* a since-lift is "new at" an epoch when it arrived on or after that date */
+function progLiftNewAt(ex,ep){ return !!(ex&&ex.since&&progDayStart(ex.since+"T12:00:00")>=ep.from); }
 const PROG_TZ_DAY=86400000;
 function progDayStart(d){ const x=new Date(d); x.setHours(0,0,0,0); return x; }
 function progDaysBetween(a,b){ return Math.round((progDayStart(b)-progDayStart(a))/PROG_TZ_DAY); }
@@ -4414,22 +4585,55 @@ function progressCompute(recipe,now){ recipe=Object.assign({},PROG_RECIPE,recipe
     const ks=kept.map(function(r){ return r.score; });
     b.lifts[id]={exId:id, n:rows.length, kept:kept.length, aside:aside.length, evaluable:kept.length>=recipe.minExposures,
       value:kept.length?(recipe.agg==="mean"?progMean(ks):progMedian(ks)):null, scores:scores, asideDates:aside.map(function(r){ return r.date; })}; }); });
-  /* ---- chain: baseline = first block with an evaluable lift; each later block links to the last indexed block */
-  let refIdx=-1;
+  /* ---- v21 equipment epochs: inside the block that CONTAINS an epoch, exposures on a lift that is new at
+     that epoch are familiarisation — counted and shown, never evaluable, so a chain can never be built
+     on first-week loads found while a machine's setup was still being worked out. */
+  const epochs=recipe.epochs===false?[]:progEpochs(); out.epochs=epochs;
+  blocks.forEach(function(b){ b.epoch=epochs.find(function(ep){ return ep.from>=b.start&&ep.from<b.endExclusive; })||null; b.familiarising=0;
+    if(!b.epoch) return;
+    Object.keys(b.lifts).forEach(function(id){ const ex=exById(id); if(progLiftNewAt(ex,b.epoch)){ const L=b.lifts[id]; if(L.evaluable||L.n>0){ L.evaluable=false; L.familiarisation=true; b.familiarising++; } } }); });
+  /* ---- chain: baseline = first block with an evaluable lift; each later block links to the last indexed block.
+     v21 — SEGMENTS. When a block cannot be linked to the last indexed block AND an equipment epoch lies
+     between them (the reference block started before the epoch, this block starts on or after it) AND
+     this block has enough evaluable lifts on its own, the chain RE-BASELINES: this block becomes 1.00 of a
+     new segment. Nothing is compared across the equipment change, no value is carried over, and the
+     earlier segment keeps its final figure. A block that still shares ≥ minLifts genuinely comparable
+     lifts (cables, free weights) across the epoch links normally — the set of lifts is never fixed. */
+  let refIdx=-1, seg=0;
   blocks.forEach(function(b){ const ev=Object.keys(b.lifts).filter(function(id){ return b.lifts[id].evaluable; });
-    if(refIdx<0){ if(ev.length){ b.index=1; b.baseline=true; refIdx=b.i; } return; }
+    if(refIdx<0){ if(ev.length){ b.index=1; b.baseline=true; b.seg=seg; refIdx=b.i; } return; }
     const ref=blocks[refIdx]; const shared=ev.filter(function(id){ return ref.lifts[id]&&ref.lifts[id].evaluable; });
     b.ref=refIdx; b.linkLifts=shared.length; b.ratios={}; shared.forEach(function(id){ b.ratios[id]=b.lifts[id].value/ref.lifts[id].value; });
-    if(shared.length>=recipe.minLifts){ b.link=Math.exp(progMean(shared.map(function(id){ return Math.log(b.ratios[id]); }))); b.index=ref.index*b.link; refIdx=b.i; }
-    else { b.gap=true; } });
+    if(shared.length>=recipe.minLifts){ b.link=Math.exp(progMean(shared.map(function(id){ return Math.log(b.ratios[id]); }))); b.index=ref.index*b.link; b.seg=seg; refIdx=b.i; }
+    else { const ep=epochs.find(function(e){ return e.from>ref.start&&e.from<=b.start; });
+      if(ep&&ev.length>=recipe.minLifts){ seg++; b.index=1; b.baseline=true; b.rebase=ep; b.seg=seg; b.ref=null; b.linkLifts=0; b.ratios={}; b.prevSegRef=refIdx; refIdx=b.i; }
+      else b.gap=true; } });
+  out.segments=seg+1;
   out.blocks=blocks;
   out.completed=blocks.filter(function(b){ return b.complete; });
   out.current=blocks[blocks.length-1].complete?null:blocks[blocks.length-1];
-  const indexed=out.completed.filter(function(b){ return b.index!=null; });
-  const latest=indexed.length?indexed[indexed.length-1]:null;
+  const indexedAll=out.completed.filter(function(b){ return b.index!=null; });
+  const latest=indexedAll.length?indexedAll[indexedAll.length-1]:null;
+  /* v21 — the headline describes the LATEST SEGMENT only; an earlier segment's final figure is kept beside it */
+  const indexed=latest?indexedAll.filter(function(b){ return b.seg===latest.seg; }):[];
   const baseline=indexed.length?indexed[0]:null;
-  if(latest&&baseline&&latest!==baseline){ out.headline={pct:latest.index-1, index:latest.index, since:baseline.start, sinceLabel:progMonthLabel(baseline.start), blocks:indexed.length, lifts:latest.linkLifts, latest:latest, baseline:baseline, latestLink:latest.link!=null?latest.link-1:null}; }
-  else if(latest){ out.headline={pct:null, index:1, since:latest.start, sinceLabel:progMonthLabel(latest.start), blocks:1, lifts:Object.keys(latest.lifts).filter(function(id){ return latest.lifts[id].evaluable; }).length, latest:latest, baseline:latest, latestLink:null, firstBlock:true}; }
+  const prevSeg=(latest&&latest.seg>0)?(function(){ const rows=indexedAll.filter(function(b){ return b.seg===latest.seg-1; }); if(!rows.length) return null; const f=rows[0], l=rows[rows.length-1];
+    return {pct:l.index-1, index:l.index, since:f.start, until:l.end, sinceLabel:progMonthLabel(f.start), untilLabel:progMonthLabel(l.end), blocks:rows.length, lifts:l.linkLifts, latest:l}; })():null;
+  const evCount=function(b){ return Object.keys(b.lifts).filter(function(id){ return b.lifts[id].evaluable; }).length; };
+  if(latest&&baseline&&latest!==baseline){ out.headline={pct:latest.index-1, index:latest.index, since:baseline.start, sinceLabel:progMonthLabel(baseline.start), blocks:indexed.length, lifts:latest.linkLifts, latest:latest, baseline:baseline, latestLink:latest.link!=null?latest.link-1:null, rebase:baseline.rebase||null, prevSegment:prevSeg}; }
+  else if(latest){ out.headline={pct:null, index:1, since:latest.start, sinceLabel:progMonthLabel(latest.start), blocks:1, lifts:evCount(latest), latest:latest, baseline:latest, latestLink:null, firstBlock:true, rebase:latest.rebase||null, prevSegment:prevSeg}; }
+  /* v21 — the equipment-change summary line: which epoch, how many lifts are re-baselining, and when the
+     first comparison on the new equipment can arrive (end of the first complete block that starts on
+     or after the epoch, plus one more block to compare it with). */
+  out.epochInfo=null;
+  if(epochs.length){ const ep=epochs[epochs.length-1]; const epBlock=blocks.find(function(b){ return b.epoch&&b.epoch.from.getTime()===ep.from.getTime(); })||null;
+    const newIds={}; blocks.forEach(function(b){ Object.keys(b.lifts).forEach(function(id){ const ex=exById(id); if(progLiftNewAt(ex,ep)) newIds[id]=1; }); });
+    const retiredIds=Object.keys(S.exercises.reduce(function(a,e){ if(exRetired(e)&&blocks.some(function(b){ return b.lifts[e.id]; })) a[e.id]=1; return a; },{}));
+    const fi=Math.max(0,Math.ceil(progDaysBetween(anchor,ep.from)/recipe.blockDays));   /* index of the first block starting on/after the epoch */
+    const firstCompare=progAddDays(anchor,(fi+2)*recipe.blockDays-1);                      /* that block and one more must complete */
+    const linkedAcross=blocks.some(function(b){ return b.start>=ep.from&&b.link!=null&&b.seg===(blocks[b.ref]||{}).seg; });
+    out.epochInfo={from:ep.from, label:ep.label, block:epBlock?epBlock.i:null, newLifts:Object.keys(newIds).length, retiredLifts:retiredIds.length, familiarising:epBlock?epBlock.familiarising:0,
+      firstCompare:firstCompare, rebased:blocks.some(function(b){ return b.rebase; }), linkedAcross:linkedAcross}; }
   /* ---- lifts: classification on the latest completed link, long view over completed blocks */
   /* lifts worth listing: anything trained in the latest completed block, plus lifts with two or more
      sessions in the current block (a one-off at another gym is not a lift you are tracking) */
@@ -4450,13 +4654,17 @@ function progressCompute(recipe,now){ recipe=Object.assign({},PROG_RECIPE,recipe
     /* why it is thin — one honest reason for the list */
     let why=null; if(cat==="thin"){
       if(!latest) why="first block";
+      else if(latest.rebase&&lb&&lb.evaluable) why="baseline on new equipment";
+      else if(lb&&lb.familiarisation) why=lb.n+" familiarisation session"+(lb.n===1?"":"s")+" · new machine";
+      else if(curB&&curB.familiarisation) why=curB.n+" familiarisation session"+(curB.n===1?"":"s")+" · new machine · current block";
       else if(lb&&lb.evaluable&&!(rb&&rb.evaluable)) why="new in this block";
       else if(lb&&!lb.evaluable&&lb.n>0) why=lb.n+" exposure"+(lb.n===1?"":"s")+" in the latest block"+(lb.aside?" · "+lb.aside+" set aside":"");
       else if(!lb&&curB) why="only in the current block";
       else if(!lb&&rb) why="not trained in the latest block";
       else why="not enough exposures"; }
     return {exId:id, name:ex.name, cat:cat, change:change, latestN:lb?lb.n:0, latestAside:lb?lb.aside:0, longPct:longPct, longSince:longSince, longLabel:longLabel, isNew:isNew,
-      currentN:curB?curB.n:0, why:why, evBlocks:evB.length}; }).filter(Boolean)
+      currentN:curB?curB.n:0, why:why, evBlocks:evB.length, retired:exRetired(ex)?ex.retired:null, newEquip:exNewEquip(ex)?ex.since:null,
+      familiarising:!!((lb&&lb.familiarisation)||(curB&&curB.familiarisation))}; }).filter(Boolean)
     .sort(function(a,b){ const o={up:0,flat:1,down:2,thin:3}; if(o[a.cat]!==o[b.cat]) return o[a.cat]-o[b.cat]; if(a.change!=null&&b.change!=null) return b.change-a.change; return a.name.localeCompare(b.name); });
   /* a lift trained only once across the latest completed block, the block before it and the current
      block — and never evaluable before — is a one-off, not a lift being tracked: counted, not listed */
@@ -4518,9 +4726,11 @@ function progStripSVG(P){ const all=P.blocks; if(!all.length) return "";
     const mon=progShortMonth(b.start); const prevMon=i>0?progShortMonth(shown[i-1].start):null;
     const lab=!b.complete?"now":(n>8?mon.slice(0,1):(mon===prevMon?b.start.getDate()+" "+mon.slice(0,3):mon));
     labels+='<text x="'+x+'" y="'+(H-6)+'" text-anchor="middle" class="ps-lab'+(b.complete?"":" cur")+'">'+lab+'</text>';
+    if(b.epoch&&!b.rebase) dots+='<text x="'+x+'" y="9" text-anchor="middle" class="ps-eplab">\u2699</text>';   /* v21: the block containing the equipment change */
     if(b.index==null){ if(!b.complete&&prevPt){ dots+='<line x1="'+prevPt.x+'" y1="'+prevPt.y+'" x2="'+x+'" y2="'+prevPt.y+'" class="ps-line cur"/><circle cx="'+x+'" cy="'+prevPt.y+'" r="4" class="ps-dot cur"/>'; }   /* in progress, nothing to compare yet */
       else dots+='<circle cx="'+x+'" cy="'+(base+6)+'" r="3" class="ps-gap"/>'; return; }
     const yy=y(b.index); const isCur=!b.complete;
+    if(b.rebase){ dots+='<line x1="'+(x-step/2).toFixed(1)+'" y1="'+(top-8)+'" x2="'+(x-step/2).toFixed(1)+'" y2="'+(base+4)+'" class="ps-epoch"/>'; prevPt=null; }   /* v21: new segment — no line across the equipment change */
     if(prevPt){ path+='<line x1="'+prevPt.x+'" y1="'+prevPt.y+'" x2="'+x+'" y2="'+yy.toFixed(1)+'" class="ps-line'+(isCur?" cur":"")+'"/>'; }
     dots+='<circle cx="'+x+'" cy="'+yy.toFixed(1)+'" r="'+(isCur?4:4.5)+'" class="ps-dot'+(isCur?" cur":"")+'"/>';
     if(n<=8||i===0||i===n-1||isCur) dots+='<text x="'+x+'" y="'+(yy-10).toFixed(1)+'" text-anchor="middle" class="ps-val'+(isCur?" cur":"")+'">'+b.index.toFixed(2)+'</text>';
@@ -4536,25 +4746,39 @@ function progHeroCard(P){ const h=P.headline; const cur=P.current;
       +'<div class="ps-big muted" style="font-size:26px;margin-top:8px">Building your baseline</div>'
       +'<div class="histline">Your first four-week block runs '+progRangeLabel(b.start,b.end)+' · '+b.sessions+' session'+(b.sessions===1?'':'s')+' so far · the first comparison arrives when the block after it completes.</div></div>'; }
   let big, sub;
-  if(h.firstBlock){ big='<div class="ps-big muted" style="font-size:26px">Baseline set</div>';
+  if(h.firstBlock&&h.rebase){ big='<div class="ps-big muted" style="font-size:26px">New baseline · new equipment</div>';
+    sub='First complete block on the new machines ('+progRangeLabel(h.latest.start,h.latest.end)+') · '+h.lifts+' lift'+(h.lifts===1?'':'s')+' with two or more sessions · the first comparison on this equipment arrives when the next block completes.'; }
+  else if(h.firstBlock){ big='<div class="ps-big muted" style="font-size:26px">Baseline set</div>';
     sub='First block complete ('+progRangeLabel(h.latest.start,h.latest.end)+') · '+h.lifts+' lift'+(h.lifts===1?'':'s')+' with two or more sessions · your first change arrives when the next block completes.'; }
   else { big='<div class="ps-big" style="color:'+progTone(h.pct)+'">'+progPct(h.pct,{zero:"0%"})+'</div>';
-    sub='Since '+h.sinceLabel+' · '+h.blocks+' blocks · '+h.lifts+' lifts tracked'; }
+    sub='Since '+h.sinceLabel+(h.rebase?' (new equipment)':'')+' · '+h.blocks+' blocks · '+h.lifts+' lifts tracked'; }
+  /* v21 — the equipment change is stated, never implied by a dip */
+  let epLine=''; const ei=P.epochInfo;
+  if(ei){ const when=progFmtDay(ei.from); let tail;
+    if(ei.linkedAcross) tail='the chain continued on '+(h.lifts)+' lifts that are comparable across the change (cables, free weights); new machines join as they qualify';
+    else if(h.rebase) tail='re-baselined · nothing is compared across the change';
+    else if(ei.firstCompare) tail='new machines re-baselining · first comparison on them after '+progFmtDay(ei.firstCompare);
+    else tail='re-baselining';
+    epLine='<div class="ps-row ep"><span>Equipment changed</span><b>'+when+'</b><small>'+ei.retiredLifts+' lifts retired'+(ei.newLifts?' · '+ei.newLifts+' new in use':'')+' · '+tail+(ei.familiarising?' · familiarisation sessions in the change block are shown, not compared':'')+'</small></div>'; }
+  const prevLine=h.prevSegment?'<div class="ps-row"><span>Previous equipment</span><b style="color:'+progTone(h.prevSegment.pct)+'">'+progPct(h.prevSegment.pct)+'</b><small>'+h.prevSegment.sinceLabel+' – '+h.prevSegment.untilLabel+' · '+h.prevSegment.blocks+' blocks · final figure kept, not carried over</small></div>':'';
   const latestLine=(!h.firstBlock&&h.latestLink!=null)?'<div class="ps-row"><span>Latest completed block</span><b style="color:'+progTone(h.latestLink)+'">'+progPct(h.latestLink)+'</b><small>vs previous block · '+progRangeLabel(h.latest.start,h.latest.end)+'</small></div>':'';
   let curLine='';
   if(cur){ const left=PROG_RECIPE.blockDays-cur.daysDone; const ev=Object.keys(cur.lifts).filter(function(id){ return cur.lifts[id].evaluable; }).length;
-    const sofar=cur.link!=null?'so far '+progPct(cur.link-1)+' on '+cur.linkLifts+' lifts':(cur.sessions?ev+' lift'+(ev===1?'':'s')+' with two or more sessions · too early to compare':'no sessions yet');
+    const sofar=cur.rebase?'new baseline on new equipment · '+ev+' lift'+(ev===1?'':'s')+' qualifying':cur.link!=null?'so far '+progPct(cur.link-1)+' on '+cur.linkLifts+' lifts'+(cur.familiarising?' · '+cur.familiarising+' new-machine lift'+(cur.familiarising===1?'':'s')+' familiarising, not compared':''):(cur.sessions?ev+' lift'+(ev===1?'':'s')+' with two or more sessions · too early to compare'+(cur.familiarising?' · '+cur.familiarising+' familiarising on new machines':''):'no sessions yet');
     curLine='<div class="ps-row cur"><span>Current block</span><b>'+cur.sessions+' session'+(cur.sessions===1?'':'s')+'</b><small>'+progRangeLabel(cur.start,cur.end)+' · '+(left===0?'completes tonight':left+' day'+(left===1?'':'s')+' left')+' · '+sofar+' · not counted until complete</small></div>'; }
   const revised=(P.revised&&P.revised.length)?'<div class="histline" style="margin-top:6px;color:var(--amber)">Block values revised since your last visit — a workout was edited or added late.</div>':'';
-  return '<div class="card">'+head+'<div style="margin-top:6px">'+big+'</div><div class="histline">'+sub+'</div>'+progStripSVG(P)+latestLine+curLine+revised+'</div>'; }
+  return '<div class="card">'+head+'<div style="margin-top:6px">'+big+'</div><div class="histline">'+sub+'</div>'+progStripSVG(P)+latestLine+curLine+epLine+prevLine+revised+'</div>'; }
 /* ---- what is driving it */
 function progLiftRow(l){ const right=l.cat==="thin"
     ?'<div class="ps-r2 muted">'+(l.why||"")+'</div>'
     :'<div class="ps-r2"><span>Latest block</span><b style="color:'+progTone(l.change)+'">'+progPct(l.change)+'</b></div>'
       +(l.longPct!=null?'<div class="ps-r2"><span>Since '+l.longLabel+'</span><b style="color:'+progTone(l.longPct)+'">'+progPct(l.longPct)+'</b></div>':(l.isNew?'<div class="ps-r2 muted">new this block</div>':''));
-  return '<div class="ps-lift" data-progex="'+l.exId+'"><div class="ps-nm">'+l.name+(l.latestAside?'<span class="tag" title="one session set aside as far below your usual load for this block">'+l.latestAside+' set aside</span>':'')+'</div><div class="ps-right">'+right+'</div><span class="ps-chev">›</span></div>'; }
+  return '<div class="ps-lift" data-progex="'+l.exId+'"><div class="ps-nm">'+l.name+(l.familiarising?'<span class="tag" style="color:var(--gold)" title="new machine · familiarisation sessions are counted, not compared">new machine</span>':'')+(l.latestAside?'<span class="tag" title="one session set aside as far below your usual load for this block">'+l.latestAside+' set aside</span>':'')+'</div><div class="ps-right">'+right+'</div><span class="ps-chev">›</span></div>'; }
 function progDriversCard(P){ if(P.empty||!P.headline||P.headline.firstBlock) return '';
-  const groups=["up","flat","down","thin"].map(function(k){ return {k:k, rows:P.lifts.filter(function(l){ return l.cat===k; })}; });
+  /* v21 — a retired machine's last comparison is still a true comparison of old-machine sessions, but it
+     is not a lift you can act on, so it is listed under "No longer available" rather than Declining. */
+  const live=P.lifts.filter(function(l){ return !l.retired; }), gone=P.lifts.filter(function(l){ return l.retired; });
+  const groups=["up","flat","down","thin"].map(function(k){ return {k:k, rows:live.filter(function(l){ return l.cat===k; })}; });
   const scored=groups.slice(0,3).reduce(function(a,g){ return a+g.rows.length; },0);
   let h='<div class="card"><div class="tiny">What is driving it</div><div class="histline">'+P.headline.latest.linkLifts+' lifts compared · latest completed block vs the one before · tap a lift for its full history</div>';
   if(!scored) h+='<div class="empty" style="padding:14px 6px 6px">No lift had two or more sessions in both of the last two completed blocks.</div>';
@@ -4565,6 +4789,10 @@ function progDriversCard(P){ if(P.empty||!P.headline||P.headline.firstBlock) ret
       if(P.oneOff) h+='<div class="histline" style="margin-top:6px">+ '+P.oneOff+' lift'+(P.oneOff===1?'':'s')+' trained once in this period.</div>';
       return; }
     h+='<div class="ps-grp '+g.k+'"><span class="ps-gt">'+PROG_LABELS[g.k]+'</span><span class="ps-gn">'+g.rows.length+'</span></div>'+g.rows.map(progLiftRow).join(""); });
+  if(gone.length){ const open=sectionOpenD("stats:proggone",false);
+    h+='<div class="ps-grp thin" data-section="stats:proggone" data-secdef="0"><span class="ps-gt">No longer available · history kept</span><span class="ps-gn">'+gone.length+'</span><span class="muted" style="margin-left:auto">'+(open?'−':'+')+'</span></div>';
+    if(open) h+=gone.map(function(l){ return progLiftRow(Object.assign({},l,{name:plainExName(l.name), why:(l.cat==="thin"?(l.why||""):"last block "+progPct(l.change))+" · retired "+progFmtDay(l.retired+"T12:00:00"), cat:"thin"})); }).join("");
+    else h+='<div class="histline ps-thinlist">'+gone.map(function(l){ return l.name.replace(/ \(retired Oct 2026\)$/,""); }).join(" · ")+'</div>'; }
   if(P.retired) h+='<div class="histline" style="margin-top:8px">'+P.retired+' other lift'+(P.retired===1?'':'s')+' tracked earlier '+(P.retired===1?'is':'are')+' not in the comparison right now · history kept.</div>';
   return h+'</div>'; }
 function progInsightCard(P){ if(!P.insights||!P.insights.length) return '';
@@ -4582,6 +4810,7 @@ function progHowSheet(){ const P=progressData();
     +'<p><b>Chained.</b> Each block\'s change is linked to the last, starting at 1.00. At least four lifts must qualify for a block to count; otherwise it is left as a gap and the chain continues from the last counted block. New lifts join as soon as they qualify in two linked blocks and retired lifts simply drop out — the set of lifts is never fixed.</p>'
     +'<p><b>Incomplete blocks do not count.</b> The current block is shown for context and joins the headline only when its 28 days are up.</p>'
     +'<p><b>Odd sessions.</b> A best set more than a quarter below your usual for that block (a different machine or gym, say) is set aside for that block and marked on the lift — never deleted or edited.</p>'
+    +'<p><b>Equipment changes.</b> When the gym replaces its machines (12 Oct 2026), the new machines are separate lifts with their own baselines — a 35 kg pec fly is never compared with a 70 kg pec deck. In the block that contains the change, sessions on new machines are familiarisation: counted and shown, never compared. The block is still linked on the lifts that genuinely continue (old-machine sessions before the change, cables, free weights). A later block that cannot be linked across the change on at least four continuing lifts starts a new baseline at 1.00; the earlier figure is kept beside it, and nothing is carried over or invented.</p>'
     +'<p><b>What it is not.</b> "+10%" means your demonstrated best-set performance across those lifts is about a tenth higher than in the first block. It is not a measured 1RM and not a claim about muscle or physiology.</p>'
     +'<p class="muted">Method version '+PROG_RECIPE.version+(P.anchor?' · blocks anchored to '+fmtDate(P.anchor):'')+'</p></div>'
 ; }
@@ -4714,14 +4943,14 @@ function muscleDetail(m){ const cfg=S.muscles[m]; const st=recoveryStatus(m); co
 function viewSettings(){ const acct=authProfile?'<div class="card"><div class="tiny">Account</div><div style="margin-top:8px;font-weight:600">'+authProfile.name+'</div><div class="histline">'+authProfile.email+' · role: '+authProfile.role+'</div><button class="btn ghost full danger" data-act="signout" style="margin-top:12px">Sign out</button></div>'
     :'<div class="card"><div class="tiny">Account</div><div class="histline" style="margin-top:6px">Local mode — not signed in.</div></div>';
   const approved=Object.entries(ALLOWED_USERS).map(([e,v])=>'<div class="exline" style="padding:7px 0"><div><div class="nm" style="font-size:13px">'+v.name+'</div><div class="histline">'+e+'</div></div><span class="tag">'+v.role+'</span></div>').join("");
-  const _fam=function(e){ return !AVAIL_OK[e.avail]?{t:"unavailable",c:"var(--faint)"}:(e.rec?{t:"default",c:"var(--green)"}:{t:"manual",c:"var(--muted)"}); };
+  const _fam=function(e){ return e.retired?{t:"retired",c:"var(--faint)"}:!AVAIL_OK[e.avail]?{t:"unavailable",c:"var(--faint)"}:(e.rec?{t:"default",c:"var(--green)"}:{t:"manual",c:"var(--muted)"}); };
   const _exMatched=S.exercises.filter(function(e){ return exPassesFilters(e,mgmtGroup,mgmtEquip)&&exMatches(e,mgmtSearch||""); });
   const _exNarrowed=!!(mgmtSearch||mgmtGroup||mgmtEquip);
   /* v12 — without a search or filter we show a capped preview, not all 119 rows */
   const _exRows=(_exNarrowed?_exMatched:_exMatched.slice(0,12)).map(e=>{ const pm=primaryMuscle(e); const prefC={love:"var(--gold)",like:"var(--green)",neutral:"var(--muted)",avoid:"var(--red)"}[e.pref]; const f=_fam(e);
     /* v17 — the row stacks: name, meta and the credit line on top, the controls beneath, so the credit
        line (now carrying the contribution words) has the full width instead of a squeezed column. */
-    return '<div class="exline" style="padding:9px 0;flex-direction:column;align-items:stretch"><div><div class="nm" style="font-size:13.5px">'+e.name+'</div><div class="histline">'+S.muscles[pm].label+' · '+e.equip+' · '+e.rl+'–'+e.rh+' reps · <span style="color:'+f.c+'">'+f.t+'</span></div><div class="mcredline">'+musLabels(e)+'</div>'+(hasSetup(e.id)?'<div class="histline" style="color:var(--gold)">⚙ '+escAttr(setupSummary(e.id,3))+'</div>':'')+'</div><div class="row" style="gap:6px;margin-top:6px;justify-content:flex-end"><button class="btn sm" data-setup="'+e.id+'" style="color:var(--gold)" title="setup / machine settings">⚙</button><button class="btn sm" data-rec="'+e.id+'" title="recommendable">'+(e.rec?"rec":"manual")+'</button><button class="btn sm" data-pref="'+e.id+'" style="color:'+prefC+'">'+e.pref+'</button><button class="btn sm" data-avail="'+e.id+'">'+e.avail+'</button></div></div>'; }).join("");
+    return '<div class="exline" style="padding:9px 0;flex-direction:column;align-items:stretch"><div><div class="nm" style="font-size:13.5px">'+e.name+'</div><div class="histline">'+S.muscles[pm].label+' · '+e.equip+' · '+e.rl+'–'+e.rh+' reps · <span style="color:'+f.c+'">'+f.t+'</span></div><div class="mcredline">'+musLabels(e)+'</div>'+equipProvenanceLine(e)+(hasSetup(e.id)?'<div class="histline" style="color:var(--gold)">⚙ '+escAttr(setupSummary(e.id,3))+'</div>':'')+'</div><div class="row" style="gap:6px;margin-top:6px;justify-content:flex-end"><button class="btn sm" data-setup="'+e.id+'" style="color:var(--gold)" title="setup / machine settings">⚙</button><button class="btn sm" data-rec="'+e.id+'" title="recommendable">'+(e.rec?"rec":"manual")+'</button><button class="btn sm" data-pref="'+e.id+'" style="color:'+prefC+'">'+e.pref+'</button><button class="btn sm" data-avail="'+e.id+'">'+e.avail+'</button></div></div>'; }).join("");
   const exList='<input class="inp srch" id="mgmtSearch" placeholder="Search exercises..." value="'+escAttr(mgmtSearch||"")+'">'+filterChips("mgmt",mgmtGroup,mgmtEquip)+(_exNarrowed?'':'<div class="histline" style="margin:8px 0 0">Showing '+Math.min(12,_exMatched.length)+' of '+_exMatched.length+' \u2014 search or filter above to narrow the list.</div>')+'<div style="margin-top:6px">'+(_exRows||'<div class="empty">No matches.</div>')+'</div>';
   const bw=(S.bodyweight||[]).slice(-1)[0];
   const TIERS=["primary","secondary","maintenance"]; const tierC={primary:"var(--gold)",secondary:"var(--accent)",maintenance:"var(--muted)"};
@@ -4950,7 +5179,7 @@ function renderFinish(){ const m=document.getElementById("finmount"); if(!m) ret
 function deriveTitle(entries){ const ms={}; entries.forEach(en=>{ const ex=exById(en.exId); const n=workingSets(en).length; if(!ex||!n) return; const pm=primaryMuscle(ex); if(pm) ms[pm]=(ms[pm]||0)+n; });
   const top=Object.entries(ms).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([m])=>S.muscles[m]?S.muscles[m].label:m); return top.length?top.join(" · "):"Workout"; }
 function startSession(rec){ loggerOpen={}; rerollCounts={}; const entries=(rec?rec.exercises:[]).map(c=>{ const e=exById(c.exId); return { exId:c.exId, sets:Array.from({length:c.sets||DEFAULT_WORK_SETS},()=>({weight:"",reps:"",type:"work",done:false})) }; });
-  activeSession={ id:uid(), startedAt:iso(new Date()), dateISO:new Date().toISOString().slice(0,10), title:rec?rec.title:BUILD_TITLE, mode:rec?"adaptive":"manual", entries }; viewingLogger=true; pendingRec=null; saveActive();
+  activeSession={ id:uid(), startedAt:iso(new Date()), dateISO:localDateISO(), title:rec?rec.title:BUILD_TITLE, mode:rec?"adaptive":"manual", entries }; viewingLogger=true; pendingRec=null; saveActive();
   try{ history.pushState({iron:"workout"},""); }catch(e){} route="today"; render(); }
 /* the one place a ticked set is committed: mark done, start the rest timer, advance or re-render */
 function commitSet(ei,si){ if(!activeSession) return; const en=activeSession.entries[ei]; if(!en) return; const st=en.sets[si]; if(!st) return;
@@ -4991,8 +5220,11 @@ function doFinish(){
     else { /* v13 — "Empty workout" was renamed to "Build workout"; both are treated as placeholder
          titles so a draft started on v12 and finished on v13 still gets a derived title. */
       if(!activeSession.title||activeSession.title==="Empty workout"||activeSession.title===BUILD_TITLE) activeSession.title=deriveTitle(activeSession.entries);
-      /* v7: a live session finishes at the moment you hit Finish — never the noon placeholder */
-      saved={ id:activeSession.id, startedAt:activeSession.startedAt, completedAt:iso(new Date()), title:activeSession.title, mode:activeSession.mode, entries:activeSession.entries, synced:false }; }
+      /* v7: a live session finishes at the moment you hit Finish — never the noon placeholder.
+         v21: a draft dated before today is a PAST workout — saved at local midday on that date (the
+         existing "unknown time" placeholder), with startedAt matched so no duration is invented. */
+      const bd=backdateFor(activeSession); const when=bd?iso(new Date(bd+"T12:00:00")):iso(new Date());
+      saved={ id:activeSession.id, startedAt:bd?when:activeSession.startedAt, completedAt:when, title:activeSession.title, mode:activeSession.mode, entries:activeSession.entries, synced:false }; }
     if(!saved.id) saved.id=uid();
     /* 2. journal → local → verify. Replace-by-id: finishing the same draft twice can only ever
           overwrite the same record, never append a second one. */
@@ -5032,7 +5264,7 @@ function buildRecap(sess){ const setsN=sess.entries.reduce((a,en)=>a+workingSets
   const prev4=baselineAvg(sess,28,28,true);
   const prog=sessionExerciseProgress(sess);   /* v11: composition-proof, leads the recap */
   const customUsed=(sess.entries||[]).filter(function(en){ const ex=exById(en.exId); return workingSets(en).length&&isCustomEx(ex)&&ex.customStatus==="unmapped"; }).length;
-  const dur=sess.startedAt?Math.max(1,Math.round(hoursBetween(sess.startedAt,sess.completedAt)*60)):null;
+  const dur=(sess.startedAt&&sess.startedAt!==sess.completedAt)?Math.max(1,Math.round(hoursBetween(sess.startedAt,sess.completedAt)*60)):null;   /* v21: a backdated session has no duration */
   const muscles=[...new Set(sess.entries.flatMap(en=>{ const ex=exById(en.exId); const n=workingSets(en).length; return (ex&&n)?Object.entries(ex.m).filter(([m,c])=>c>=0.5).map(([m])=>m):[]; }))].map(m=>S.muscles[m]?S.muscles[m].label:m);
   const ach=sessionAchievements(sess); const prs=ach.map(achText);
   const vbp=weeklyVolume([sess]); const parts=Object.entries(vbp).filter(([m,v])=>v>0).sort((a,b)=>b[1]-a[1]).slice(0,6).map(([m,v])=>({label:S.muscles[m].label,v}));
@@ -5047,8 +5279,8 @@ function buildRecap(sess){ const setsN=sess.entries.reduce((a,en)=>a+workingSets
   else coach="Momentum "+mom.score+"/100 — every priority muscle is on track this week. 🔥";
   return {id:sess.id, setsN, exN:sess.entries.filter(en=>workingSets(en).length).length, dur, muscles, prs, ach, achGroups:groupAchievements(ach), parts, title:sess.title, coach,
           totals, cmp, cmpTotals, base4, prev4, customUsed, prog, composition:sessionComposition(sess), date:sess.completedAt}; }
-function editWorkout(id){ const s=S.sessions.find(x=>x.id===id); if(!s) return; loggerOpen={}; activeSession={ id:uid(), editingId:id, startedAt:s.startedAt||s.completedAt, dateISO:new Date(s.completedAt).toISOString().slice(0,10), title:s.title, mode:"edit", entries:JSON.parse(JSON.stringify(s.entries)) }; viewingLogger=true; saveActive(); go("today"); }
-function duplicateWorkout(id){ const s=S.sessions.find(x=>x.id===id); if(!s) return; loggerOpen={}; activeSession={ id:uid(), startedAt:iso(new Date()), dateISO:new Date().toISOString().slice(0,10), title:s.title, mode:"manual", entries:s.entries.map(en=>({exId:en.exId, sets:en.sets.map(()=>({weight:"",reps:"",type:"work",done:false}))})) }; viewingLogger=true; saveActive(); try{ history.pushState({iron:"workout"},""); }catch(e){} go("today"); }
+function editWorkout(id){ const s=S.sessions.find(x=>x.id===id); if(!s) return; loggerOpen={}; activeSession={ id:uid(), editingId:id, startedAt:s.startedAt||s.completedAt, dateISO:localDateISO(s.completedAt), title:s.title, mode:"edit", entries:JSON.parse(JSON.stringify(s.entries)) }; viewingLogger=true; saveActive(); go("today"); }
+function duplicateWorkout(id){ const s=S.sessions.find(x=>x.id===id); if(!s) return; loggerOpen={}; activeSession={ id:uid(), startedAt:iso(new Date()), dateISO:localDateISO(), title:s.title, mode:"manual", entries:s.entries.map(en=>({exId:en.exId, sets:en.sets.map(()=>({weight:"",reps:"",type:"work",done:false}))})) }; viewingLogger=true; saveActive(); try{ history.pushState({iron:"workout"},""); }catch(e){} go("today"); }
 /* v10: a deliberate delete is tombstoned, so neither the journal nor a cloud rehydrate
    can bring it back — that is the one and only way a workout leaves the device. */
 function deleteWorkout(id){ confirmSheet("Delete this workout permanently? Stats, volume and muscle status will update.","Delete",()=>{ S.sessions=S.sessions.filter(x=>x.id!==id); journalForget(id); persistLocal(); pushSettings(); deleteWorkoutCloud(id); render(); },{danger:true,title:"Delete workout?"}); }
@@ -5100,7 +5332,7 @@ function wireScreen(){
        would collapse the card mid-number (typing "1" of "180" can momentarily look complete). */
     inp.onchange=()=>{ const ei=+inp.dataset.ei; maybeAdvance(ei); };
   });
-  const wd=document.querySelector("[data-wdate]"); if(wd) wd.onchange=()=>{ activeSession.dateISO=wd.value; saveActive(); };
+  const wd=document.querySelector("[data-wdate]"); if(wd) wd.onchange=()=>{ activeSession.dateISO=wd.value; if(activeSession.mode!=="edit"){ activeSession.dateSet=true; saveActive(); render(); } else saveActive(); };   /* v21: a new draft re-dated by hand becomes a past workout */
   // P1 — tap ✓ commits the ghost values (one-tap log); only edit what you changed
   document.querySelectorAll("[data-log]").forEach(b=>b.onclick=()=>{ const [ei,si]=b.dataset.log.split("-").map(Number); const en=activeSession.entries[ei]; const st=en.sets[si];
     if(st.type!=="warm"){ const g=ghostFor(en,si); if((st.weight===""||st.weight==null)&&g.w!=="") st.weight=g.w; if((st.reps===""||st.reps==null)&&g.r!=="") st.reps=g.r; }
